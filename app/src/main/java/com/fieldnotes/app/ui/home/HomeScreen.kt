@@ -220,22 +220,20 @@ fun HomeScreen(navController: NavHostController) {
                     }
                 }
             } else {
-                items(
-                    notes,
-                    key = { "list-${it.note.id}" },
-                    span = StaggeredGridItemSpan.FullLine
-                ) { entry ->
-                    ListRowNote(
-                        entry = entry,
-                        dotColor = dotColorFor(entry),
-                        onOpen = { openNote(entry.note.id) },
-                        onLongPress = {
-                            if (hapticsEnabled) {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                notes.forEach { entry ->
+                    item(key = "list-${entry.note.id}", span = StaggeredGridItemSpan.FullLine) {
+                        ListRowNote(
+                            entry = entry,
+                            dotColor = dotColorFor(entry),
+                            onOpen = { openNote(entry.note.id) },
+                            onLongPress = {
+                                if (hapticsEnabled) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                }
+                                actionNote = entry
                             }
-                            actionNote = entry
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }

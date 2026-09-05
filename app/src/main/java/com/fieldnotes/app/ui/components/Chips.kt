@@ -106,11 +106,11 @@ fun TagChipView(
 fun CircleIconButton(
     icon: ImageVector,
     contentDescription: String,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     size: Dp = 44.dp,
     background: Color = CardWhite,
-    tint: Color = Ink
+    tint: Color = Ink,
+    onClick: () -> Unit
 ) {
     Surface(
         shape = CircleShape,

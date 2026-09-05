@@ -79,7 +79,7 @@ fun List<Block>.plainText(): String = joinToString(" ") { block ->
 
 fun wordCount(text: String): Int = text.trim().split(Regex("\\s+")).count { it.isNotEmpty() }
 
-fun List<Block>.wordCount(): Int = sumOf { wordCount(it.plainText()) }
+fun List<Block>.wordCount(): Int = wordCount(plainText())
 
 /** Replaces the text of a text-bearing block, used by the editor's BasicTextFields. */
 fun Block.withText(text: String): Block = when (this) {
