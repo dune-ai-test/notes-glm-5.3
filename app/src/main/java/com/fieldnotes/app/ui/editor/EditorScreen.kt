@@ -1,0 +1,1038 @@
+@file:OptIn(
+    androidx.compose.foundation.layout.ExperimentalLayoutApi::class,
+    androidx.compose.material3.ExperimentalMaterial3Api::class
+)
+
+package com.fieldnotes.app.ui.editor
+
+import android.content.Intent
+import android.content.pm.PackageManager
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.FormatBold
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material.icons.outlined.Mic
+import androidx.compose.material.icons.outlined.MoreHoriz
+import androidx.compose.material.icons.outlined.Pause
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.TextFields
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
+import com.fieldnotes.app.data.db.NoteEntity
+import com.fieldnotes.app.data.db.NoteWithTags
+import com.fieldnotes.app.data.export.NoteExporter
+import com.fieldnotes.app.data.media.AudioPlayer
+import com.fieldnotes.app.data.model.Block
+import com.fieldnotes.app.data.model.ChecklistItem
+import com.fieldnotes.app.data.model.encodeBlocks
+import com.fieldnotes.app.data.model.withText
+import com.fieldnotes.app.data.model.wordCount
+import com.fieldnotes.app.di.LocalAppContainer
+import com.fieldnotes.app.ui.components.ColoredDot
+import com.fieldnotes.app.ui.components.MiniCheckbox
+import com.fieldnotes.app.ui.components.MetaPill
+import com.fieldnotes.app.ui.components.RecordSheet
+import com.fieldnotes.app.ui.components.SectionLabel
+import com.fieldnotes.app.ui.components.TagChipView
+import com.fieldnotes.app.ui.components.Waveform
+import com.fieldnotes.app.ui.theme.Accent
+import com.fieldnotes.app.ui.theme.Butter
+import com.fieldnotes.app.ui.theme.CardWhite
+import com.fieldnotes.app.ui.theme.DotGray
+import com.fieldnotes.app.ui.theme.FT
+import com.fieldnotes.app.ui.theme.Ink
+import com.fieldnotes.app.ui.theme.InkSoft
+import com.fieldnotes.app.ui.theme.Lilac
+import com.fieldnotes.app.ui.theme.Line
+import com.fieldnotes.app.ui.theme.Muted
+import com.fieldnotes.app.ui.theme.Peach
+import com.fieldnotes.app.ui.theme.Sage
+import com.fieldnotes.app.ui.theme.Sky
+import com.fieldnotes.app.ui.theme.WarmPaper
+import com.fieldnotes.app.ui.theme.noteColor
+import com.fieldnotes.app.util.TimeFormat
+import java.io.File
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+@Composable
+fun EditorScreen(noteId: Long, navController: NavHostController) {
+    val container = LocalAppContainer.current
+    val vm: EditorViewModel = viewModel(
+        key = "editor-$noteId",
+        factory = viewModelFactory { initializer { EditorViewModel(container.noteRepository, noteId) } }
+    )
+    val state by vm.state.collectAsStateWithLifecycle()
+    val allTags by vm.tags.collectAsStateWithLifecycle()
+    val folders by vm.folders.collectAsStateWithLifecycle()
+    val playback by container.audioPlayer.state.collectAsStateWithLifecycle()
+    val recState by container.audioRecorder.state.collectAsStateWithLifecycle()
+    val settings by container.settingsRepository.settings
+        .collectAsStateWithLifecycle(initialValue = com.fieldnotes.app.data.repo.AppSettings())
+
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    var showMore by remember { mutableStateOf(false) }
+    var showAddBlock by remember { mutableStateOf(false) }
+    var showRecord by remember { mutableStateOf(false) }
+    var pendingFocusIndex by remember { mutableStateOf(-1) }
+    val focusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
+
+    val saveAndClose: () -> Unit = {
+        scope.launch {
+            vm.saveNow()
+            navController.popBackStack()
+        }
+    }
+    BackHandler { saveAndClose() }
+
+    val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            scope.launch {
+                val path = container.imageStore.copyFrom(uri)
+                if (path != null) vm.addBlock(Block.Image(path = path))
+            }
+        }
+    }
+
+    val requestMicAndRecord = {
+        showRecord = true
+    }
+    val micPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) requestMicAndRecord()
+    }
+
+    // Autofocus freshly added text blocks.
+    LaunchedEffect(pendingFocusIndex) {
+        if (pendingFocusIndex >= 0) {
+            delay(120)
+            runCatching { focusRequesters[pendingFocusIndex]?.requestFocus() }
+            pendingFocusIndex = -1
+        }
+    }
+
+    fun addAndFocus(block: Block) {
+        vm.addBlock(block)
+        pendingFocusIndex = vm.state.value.blocks.size - 1
+    }
+
+    fun shareNote() {
+        val current = state
+        val md = NoteExporter.noteToMarkdown(
+            NoteWithTags(
+                note = NoteEntity(
+                    id = noteId,
+                    title = current.title,
+                    blocksJson = encodeBlocks(current.blocks),
+                    folderId = current.folderId,
+                    createdAt = current.createdAt,
+                    updatedAt = current.updatedAt
+                ),
+                tags = allTags.filter { it.id in current.tagIds }
+            ),
+            NoteExporter.folderName(folders, current.folderId)
+        )
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, current.title.ifBlank { "Field note" })
+            putExtra(Intent.EXTRA_TEXT, md)
+        }
+        context.startActivity(Intent.createChooser(intent, "Share note"))
+    }
+
+    Surface(Modifier.fillMaxSize(), color = WarmPaper) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .imePadding()
+        ) {
+            EditorTopBar(
+                editedLabel = "edited ${TimeFormat.relative(state.updatedAt)}",
+                onBack = saveAndClose,
+                onShare = { if (!state.loading && !state.missing) shareNote() },
+                onMore = { showMore = true }
+            )
+
+            when {
+                state.loading -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Ink)
+                    }
+                }
+                state.missing || state.kind == NoteEntity.KIND_SKETCH -> {
+                    SketchPlaceholder(onBack = saveAndClose)
+                }
+                else -> {
+                    Column(
+                        Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        SectionLabel(
+                            text = "${NoteExporter.folderName(folders, state.folderId)} · edited ${TimeFormat.relative(state.updatedAt)}",
+                            modifier = Modifier.padding(top = 6.dp)
+                        )
+                        BasicTextField(
+                            value = state.title,
+                            onValueChange = vm::setTitle,
+                            textStyle = FT.editorTitle.copy(color = Ink),
+                            cursorBrush = SolidColor(Accent),
+                            modifier = Modifier.fillMaxWidth(),
+                            decorationBox = { inner ->
+                                Box {
+                                    if (state.title.isEmpty()) {
+                                        Text("Title", style = FT.editorTitle, color = DotGray)
+                                    }
+                                    inner()
+                                }
+                            }
+                        )
+                        MetaPill(
+                            text = "${TimeFormat.smartDate(state.createdAt)} · ${state.blocks.wordCount() + wordCount(state.title)} words"
+                        )
+                        state.blocks.forEachIndexed { index, block ->
+                            BlockEditor(
+                                index = index,
+                                block = block,
+                                playback = playback,
+                                focusRequester = focusRequesters[index] ?: FocusRequester().also {
+                                    focusRequesters[index] = it
+                                },
+                                onFocused = { vm.setFocusedBlock(index) },
+                                onUpdate = { vm.updateBlock(index, it) },
+                                onRemove = { vm.removeBlock(index) },
+                                onChecklistText = { itemIndex, text ->
+                                    vm.updateChecklistItem(index, itemIndex, text = text)
+                                },
+                                onChecklistToggle = { itemIndex ->
+                                    val checklist = block as? Block.Checklist ?: return@BlockEditor
+                                    val item = checklist.items.getOrNull(itemIndex) ?: return@BlockEditor
+                                    vm.updateChecklistItem(index, itemIndex, done = !item.done)
+                                },
+                                onChecklistAdd = { vm.addChecklistItem(index) },
+                                onChecklistRemove = { itemIndex -> vm.removeChecklistItem(index, itemIndex) },
+                                onTogglePlay = { audioId, path -> container.audioPlayer.toggle(audioId, path) }
+                            )
+                        }
+                        TagsCard(
+                            assignedIds = state.tagIds,
+                            allTags = allTags,
+                            onToggleTag = { id ->
+                                vm.setTags(
+                                    if (id in state.tagIds) state.tagIds - id else state.tagIds + id
+                                )
+                            }
+                        )
+                        Spacer(Modifier.height(90.dp))
+                    }
+
+                    EditorToolbar(
+                        emphasized = (state.blocks.getOrNull(
+                            if (state.focusedBlock in state.blocks.indices) state.focusedBlock
+                            else state.blocks.lastIndex
+                        ) as? Block.Paragraph)?.emphasized == true,
+                        onBold = { vm.toggleEmphasis() },
+                        onChecklist = { vm.turnIntoChecklist() },
+                        onImage = {
+                            pickImage.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                        onAddBlock = { showAddBlock = true },
+                        onMic = {
+                            if (
+                                ContextCompat.checkSelfPermission(
+                                    context,
+                                    android.Manifest.permission.RECORD_AUDIO
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                requestMicAndRecord()
+                            } else {
+                                micPermission.launch(android.Manifest.permission.RECORD_AUDIO)
+                            }
+                        },
+                        onMore = { showMore = true }
+                    )
+                }
+            }
+        }
+    }
+
+    if (showAddBlock) {
+        AddBlockSheet(
+            onDismiss = { showAddBlock = false },
+            onAdd = { block ->
+                showAddBlock = false
+                addAndFocus(block)
+            },
+            onPickImage = {
+                showAddBlock = false
+                pickImage.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                )
+            },
+            onRecord = {
+                showAddBlock = false
+                requestMicAndRecord()
+            }
+        )
+    }
+
+    if (showMore) {
+        MoreSheet(
+            state = state,
+            folders = folders,
+            allTags = allTags,
+            onDismiss = { showMore = false },
+            onPin = { vm.setPinned(!state.pinned) },
+            onColor = { vm.setColor(it) },
+            onFolder = { vm.setFolder(it) },
+            onToggleTag = { id ->
+                vm.setTags(if (id in state.tagIds) state.tagIds - id else state.tagIds + id)
+            },
+            onDelete = {
+                showMore = false
+                vm.deleteNote { navController.popBackStack() }
+            }
+        )
+    }
+
+    if (showRecord) {
+        RecordSheet(
+            recorderState = recState,
+            onDismiss = {
+                container.audioRecorder.cancel()
+                showRecord = false
+            },
+            onStart = {
+                scope.launch {
+                    container.audioRecorder.start(
+                        scope = scope,
+                        dir = container.recordingsDir,
+                        bitRate = if (settings.audioQuality == "high") 256_000 else 128_000
+                    )
+                }
+            },
+            onSave = {
+                val result = container.audioRecorder.stop()
+                showRecord = false
+                if (result != null) {
+                    vm.addBlock(
+                        Block.Audio(
+                            path = result.path,
+                            durationMs = result.durationMs,
+                            amplitudes = result.amplitudes
+                        )
+                    )
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun EditorTopBar(
+    editedLabel: String,
+    onBack: () -> Unit,
+    onShare: () -> Unit,
+    onMore: () -> Unit
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        CircleTool(Icons.AutoMirrored.Outlined.ArrowBack, "Back", onBack)
+        Column(
+            Modifier
+                .weight(1f)
+                .padding(horizontal = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text("Field Notes", style = FT.cardTitle, color = Ink, maxLines = 1)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                ColoredDot(Accent, size = 5.dp)
+                Text(editedLabel, style = FT.monoTiny, color = Muted, maxLines = 1)
+            }
+        }
+        CircleTool(Icons.Outlined.Share, "Share", onShare)
+        Spacer(Modifier.size(8.dp))
+        CircleTool(Icons.Outlined.MoreHoriz, "More", onMore)
+    }
+}
+
+@Composable
+private fun CircleTool(icon: ImageVector, label: String, onClick: () -> Unit) {
+    Surface(
+        shape = CircleShape,
+        color = CardWhite,
+        border = BorderStroke(1.dp, Line),
+        modifier = Modifier.size(42.dp)
+    ) {
+        Box(
+            Modifier
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = label, tint = Ink, modifier = Modifier.size(18.dp))
+        }
+    }
+}
+
+@Composable
+private fun SketchPlaceholder(onBack: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Surface(shape = RoundedCornerShape(24.dp), color = Butter) {
+            Box(Modifier.padding(22.dp)) {
+                Icon(
+                    imageVector = Icons.Outlined.Edit,
+                    contentDescription = null,
+                    tint = Ink,
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+        Text("Sketching is coming soon", style = FT.sectionTitle, color = Ink)
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "This note is a sketch. Finger drawing arrives in a later update.",
+            style = FT.bodySmall,
+            color = Muted
+        )
+        Spacer(Modifier.height(20.dp))
+        Text("Go back", style = FT.button, color = Accent, modifier = Modifier.clickable(onClick = onBack))
+    }
+}
+
+@Composable
+private fun BlockEditor(
+    index: Int,
+    block: Block,
+    playback: AudioPlayer.State,
+    focusRequester: FocusRequester,
+    onFocused: () -> Unit,
+    onUpdate: (Block) -> Unit,
+    onRemove: () -> Unit,
+    onChecklistText: (Int, String) -> Unit,
+    onChecklistToggle: (Int) -> Unit,
+    onChecklistAdd: () -> Unit,
+    onChecklistRemove: (Int) -> Unit,
+    onTogglePlay: (String, String) -> Unit
+) {
+    when (block) {
+        is Block.Heading -> TextField(
+            text = block.text,
+            hint = "Heading",
+            style = FT.heading,
+            focusRequester = focusRequester,
+            onFocused = onFocused,
+            onText = { onUpdate(block.withText(it)) }
+        )
+        is Block.Paragraph -> TextField(
+            text = block.text,
+            hint = "Start writing…",
+            style = if (block.emphasized) FT.body.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            else FT.body,
+            focusRequester = focusRequester,
+            onFocused = onFocused,
+            onText = { onUpdate(block.withText(it)) }
+        )
+        is Block.Highlight -> Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = Butter,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Icon(
+                            imageVector = Icons.Outlined.MenuBook,
+                            contentDescription = null,
+                            tint = Ink,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text("HIGHLIGHT", style = FT.monoBadge, color = Ink)
+                    }
+                    Icon(
+                        imageVector = Icons.Outlined.Close,
+                        contentDescription = "Remove",
+                        tint = Ink.copy(alpha = 0.4f),
+                        modifier = Modifier
+                            .size(14.dp)
+                            .clickable(onClick = onRemove)
+                    )
+                }
+                TextField(
+                    text = block.text,
+                    hint = "Worth remembering…",
+                    style = FT.bodySmall.copy(
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+                    ),
+                    focusRequester = focusRequester,
+                    onFocused = onFocused,
+                    onText = { onUpdate(block.withText(it)) }
+                )
+            }
+        }
+        is Block.Checklist -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            block.items.forEachIndexed { itemIndex, item ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    MiniCheckbox(done = item.done) { onChecklistToggle(itemIndex) }
+                    BasicTextField(
+                        value = item.text,
+                        onValueChange = { onChecklistText(itemIndex, it) },
+                        textStyle = FT.bodySmall.copy(
+                            color = if (item.done) Muted else Ink
+                        ),
+                        cursorBrush = SolidColor(Accent),
+                        modifier = Modifier
+                            .weight(1f)
+                            .focusRequester(focusRequester)
+                            .onFocusChanged { if (it.isFocused) onFocused() },
+                        decorationBox = { inner ->
+                            Box {
+                                if (item.text.isEmpty()) {
+                                    Text("List item", style = FT.bodySmall, color = DotGray)
+                                }
+                                inner()
+                            }
+                        }
+                    )
+                    Icon(
+                        imageVector = Icons.Outlined.Close,
+                        contentDescription = "Remove item",
+                        tint = DotGray,
+                        modifier = Modifier
+                            .size(13.dp)
+                            .clickable { onChecklistRemove(itemIndex) }
+                    )
+                }
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.clickable(onClick = onChecklistAdd)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = CardWhite,
+                    border = BorderStroke(1.dp, Line)
+                ) {
+                    Text(
+                        "+",
+                        style = FT.bodySmall,
+                        color = Muted,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                    )
+                }
+                Text("Add item", style = FT.bodySmall, color = Muted)
+            }
+        }
+        is Block.Image -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = CardWhite,
+                border = BorderStroke(1.dp, Line),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column {
+                    Box {
+                        if (block.path.isNotBlank() && File(block.path).exists()) {
+                            AsyncImage(
+                                model = File(block.path),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(210.dp)
+                            )
+                        } else {
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(120.dp)
+                                    .background(WarmPaper),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Image,
+                                    contentDescription = null,
+                                    tint = DotGray,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+                        Icon(
+                            imageVector = Icons.Outlined.Close,
+                            contentDescription = "Remove",
+                            tint = CardWhite,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(10.dp)
+                                .size(16.dp)
+                                .clickable(onClick = onRemove)
+                        )
+                    }
+                    BasicTextField(
+                        value = block.caption,
+                        onValueChange = { onUpdate(block.copy(caption = it)) },
+                        textStyle = FT.monoTiny.copy(color = Muted),
+                        cursorBrush = SolidColor(Accent),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester)
+                            .onFocusChanged { if (it.isFocused) onFocused() }
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        decorationBox = { inner ->
+                            Box {
+                                if (block.caption.isEmpty()) {
+                                    Text(
+                                        "Add a caption…",
+                                        style = FT.monoTiny,
+                                        color = DotGray,
+                                        modifier = Modifier.padding(horizontal = 0.dp, vertical = 10.dp)
+                                    )
+                                }
+                                inner()
+                            }
+                        }
+                    )
+                }
+            }
+        }
+        is Block.Audio -> {
+            val audioId = "block-$index"
+            val active = playback.activeId == audioId
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = CardWhite,
+                border = BorderStroke(1.dp, Line),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Box(
+                        Modifier
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Ink)
+                            .clickable { onTogglePlay(audioId, block.path) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (active && playback.isPlaying) {
+                                Icons.Outlined.Pause
+                            } else {
+                                Icons.Outlined.PlayArrow
+                            },
+                            contentDescription = if (active && playback.isPlaying) "Pause" else "Play",
+                            tint = CardWhite,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Column(
+                        Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = block.title,
+                            style = FT.cardTitleSmall.copy(fontSize = 12.sp),
+                            color = Ink,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Waveform(
+                            amplitudes = block.amplitudes,
+                            progress = if (active) playback.progress else 0f,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    Text(
+                        text = TimeFormat.duration(block.durationMs),
+                        style = FT.monoTiny,
+                        color = Muted
+                    )
+                    Icon(
+                        imageVector = Icons.Outlined.Close,
+                        contentDescription = "Remove",
+                        tint = DotGray,
+                        modifier = Modifier
+                            .size(14.dp)
+                            .clickable(onClick = onRemove)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TextField(
+    text: String,
+    hint: String,
+    style: TextStyle,
+    focusRequester: FocusRequester,
+    onFocused: () -> Unit,
+    onText: (String) -> Unit
+) {
+    BasicTextField(
+        value = text,
+        onValueChange = onText,
+        textStyle = style.copy(color = Ink),
+        cursorBrush = SolidColor(Accent),
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusRequester(focusRequester)
+            .onFocusChanged { if (it.isFocused) onFocused() },
+        decorationBox = { inner ->
+            Box {
+                if (text.isEmpty()) {
+                    Text(hint, style = style, color = DotGray)
+                }
+                inner()
+            }
+        }
+    )
+}
+
+@Composable
+private fun TagsCard(
+    assignedIds: Set<Long>,
+    allTags: List<com.fieldnotes.app.data.db.TagEntity>,
+    onToggleTag: (Long) -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = CardWhite,
+        border = BorderStroke(1.dp, Line),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text("Tags", style = FT.sectionTitle, color = Ink)
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                verticalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                allTags.forEach { tag ->
+                    TagChipView(
+                        name = tag.name,
+                        colorIndex = tag.colorIndex,
+                        selected = tag.id in assignedIds,
+                        onClick = { onToggleTag(tag.id) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EditorToolbar(
+    emphasized: Boolean,
+    onBold: () -> Unit,
+    onChecklist: () -> Unit,
+    onImage: () -> Unit,
+    onAddBlock: () -> Unit,
+    onMic: () -> Unit,
+    onMore: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = CardWhite,
+        border = BorderStroke(1.dp, Line),
+        shadowElevation = 8.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 12.dp)
+    ) {
+        Row(
+            Modifier
+                .navigationBarsPadding()
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ToolIcon(Icons.Outlined.FormatBold, "Bold", if (emphasized) Accent else InkSoft, onBold)
+            ToolIcon(Icons.AutoMirrored.Outlined.FormatListBulleted, "Checklist", InkSoft, onChecklist)
+            ToolIcon(Icons.Outlined.Image, "Image", InkSoft, onImage)
+            Spacer(Modifier.weight(1f))
+            Box(
+                Modifier
+                    .size(46.dp)
+                    .clip(CircleShape)
+                    .background(Accent)
+                    .clickable(onClick = onAddBlock),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Edit,
+                    contentDescription = "Add block",
+                    tint = CardWhite,
+                    modifier = Modifier.size(19.dp)
+                )
+            }
+            Spacer(Modifier.weight(1f))
+            ToolIcon(Icons.Outlined.Mic, "Record", InkSoft, onMic)
+            ToolIcon(Icons.Outlined.MoreHoriz, "More", InkSoft, onMore)
+        }
+    }
+}
+
+@Composable
+private fun ToolIcon(icon: ImageVector, label: String, tint: Color, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(icon, contentDescription = label, tint = tint, modifier = Modifier.size(19.dp))
+    }
+}
+
+@Composable
+private fun AddBlockSheet(
+    onDismiss: () -> Unit,
+    onAdd: (Block) -> Unit,
+    onPickImage: () -> Unit,
+    onRecord: () -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 30.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text("Add block", style = FT.sectionTitle, color = Ink)
+            Spacer(Modifier.height(6.dp))
+            BlockAction(Icons.Outlined.TextFields, "Paragraph") { onAdd(Block.Paragraph()) }
+            BlockAction(Icons.Outlined.MenuBook, "Heading") { onAdd(Block.Heading()) }
+            BlockAction(
+                Icons.AutoMirrored.Outlined.FormatListBulleted,
+                "Checklist"
+            ) { onAdd(Block.Checklist(emptyList())) }
+            BlockAction(Icons.Outlined.MenuBook, "Highlight") { onAdd(Block.Highlight()) }
+            BlockAction(Icons.Outlined.Image, "Image") { onPickImage() }
+            BlockAction(Icons.Outlined.Mic, "Voice memo") { onRecord() }
+        }
+    }
+}
+
+@Composable
+private fun BlockAction(icon: ImageVector, label: String, onClick: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 13.dp, horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Icon(icon, contentDescription = null, tint = Ink, modifier = Modifier.size(19.dp))
+        Text(label, style = FT.button, color = Ink)
+    }
+}
+
+@Composable
+private fun MoreSheet(
+    state: EditorViewModel.EditorState,
+    folders: List<com.fieldnotes.app.data.db.FolderEntity>,
+    allTags: List<com.fieldnotes.app.data.db.TagEntity>,
+    onDismiss: () -> Unit,
+    onPin: () -> Unit,
+    onColor: (Int) -> Unit,
+    onFolder: (Long) -> Unit,
+    onToggleTag: (Long) -> Unit,
+    onDelete: () -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 30.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Note options", style = FT.sectionTitle, color = Ink)
+                Icon(
+                    imageVector = Icons.Outlined.PushPin,
+                    contentDescription = "Pin",
+                    tint = if (state.pinned) Accent else DotGray,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clickable(onClick = onPin)
+                )
+            }
+            SectionLabel("Card color")
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                listOf(CardWhite, Peach, Butter, com.fieldnotes.app.ui.theme.Sage, com.fieldnotes.app.ui.theme.Lilac, com.fieldnotes.app.ui.theme.Sky)
+                    .forEachIndexed { index, color ->
+                        val selected = state.colorIndex == index
+                        Box(
+                            Modifier
+                                .size(30.dp)
+                                .clip(CircleShape)
+                                .background(color)
+                                .border(
+                                    width = if (selected) 2.dp else 1.dp,
+                                    color = if (selected) Accent else Line,
+                                    shape = CircleShape
+                                )
+                                .clickable { onColor(index) }
+                        )
+                    }
+            }
+            SectionLabel("Folder")
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                verticalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                folders.forEach { folder ->
+                    TagChipView(
+                        name = folder.name,
+                        colorIndex = if (state.folderId == folder.id) 6 else folder.colorIndex,
+                        selected = state.folderId == folder.id,
+                        onClick = { onFolder(folder.id) }
+                    )
+                }
+            }
+            SectionLabel("Tags")
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                verticalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                allTags.forEach { tag ->
+                    TagChipView(
+                        name = tag.name,
+                        colorIndex = tag.colorIndex,
+                        selected = tag.id in state.tagIds,
+                        onClick = { onToggleTag(tag.id) }
+                    )
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(onClick = onDelete)
+                    .padding(vertical = 12.dp, horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(Icons.Outlined.Delete, contentDescription = null, tint = Accent, modifier = Modifier.size(19.dp))
+                Text("Delete note", style = FT.button, color = Accent)
+            }
+        }
+    }
+}
