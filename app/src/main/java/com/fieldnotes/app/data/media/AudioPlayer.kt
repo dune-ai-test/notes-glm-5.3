@@ -49,7 +49,7 @@ class AudioPlayer(private val context: Context) {
     private fun play(id: String, path: String) {
         stop()
         if (path.isBlank() || !File(path).exists()) {
-            Toast.makeText(context, "Demo recording — record your own to play it", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Recording file not found", Toast.LENGTH_SHORT).show()
             return
         }
         val p = MediaPlayer()
