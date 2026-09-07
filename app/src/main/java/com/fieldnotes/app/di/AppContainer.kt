@@ -9,19 +9,12 @@ import com.fieldnotes.app.data.media.AudioPlayer
 import com.fieldnotes.app.data.media.AudioRecorder
 import com.fieldnotes.app.data.media.ImageStore
 import com.fieldnotes.app.data.repo.NoteRepository
-import com.fieldnotes.app.data.repo.Seeder
 import com.fieldnotes.app.data.repo.SettingsRepository
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import java.io.File
 
 class AppContainer(private val appContext: Context) {
 
     val context: Context get() = appContext
-
-    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     val database: AppDatabase = Room.databaseBuilder(
         context,
@@ -41,10 +34,6 @@ class AppContainer(private val appContext: Context) {
         BiometricManager.Authenticators.BIOMETRIC_WEAK or
             BiometricManager.Authenticators.DEVICE_CREDENTIAL
     ) == BiometricManager.BIOMETRIC_SUCCESS
-
-    init {
-        appScope.launch { Seeder(database, settingsRepository).seedIfEmpty() }
-    }
 }
 
 val LocalAppContainer = staticCompositionLocalOf<AppContainer> {

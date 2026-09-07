@@ -512,7 +512,7 @@ fun SettingsScreen() {
             title = { Text("Erase everything?", style = FT.sectionTitle, color = Ink) },
             text = {
                 Text(
-                    "All notes, memos and settings will be wiped and the demo library restored. This can't be undone.",
+                    "All notes, memos and settings will be wiped permanently. This can't be undone.",
                     style = FT.body,
                     color = InkSoft
                 )
@@ -520,7 +520,7 @@ fun SettingsScreen() {
             confirmButton = {
                 TextButton(onClick = {
                     showEraseDialog = false
-                    vm.wipeAndReseed { toast("Erased — demo library restored") }
+                    vm.wipeAll { toast("Everything erased") }
                 }) {
                     Text("Erase", color = Accent)
                 }

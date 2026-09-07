@@ -69,6 +69,7 @@ import com.fieldnotes.app.data.db.TagEntity
 import com.fieldnotes.app.data.media.AudioPlayer
 import com.fieldnotes.app.data.model.decodeBlocks
 import com.fieldnotes.app.data.repo.NoteRepository
+import com.fieldnotes.app.data.repo.AppSettings
 import com.fieldnotes.app.data.repo.NoteSort
 import com.fieldnotes.app.di.LocalAppContainer
 import com.fieldnotes.app.navigation.navigateTopLevel
@@ -107,6 +108,8 @@ fun HomeScreen(navController: NavHostController) {
     val sort by vm.sort.collectAsStateWithLifecycle()
     val tagFilter by vm.tagFilter.collectAsStateWithLifecycle()
     val playback by container.audioPlayer.state.collectAsStateWithLifecycle()
+    val settings by container.settingsRepository.settings
+        .collectAsStateWithLifecycle(initialValue = AppSettings())
 
     var gridMode by rememberSaveable { mutableStateOf(true) }
     var showFilters by remember { mutableStateOf(false) }
@@ -140,7 +143,10 @@ fun HomeScreen(navController: NavHostController) {
                         .padding(top = 18.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    HeaderRow(noteCount = noteCount) { navController.navigateTopLevel("settings") }
+                    HeaderRow(
+                        noteCount = noteCount,
+                        initial = settings.userName.take(1).uppercase().ifBlank { "F" }
+                    ) { navController.navigateTopLevel("settings") }
                     SearchBarRow(
                         onSearch = { navController.navigate("search") },
                         onFilters = { showFilters = true }
@@ -262,7 +268,7 @@ fun HomeScreen(navController: NavHostController) {
 }
 
 @Composable
-private fun HeaderRow(noteCount: Int, onAvatar: () -> Unit) {
+private fun HeaderRow(noteCount: Int, initial: String, onAvatar: () -> Unit) {
     val hour = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
     val today = remember { TimeFormat.headerDate() }
     Row(
@@ -294,7 +300,7 @@ private fun HeaderRow(noteCount: Int, onAvatar: () -> Unit) {
                         .clickable(onClick = onAvatar),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("M", style = FT.cardTitle.copy(fontSize = 17.sp), color = Ink)
+                    Text(initial, style = FT.cardTitle.copy(fontSize = 17.sp), color = Ink)
                 }
             }
             Box(

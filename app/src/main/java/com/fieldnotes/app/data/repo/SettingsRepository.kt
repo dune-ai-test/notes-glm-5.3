@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.map
 private val Context.settingsDataStore by preferencesDataStore(name = "fieldnotes_settings")
 
 data class AppSettings(
-    val userName: String = "Maya",
+    val userName: String = "You",
     val haptics: Boolean = true,
     val reduceMotion: Boolean = false,
     val autoTranscribe: Boolean = true,
@@ -47,7 +47,7 @@ class SettingsRepository(private val context: Context) {
 
     val settings: Flow<AppSettings> = context.settingsDataStore.data.map { p ->
         AppSettings(
-            userName = p[Keys.userName] ?: "Maya",
+            userName = p[Keys.userName] ?: "You",
             haptics = p[Keys.haptics] ?: true,
             reduceMotion = p[Keys.reduceMotion] ?: false,
             autoTranscribe = p[Keys.autoTranscribe] ?: true,
@@ -84,14 +84,6 @@ class SettingsRepository(private val context: Context) {
             result = next
         }
         return result
-    }
-
-    /** Used by the demo seed so the streak card shows content on first launch. */
-    suspend fun seedStreak(streak: Int, todayEpochDay: Long) {
-        context.settingsDataStore.edit { p ->
-            p[Keys.streakCount] = streak
-            p[Keys.lastActiveEpochDay] = todayEpochDay
-        }
     }
 
     suspend fun clearAll() {

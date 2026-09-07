@@ -8,7 +8,6 @@ import com.fieldnotes.app.data.db.MemoEntity
 import com.fieldnotes.app.data.export.NoteExporter
 import com.fieldnotes.app.data.repo.AppSettings
 import com.fieldnotes.app.data.repo.NoteRepository
-import com.fieldnotes.app.data.repo.Seeder
 import com.fieldnotes.app.data.repo.SettingsRepository
 import com.fieldnotes.app.di.AppContainer
 import kotlinx.coroutines.Dispatchers
@@ -78,12 +77,11 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
-    /** Erases everything (notes, memos, settings) and re-seeds the demo content. */
-    fun wipeAndReseed(onDone: () -> Unit) {
+    /** Erases everything: notes, memos, media and settings. */
+    fun wipeAll(onDone: () -> Unit) {
         viewModelScope.launch {
             noteRepo.wipeAll()
             settingsRepo.clearAll()
-            Seeder(container.database, settingsRepo).seedIfEmpty()
             onDone()
         }
     }
