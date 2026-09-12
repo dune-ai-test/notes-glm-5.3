@@ -25,6 +25,17 @@ Library, Settings).
 
 Pushes to `main` rebuild automatically via `.github/workflows/android.yml`.
 
+### Pre-releases
+
+Two ways to publish the debug APK as a GitHub **pre-release** (under Releases):
+
+- **Manual:** Actions → **Android CI** → **Run workflow** → tick
+  *"Publish the debug APK as a GitHub pre-release"* → Run.
+- **Tag:** push a version tag and it publishes automatically:
+  ```bash
+  git tag v1.1 && git push origin v1.1
+  ```
+
 ## Your data
 
 All data lives on-device. **Android Settings → Apps → Field Notes → Clear data**
