@@ -58,6 +58,7 @@ class AppContainer(private val appContext: Context) {
             noteRepository.seedDefaultsIfEmpty()
             settingsRepository.settings.collect {
                 soundsEnabled = it.sounds
+                scheduleAutoBackup(context, it.autoBackup)
             }
         }
     }
@@ -69,6 +70,31 @@ class AppContainer(private val appContext: Context) {
             val tone = ToneGenerator(AudioManager.STREAM_MUSIC, 80)
             tone.startTone(ToneGenerator.TONE_PROP_ACK, 150)
             Handler(Looper.getMainLooper()).postDelayed({ tone.release() }, 400)
+        }
+    }
+
+    companion object {
+        private const val AUTO_BACKUP_WORK = "auto_backup"
+
+        /** Weekly background ZIP backup, battery-not-low; keeps the last 4 files. */
+        private fun scheduleAutoBackup(context: Context, enabled: Boolean) {
+            val wm = androidx.work.WorkManager.getInstance(context)
+            runCatching {
+                if (enabled) {
+                    val request = androidx.work.PeriodicWorkRequestBuilder<com.fieldnotes.app.data.backup.AutoBackupWorker>(
+                        7, java.util.concurrent.TimeUnit.DAYS
+                    )
+                        .setConstraints(
+                            androidx.work.Constraints.Builder()
+                                .setRequiresBatteryNotLow(true)
+                                .build()
+                        )
+                        .build()
+                    wm.enqueueUniquePeriodicWork(AUTO_BACKUP_WORK, androidx.work.ExistingPeriodicWorkPolicy.KEEP, request)
+                } else {
+                    wm.cancelUniqueWork(AUTO_BACKUP_WORK)
+                }
+            }
         }
     }
 }

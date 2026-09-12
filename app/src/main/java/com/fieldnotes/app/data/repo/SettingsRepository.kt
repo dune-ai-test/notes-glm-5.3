@@ -22,6 +22,7 @@ data class AppSettings(
     val sounds: Boolean = true,
     val biometricLock: Boolean = false,
     val autoLockMinutes: Int = 1,
+    val autoBackup: Boolean = true,
     val defaultCapture: String = "voice",
     val audioQuality: String = "high",
     val appearance: String = "light",
@@ -40,6 +41,7 @@ class SettingsRepository(private val context: Context) {
         val sounds = booleanPreferencesKey("sounds")
         val biometricLock = booleanPreferencesKey("biometric_lock")
         val autoLockMinutes = intPreferencesKey("auto_lock_minutes")
+        val autoBackup = booleanPreferencesKey("auto_backup")
         val defaultCapture = stringPreferencesKey("default_capture")
         val audioQuality = stringPreferencesKey("audio_quality")
         val appearance = stringPreferencesKey("appearance")
@@ -57,6 +59,7 @@ class SettingsRepository(private val context: Context) {
             sounds = p[Keys.sounds] ?: true,
             biometricLock = p[Keys.biometricLock] ?: false,
             autoLockMinutes = p[Keys.autoLockMinutes] ?: 1,
+            autoBackup = p[Keys.autoBackup] ?: true,
             defaultCapture = p[Keys.defaultCapture] ?: "voice",
             audioQuality = p[Keys.audioQuality] ?: "high",
             appearance = p[Keys.appearance] ?: "light",
@@ -73,6 +76,7 @@ class SettingsRepository(private val context: Context) {
     suspend fun setSounds(value: Boolean) = edit { it[Keys.sounds] = value }
     suspend fun setBiometricLock(value: Boolean) = edit { it[Keys.biometricLock] = value }
     suspend fun setAutoLockMinutes(value: Int) = edit { it[Keys.autoLockMinutes] = value }
+    suspend fun setAutoBackup(value: Boolean) = edit { it[Keys.autoBackup] = value }
     suspend fun setDefaultCapture(value: String) = edit { it[Keys.defaultCapture] = value }
     suspend fun setAudioQuality(value: String) = edit { it[Keys.audioQuality] = value }
     suspend fun setAppearance(value: String) = edit { it[Keys.appearance] = value }

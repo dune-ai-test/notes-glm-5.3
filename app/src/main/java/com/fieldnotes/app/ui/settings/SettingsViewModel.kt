@@ -55,6 +55,18 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     fun setAutoLockMinutes(value: Int) {
         viewModelScope.launch { settingsRepo.setAutoLockMinutes(value) }
     }
+
+    fun setAutoBackup(value: Boolean) {
+        viewModelScope.launch { settingsRepo.setAutoBackup(value) }
+    }
+
+    /** Runs the same weekly auto-backup immediately (device-local ZIP, keeps last 4). */
+    fun runAutoBackupNow(onDone: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val file = com.fieldnotes.app.data.backup.AutoBackup.run(container.context, noteRepo)
+            onDone(file != null, file?.name ?: "")
+        }
+    }
     fun setDefaultCapture(value: String) = viewModelScope.launch { settingsRepo.setDefaultCapture(value) }
     fun setAudioQuality(value: String) = viewModelScope.launch { settingsRepo.setAudioQuality(value) }
 

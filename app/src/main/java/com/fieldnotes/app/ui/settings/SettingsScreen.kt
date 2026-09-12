@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.Accessibility
 import androidx.compose.material.icons.outlined.Archive
+import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ChevronRight
@@ -46,6 +47,7 @@ import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material.icons.outlined.UploadFile
 import androidx.compose.material.icons.outlined.Vibration
@@ -110,6 +112,8 @@ fun SettingsScreen() {
     var showHelpDialog by remember { mutableStateOf(false) }
     var showWhatsNewDialog by remember { mutableStateOf(false) }
     var showAutoLockDialog by remember { mutableStateOf(false) }
+    var backupRunning by remember { mutableStateOf(false) }
+    var backupFileName by remember { mutableStateOf("") }
     var syncing by remember { mutableStateOf(false) }
 
     val cacheSize by produceState(initialValue = 0L) {
@@ -361,6 +365,37 @@ fun SettingsScreen() {
                 onClick = { showAutoLockDialog = true }
             ) {
                 Chevron()
+            }
+            SettingRow(
+                icon = Icons.Outlined.Backup,
+                iconBg = FN.sage,
+                title = "Scheduled backup",
+                subtitle = "Weekly ZIP • keeps last 4 • device only"
+            ) {
+                Toggle(settings.autoBackup) { vm.setAutoBackup(it) }
+            }
+            SettingRow(
+                icon = Icons.Outlined.Save,
+                iconBg = FN.butter,
+                title = "Back up now",
+                subtitle = if (backupRunning) "Writing backup…" else if (backupFileName.isBlank()) "Write this week's ZIP now" else "Last: $backupFileName"
+            ) {
+                ValueChip(
+                    text = if (backupRunning) "…" else "Run",
+                    onClick = {
+                        if (!backupRunning) {
+                            backupRunning = true
+                            vm.runAutoBackupNow { ok, name ->
+                                backupRunning = false
+                                if (ok) {
+                                    backupFileName = name
+                                    container.playChime()
+                                }
+                                toast(if (ok) "Backup saved to the device" else "Backup failed")
+                            }
+                        }
+                    }
+                )
             }
             SettingRow(
                 icon = Icons.Outlined.DeleteSweep,
