@@ -11,7 +11,9 @@ import com.fieldnotes.app.data.db.TagIdCount
 import com.fieldnotes.app.data.model.Block
 import com.fieldnotes.app.data.model.encodeBlocks
 import com.fieldnotes.app.data.model.encodeToStringList
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 
 class NoteRepository(private val db: AppDatabase) {
 
@@ -101,6 +103,13 @@ class NoteRepository(private val db: AppDatabase) {
         )
 
     suspend fun deleteMemo(memo: MemoEntity) = db.memoDao().delete(memo)
+
+    /** Persists a manual drag order: ids in display order get sortIndex 0..n. */
+    suspend fun saveCustomOrder(order: List<Long>) = withContext(Dispatchers.IO) {
+        androidx.room.withTransaction(db) {
+            order.forEachIndexed { index, id -> db.noteDao().updateSortIndex(id, index) }
+        }
+    }
 
     /** Erases everything; used by "Erase all data" and by clearing app data. */
     suspend fun wipeAll() {

@@ -28,7 +28,10 @@ class AppContainer(private val appContext: Context) {
         context,
         AppDatabase::class.java,
         "fieldnotes.db"
-    ).addMigrations(AppDatabase.MIGRATION_1_2).fallbackToDestructiveMigration().build()
+    )
+        .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
+        .fallbackToDestructiveMigration()
+        .build()
 
     val noteRepository = NoteRepository(database)
     val settingsRepository = SettingsRepository(context)

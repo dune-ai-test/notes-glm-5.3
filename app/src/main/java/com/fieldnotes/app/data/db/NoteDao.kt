@@ -50,6 +50,9 @@ interface NoteDao {
 
     @Query("DELETE FROM notes")
     suspend fun clearAll()
+
+    @Query("UPDATE notes SET sortIndex = :index WHERE id = :id")
+    suspend fun updateSortIndex(id: Long, index: Int)
 }
 
 @Dao

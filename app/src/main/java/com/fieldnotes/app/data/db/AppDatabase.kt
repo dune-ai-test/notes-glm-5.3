@@ -14,7 +14,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         MemoEntity::class,
         ReminderEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -34,6 +34,12 @@ abstract class AppDatabase : RoomDatabase() {
                         "`dueAt` INTEGER NOT NULL, " +
                         "`createdAt` INTEGER NOT NULL)"
                 )
+            }
+        }
+
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `notes` ADD COLUMN `sortIndex` INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

@@ -6,6 +6,7 @@
 package com.fieldnotes.app.ui.home
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,6 +33,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.DragHandle
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Search
@@ -45,6 +47,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -52,11 +55,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -109,10 +118,43 @@ fun HomeScreen(
     var gridMode by rememberSaveable { mutableStateOf(true) }
     var showFilters by remember { mutableStateOf(false) }
     var actionNote by remember { mutableStateOf<NoteWithTags?>(null) }
+    var reorderMode by rememberSaveable { mutableStateOf(false) }
+
+    // Drag-to-reorder state (reorder mode only).
+    val cardBounds = remember { mutableStateMapOf<Long, Rect>() }
+    var dragId by remember { mutableStateOf<Long?>(null) }
+    var dragOffset by remember { mutableStateOf(Offset.Zero) }
 
     val haptic = LocalHapticFeedback.current
     val hapticsEnabled = LocalHapticsEnabled.current
     val foldersById = remember(folders) { folders.associateBy { it.id } }
+
+    fun onDragGrab(id: Long) {
+        dragId = id
+        dragOffset = Offset.Zero
+        vm.beginReorder()
+        if (hapticsEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+    }
+
+    fun onDragMove(id: Long, amount: Offset) {
+        dragOffset += amount
+        val from = cardBounds[id] ?: return
+        val center = from.center + dragOffset
+        val target = cardBounds.entries
+            .firstOrNull { (key, rect) -> key != id && rect.contains(center) }
+            ?.key ?: return
+        val onto = cardBounds[target] ?: return
+        vm.moveCard(id, target)
+        // Compensate so the dragged card stays under the finger after the
+        // list re-flows (it inherits the target's old slot).
+        dragOffset += from.center - onto.center
+    }
+
+    fun onDragEnd() {
+        dragId = null
+        dragOffset = Offset.Zero
+        vm.persistReorder()
+    }
 
     val openNote: (Long) -> Unit = { id -> navController.navigate("editor/$id") }
     val dotColorFor: @Composable (NoteWithTags) -> Color = { entry ->
@@ -159,6 +201,51 @@ fun HomeScreen(
                             onClick = { vm.setPinnedOnly(true) },
                             icon = Icons.Outlined.PushPin
                         )
+                        PillChip(
+                            label = "Reorder",
+                            selected = reorderMode,
+                            onClick = {
+                                if (!reorderMode) vm.beginReorder() else vm.persistReorder()
+                                reorderMode = !reorderMode
+                            },
+                            icon = Icons.Outlined.DragHandle
+                        )
+                    }
+                    if (reorderMode) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = FN.surfaceAlt,
+                            border = BorderStroke(1.dp, FN.line),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    Icons.Outlined.DragHandle,
+                                    contentDescription = null,
+                                    tint = FN.textSoft,
+                                    modifier = Modifier.size(15.dp)
+                                )
+                                Text(
+                                    "Drag cards to rearrange.",
+                                    style = FT.bodySmall,
+                                    color = FN.textSoft,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    "Done",
+                                    style = FT.button,
+                                    color = FN.accent,
+                                    modifier = Modifier.clickable {
+                                        vm.persistReorder()
+                                        reorderMode = false
+                                    }
+                                )
+                            }
+                        }
                     }
                     Row(
                         Modifier.fillMaxWidth(),
@@ -195,23 +282,63 @@ fun HomeScreen(
                     val blocks = decodeBlocks(entry.note.blocksJson)
                     val kind = noteCardKind(entry.note, blocks)
                     val wide = kind == com.fieldnotes.app.ui.components.NoteCardKind.HERO
+                    val isDragging = dragId == entry.note.id
                     val card: @Composable () -> Unit = {
-                        HomeNoteCard(
-                            entry = entry,
-                            dotColor = dotColorFor(entry),
-                            playbackState = playback,
-                            onOpen = { openNote(entry.note.id) },
-                            onLongPress = {
-                                if (hapticsEnabled) {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        Box(
+                            Modifier
+                                .zIndex(if (isDragging) 2f else 0f)
+                                .graphicsLayer {
+                                    if (isDragging) {
+                                        translationX = dragOffset.x
+                                        translationY = dragOffset.y
+                                        scaleX = 1.04f
+                                        scaleY = 1.04f
+                                        shape = RoundedCornerShape(20.dp)
+                                        shadowElevation = 24f
+                                    }
                                 }
-                                actionNote = entry
-                            },
-                            onToggleChecklistItem = { blockIndex, itemIndex ->
-                                vm.toggleChecklistItem(entry, blockIndex, itemIndex)
-                            },
-                            onTogglePlay = { id, path -> container.audioPlayer.toggle(id, path) }
-                        )
+                                .onGloballyPositioned { cardBounds[entry.note.id] = it.boundsInRoot() }
+                                .then(
+                                    if (reorderMode) {
+                                        Modifier.pointerInput(entry.note.id) {
+                                            detectDragGestures(
+                                                onDragStart = { onDragGrab(entry.note.id) },
+                                                onDrag = { change, amount ->
+                                                    change.consume()
+                                                    onDragMove(entry.note.id, amount)
+                                                },
+                                                onDragEnd = { onDragEnd() },
+                                                onDragCancel = { onDragEnd() }
+                                            )
+                                        }
+                                    } else {
+                                        Modifier
+                                    }
+                                )
+                        ) {
+                            HomeNoteCard(
+                                entry = entry,
+                                dotColor = dotColorFor(entry),
+                                playbackState = playback,
+                                onOpen = {
+                                    if (!reorderMode) openNote(entry.note.id)
+                                },
+                                onLongPress = if (reorderMode) {
+                                    null
+                                } else {
+                                    {
+                                        if (hapticsEnabled) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        }
+                                        actionNote = entry
+                                    }
+                                },
+                                onToggleChecklistItem = { blockIndex, itemIndex ->
+                                    vm.toggleChecklistItem(entry, blockIndex, itemIndex)
+                                },
+                                onTogglePlay = { id, path -> container.audioPlayer.toggle(id, path) }
+                            )
+                        }
                     }
                     if (wide) {
                         item(key = "home-${entry.note.id}", span = StaggeredGridItemSpan.FullLine) { card() }
@@ -439,7 +566,8 @@ private fun FilterSheet(
                 listOf(
                     NoteSort.RECENT to "Recent",
                     NoteSort.OLDEST to "Oldest",
-                    NoteSort.TITLE to "A–Z"
+                    NoteSort.TITLE to "A–Z",
+                    NoteSort.CUSTOM to "Custom"
                 ).forEach { (value, label) ->
                     PillChip(label = label, selected = sort == value, onClick = { onSort(value) })
                 }

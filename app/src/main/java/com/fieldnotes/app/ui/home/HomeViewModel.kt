@@ -28,16 +28,52 @@ class HomeViewModel(private val repo: NoteRepository) : ViewModel() {
     val folders: StateFlow<List<FolderEntity>> = repo.folders
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    private val allNotesRaw: StateFlow<List<NoteWithTags>> = repo.allNotes
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Non-null while the user is in / has used manual ordering this session. */
+    private val customOrder = MutableStateFlow<List<Long>?>(null)
+
+    private val notesWithOrder = combine(repo.allNotes, customOrder) { notes, order ->
+        notes to order
+    }
+
     val query = MutableStateFlow("")
     val sort = MutableStateFlow(NoteSort.RECENT)
     val tagFilter = MutableStateFlow<Set<Long>>(emptySet())
     val pinnedOnly = MutableStateFlow(false)
 
     val visibleNotes: StateFlow<List<NoteWithTags>> = combine(
-        repo.allNotes, query, sort, tagFilter, pinnedOnly
-    ) { notes, queryValue, sortValue, tagIds, pinned ->
-        filterNotes(notes, queryValue, sortValue, tagIds, pinned)
+        notesWithOrder, query, sort, tagFilter, pinnedOnly
+    ) { (notes, order), queryValue, sortValue, tagIds, pinned ->
+        filterNotes(notes, queryValue, sortValue, tagIds, pinned, order)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Enters manual ordering, seeding the order from the current list. */
+    fun beginReorder() {
+        if (sort.value != NoteSort.CUSTOM || customOrder.value == null) {
+            sort.value = NoteSort.CUSTOM
+            customOrder.value = allNotesRaw.value.map { it.note.id }
+        }
+    }
+
+    /** Moves [dragId] to the position [ontoId] held in the manual order. */
+    fun moveCard(dragId: Long, ontoId: Long) {
+        val order = customOrder.value ?: return
+        val from = order.indexOf(dragId)
+        val to = order.indexOf(ontoId)
+        if (from == -1 || to == -1 || from == to) return
+        val updated = order.toMutableList()
+        updated.removeAt(from)
+        updated.add(to, dragId)
+        customOrder.value = updated
+    }
+
+    /** Writes the manual order back to the database. */
+    fun persistReorder() {
+        val order = customOrder.value ?: return
+        viewModelScope.launch { repo.saveCustomOrder(order) }
+    }
 
     fun setQuery(value: String) {
         query.value = value
