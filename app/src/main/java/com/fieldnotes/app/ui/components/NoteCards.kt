@@ -363,7 +363,7 @@ private fun ChecklistCard(
     entry: NoteWithTags,
     blocks: List<Block>,
     onOpen: () -> Unit,
-    onLongPress: () -> Unit,
+    onLongPress: (() -> Unit)?,
     onToggleChecklistItem: (Int, Int) -> Unit
 ) {
     val blockIndex = blocks.indexOfFirst { it is Block.Checklist }
@@ -511,7 +511,7 @@ private fun AudioCard(
     blocks: List<Block>,
     playbackState: AudioPlayer.State,
     onOpen: () -> Unit,
-    onLongPress: () -> Unit,
+    onLongPress: (() -> Unit)?,
     onTogglePlay: (String, String) -> Unit
 ) {
     val audio = blocks.filterIsInstance<Block.Audio>().firstOrNull() ?: return

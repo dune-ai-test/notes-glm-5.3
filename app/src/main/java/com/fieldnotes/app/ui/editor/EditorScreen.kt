@@ -165,7 +165,16 @@ fun EditorScreen(
         showRecord = true
     }
     val micDeniedMessage = "Microphone permission is needed to record voice notes"
-    val startMicFlow = {
+    val micPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            requestMicAndRecord()
+        } else {
+            Toast.makeText(context, micDeniedMessage, Toast.LENGTH_SHORT).show()
+        }
+    }
+    val startMicFlow: () -> Unit = {
         if (
             ContextCompat.checkSelfPermission(
                 context,
@@ -175,15 +184,6 @@ fun EditorScreen(
             requestMicAndRecord()
         } else {
             micPermission.launch(android.Manifest.permission.RECORD_AUDIO)
-        }
-    }
-    val micPermission = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            requestMicAndRecord()
-        } else {
-            Toast.makeText(context, micDeniedMessage, Toast.LENGTH_SHORT).show()
         }
     }
 

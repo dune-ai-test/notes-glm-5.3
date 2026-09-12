@@ -14,6 +14,7 @@ import com.fieldnotes.app.data.model.encodeToStringList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import androidx.room.withTransaction
 
 class NoteRepository(private val db: AppDatabase) {
 
@@ -106,7 +107,7 @@ class NoteRepository(private val db: AppDatabase) {
 
     /** Persists a manual drag order: ids in display order get sortIndex 0..n. */
     suspend fun saveCustomOrder(order: List<Long>) = withContext(Dispatchers.IO) {
-        androidx.room.withTransaction(db) {
+        db.withTransaction {
             order.forEachIndexed { index, id -> db.noteDao().updateSortIndex(id, index) }
         }
     }

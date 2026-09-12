@@ -64,6 +64,7 @@ import android.widget.Toast
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
@@ -133,12 +134,6 @@ fun HomeScreen(
     val hapticsEnabled = LocalHapticsEnabled.current
     val foldersById = remember(folders) { folders.associateBy { it.id } }
 
-    // Locked notes: authenticate before opening.
-    var unlockRequest by remember { mutableStateOf<NoteWithTags?>(null) }
-    val tryOpen: (NoteWithTags) -> Unit = { entry ->
-        if (entry.note.locked) unlockRequest = entry else openNote(entry.note.id)
-    }
-
     fun onDragGrab(id: Long) {
         dragId = id
         dragOffset = Offset.Zero
@@ -169,6 +164,12 @@ fun HomeScreen(
     val openNote: (Long) -> Unit = { id -> navController.navigate("editor/$id") }
     val dotColorFor: @Composable (NoteWithTags) -> Color = { entry ->
         foldersById[entry.note.folderId]?.let { noteColor(it.colorIndex) } ?: FN.accent
+    }
+
+    // Locked notes: authenticate before opening.
+    var unlockRequest by remember { mutableStateOf<NoteWithTags?>(null) }
+    val tryOpen: (NoteWithTags) -> Unit = { entry ->
+        if (entry.note.locked) unlockRequest = entry else openNote(entry.note.id)
     }
 
     Box(

@@ -63,7 +63,7 @@ fun AppRoot(container: AppContainer) {
                 HorizontalPager(
                     state = pagerState,
                     modifier = Modifier.fillMaxSize(),
-                    beyondBoundsPageCount = TopLevelTab.entries.size - 1
+                    beyondViewportPageCount = TopLevelTab.entries.size - 1
                 ) { page ->
                     when (TopLevelTab.entries[page]) {
                         TopLevelTab.HOME ->
