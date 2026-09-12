@@ -7,6 +7,7 @@ package com.fieldnotes.app.ui.editor
 
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -156,10 +157,27 @@ fun EditorScreen(noteId: Long, navController: NavHostController) {
     val requestMicAndRecord = {
         showRecord = true
     }
+    val micDeniedMessage = "Microphone permission is needed to record voice notes"
+    val startMicFlow = {
+        if (
+            ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            requestMicAndRecord()
+        } else {
+            micPermission.launch(android.Manifest.permission.RECORD_AUDIO)
+        }
+    }
     val micPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        if (granted) requestMicAndRecord()
+        if (granted) {
+            requestMicAndRecord()
+        } else {
+            Toast.makeText(context, micDeniedMessage, Toast.LENGTH_SHORT).show()
+        }
     }
 
     // Autofocus freshly added text blocks.
@@ -303,18 +321,7 @@ fun EditorScreen(noteId: Long, navController: NavHostController) {
                             )
                         },
                         onAddBlock = { showAddBlock = true },
-                        onMic = {
-                            if (
-                                ContextCompat.checkSelfPermission(
-                                    context,
-                                    android.Manifest.permission.RECORD_AUDIO
-                                ) == PackageManager.PERMISSION_GRANTED
-                            ) {
-                                requestMicAndRecord()
-                            } else {
-                                micPermission.launch(android.Manifest.permission.RECORD_AUDIO)
-                            }
-                        },
+                        onMic = startMicFlow,
                         onMore = { showMore = true }
                     )
                 }
@@ -337,7 +344,7 @@ fun EditorScreen(noteId: Long, navController: NavHostController) {
             },
             onRecord = {
                 showAddBlock = false
-                requestMicAndRecord()
+                startMicFlow()
             }
         )
     }
@@ -370,11 +377,18 @@ fun EditorScreen(noteId: Long, navController: NavHostController) {
             },
             onStart = {
                 scope.launch {
-                    container.audioRecorder.start(
+                    val started = container.audioRecorder.start(
                         scope = scope,
                         dir = container.recordingsDir,
                         bitRate = if (settings.audioQuality == "high") 256_000 else 128_000
                     )
+                    if (!started) {
+                        Toast.makeText(
+                            context,
+                            "Couldn't start recording — check the microphone permission",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             },
             onSave = {
@@ -388,6 +402,12 @@ fun EditorScreen(noteId: Long, navController: NavHostController) {
                             amplitudes = result.amplitudes
                         )
                     )
+                } else {
+                    Toast.makeText(
+                        context,
+                        "Recording failed or was too short — try again",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         )
