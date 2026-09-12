@@ -62,7 +62,7 @@ fun PillBottomBar(
             modifier = Modifier.weight(1f)
         ) {
             Row(
-                Modifier.padding(5.dp),
+                Modifier.padding(6.dp),
                 horizontalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 TopLevelTab.entries.forEach { tab ->
@@ -72,7 +72,7 @@ fun PillBottomBar(
                             .clip(CircleShape)
                             .background(if (selected) FN.onStrong else Color.Transparent)
                             .clickable { onSelect(tab.route) }
-                            .padding(horizontal = 12.dp, vertical = 11.dp),
+                            .padding(horizontal = 13.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
@@ -80,12 +80,12 @@ fun PillBottomBar(
                             imageVector = tab.icon,
                             contentDescription = tab.label,
                             tint = if (selected) FN.inkFixed else FN.onStrong.copy(alpha = 0.6f),
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(21.dp)
                         )
                         if (selected) {
                             Text(
                                 text = tab.label,
-                                style = FT.cardTitle.copy(fontSize = 12.sp),
+                                style = FT.cardTitle.copy(fontSize = 13.sp),
                                 color = FN.inkFixed
                             )
                         }
@@ -93,13 +93,13 @@ fun PillBottomBar(
                 }
             }
         }
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(10.dp))
         Surface(
             shape = CircleShape,
             color = FN.strong,
             border = BorderStroke(1.dp, FN.line),
             shadowElevation = 10.dp,
-            modifier = Modifier.size(52.dp)
+            modifier = Modifier.size(56.dp)
         ) {
             Box(
                 Modifier.clickable(onClick = onFab),
@@ -109,7 +109,7 @@ fun PillBottomBar(
                     imageVector = Icons.Outlined.Add,
                     contentDescription = "New note",
                     tint = FN.onStrong,
-                    modifier = Modifier.size(21.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
