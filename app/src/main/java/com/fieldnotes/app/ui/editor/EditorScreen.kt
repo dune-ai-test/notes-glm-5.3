@@ -285,7 +285,15 @@ fun EditorScreen(
                                 },
                                 onFocused = { vm.setFocusedBlock(index) },
                                 onUpdate = { vm.updateBlock(index, it) },
-                                onRemove = { vm.removeBlock(index) },
+                                onRemove = {
+                                    vm.removeBlock(index)
+                                    // If that left a single fresh paragraph, put the
+                                    // typing place back and focus it.
+                                    val now = vm.state.value.blocks
+                                    if (now.size == 1 && now[0] is Block.Paragraph && (now[0] as Block.Paragraph).text.isEmpty()) {
+                                        pendingFocusIndex = 0
+                                    }
+                                },
                                 onChecklistText = { itemIndex, text ->
                                     vm.updateChecklistItem(index, itemIndex, text = text)
                                 },

@@ -112,6 +112,8 @@ class EditorViewModel(
 
     fun removeBlock(index: Int) = mutateBlocks { list ->
         if (index in list.indices) list.removeAt(index)
+        // Never leave the editor without a place to type.
+        if (list.isEmpty()) list.add(Block.Paragraph())
     }
 
     /** Toggles bold on the focused paragraph (or the last paragraph). */
