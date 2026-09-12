@@ -51,6 +51,10 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     fun setPushNotifications(value: Boolean) = viewModelScope.launch { settingsRepo.setPushNotifications(value) }
     fun setSounds(value: Boolean) = viewModelScope.launch { settingsRepo.setSounds(value) }
     fun setBiometricLock(value: Boolean) = viewModelScope.launch { settingsRepo.setBiometricLock(value) }
+
+    fun setAutoLockMinutes(value: Int) {
+        viewModelScope.launch { settingsRepo.setAutoLockMinutes(value) }
+    }
     fun setDefaultCapture(value: String) = viewModelScope.launch { settingsRepo.setDefaultCapture(value) }
     fun setAudioQuality(value: String) = viewModelScope.launch { settingsRepo.setAudioQuality(value) }
 

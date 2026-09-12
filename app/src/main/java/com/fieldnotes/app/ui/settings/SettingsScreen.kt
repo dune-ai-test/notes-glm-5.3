@@ -39,6 +39,7 @@ import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.GraphicEq
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.LockClock
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Palette
@@ -108,6 +109,7 @@ fun SettingsScreen() {
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showHelpDialog by remember { mutableStateOf(false) }
     var showWhatsNewDialog by remember { mutableStateOf(false) }
+    var showAutoLockDialog by remember { mutableStateOf(false) }
     var syncing by remember { mutableStateOf(false) }
 
     val cacheSize by produceState(initialValue = 0L) {
@@ -347,6 +349,20 @@ fun SettingsScreen() {
                 }
             }
             SettingRow(
+                icon = Icons.Outlined.LockClock,
+                iconBg = FN.sky,
+                title = "Auto-lock",
+                subtitle = when (settings.autoLockMinutes) {
+                    0 -> "Immediately on background"
+                    5 -> "After 5 minutes in background"
+                    15 -> "After 15 minutes in background"
+                    else -> "After 1 minute in background"
+                },
+                onClick = { showAutoLockDialog = true }
+            ) {
+                Chevron()
+            }
+            SettingRow(
                 icon = Icons.Outlined.DeleteSweep,
                 iconBg = FN.sky,
                 title = "Clear cache",
@@ -489,6 +505,24 @@ fun SettingsScreen() {
                 vm.setAppearance(it)
             },
             onDismiss = { showAppearanceDialog = false }
+        )
+    }
+
+    if (showAutoLockDialog) {
+        ChoiceDialog(
+            title = "Auto-lock",
+            options = listOf(
+                "0" to "Immediately on background",
+                "1" to "After 1 minute",
+                "5" to "After 5 minutes",
+                "15" to "After 15 minutes"
+            ),
+            selected = settings.autoLockMinutes.toString(),
+            onSelect = {
+                showAutoLockDialog = false
+                vm.setAutoLockMinutes(it.toInt())
+            },
+            onDismiss = { showAutoLockDialog = false }
         )
     }
 

@@ -26,17 +26,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.biometric.BiometricManager
@@ -44,6 +45,8 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fieldnotes.app.data.repo.AppSettings
 import com.fieldnotes.app.di.AppContainer
@@ -91,7 +94,10 @@ class MainActivity : FragmentActivity() {
                     }
                 }
                 FieldNotesTheme(dark = dark) {
-                    LockGate(enabled = settings.biometricLock && container.biometricAvailable) {
+                    LockGate(
+                        enabled = settings.biometricLock && container.biometricAvailable,
+                        timeoutMinutes = settings.autoLockMinutes
+                    ) {
                         AppRoot(container)
                     }
                 }
@@ -101,13 +107,17 @@ class MainActivity : FragmentActivity() {
 }
 
 @Composable
-private fun LockGate(enabled: Boolean, content: @Composable () -> Unit) {
+private fun LockGate(enabled: Boolean, timeoutMinutes: Int, content: @Composable () -> Unit) {
     if (!enabled) {
         content()
         return
     }
     val activity = LocalContext.current.findFragmentActivity()
-    var unlocked by rememberSaveable { mutableStateOf(false) }
+    // Plain remember (not saveable): if the system kills the process in the
+    // background, the next launch must be locked again.
+    var unlocked by remember { mutableStateOf(false) }
+    var backgroundedAtMs by remember { mutableStateOf(0L) }
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     if (activity != null) {
         val promptInfo = remember {
@@ -140,7 +150,29 @@ private fun LockGate(enabled: Boolean, content: @Composable () -> Unit) {
             )
             prompt.authenticate(promptInfo)
         }
-        LaunchedEffect(enabled) {
+        // Re-lock after the app has been backgrounded for longer than the timeout.
+        DisposableEffect(lifecycleOwner, timeoutMinutes) {
+            val observer = LifecycleEventObserver { _, event ->
+                when (event) {
+                    Lifecycle.Event.ON_STOP -> {
+                        backgroundedAtMs = System.currentTimeMillis()
+                    }
+                    Lifecycle.Event.ON_START -> {
+                        if (unlocked && backgroundedAtMs > 0) {
+                            val goneMs = System.currentTimeMillis() - backgroundedAtMs
+                            if (goneMs >= timeoutMinutes * 60_000L) {
+                                unlocked = false
+                            }
+                        }
+                        backgroundedAtMs = 0L
+                    }
+                    else -> {}
+                }
+            }
+            lifecycleOwner.lifecycle.addObserver(observer)
+            onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        }
+        LaunchedEffect(enabled, unlocked) {
             if (!unlocked) showPrompt()
         }
         if (unlocked) {
