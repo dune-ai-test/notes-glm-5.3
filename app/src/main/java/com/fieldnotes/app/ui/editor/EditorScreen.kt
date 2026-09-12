@@ -115,11 +115,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun EditorScreen(noteId: Long, navController: NavHostController) {
+fun EditorScreen(
+    noteId: Long,
+    folderIdHint: Long = -1L,
+    navController: NavHostController
+) {
     val container = LocalAppContainer.current
     val vm: EditorViewModel = viewModel(
         key = "editor-$noteId",
-        factory = viewModelFactory { initializer { EditorViewModel(container.noteRepository, noteId) } }
+        factory = viewModelFactory { initializer { EditorViewModel(container.noteRepository, noteId, folderIdHint) } }
     )
     val state by vm.state.collectAsStateWithLifecycle()
     val allTags by vm.tags.collectAsStateWithLifecycle()
@@ -139,7 +143,7 @@ fun EditorScreen(noteId: Long, navController: NavHostController) {
 
     val saveAndClose: () -> Unit = {
         scope.launch {
-            vm.saveNow()
+            vm.finish()
             navController.popBackStack()
         }
     }

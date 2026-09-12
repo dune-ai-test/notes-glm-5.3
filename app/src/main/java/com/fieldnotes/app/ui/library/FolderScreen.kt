@@ -18,7 +18,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -41,7 +40,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
 class FolderViewModel(repo: NoteRepository, folderId: Long) : ViewModel() {
 
@@ -62,7 +60,6 @@ fun FolderScreen(folderId: Long, navController: NavHostController) {
     )
     val folder by vm.folder.collectAsStateWithLifecycle()
     val notes by vm.notes.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
 
     Column(
         Modifier
@@ -92,13 +89,7 @@ fun FolderScreen(folderId: Long, navController: NavHostController) {
                 Text("${notes.size} notes", style = FT.monoTiny, color = FN.muted)
             }
             CircleIconButton(Icons.Outlined.Add, "New note", background = FN.strong, tint = FN.onStrong) {
-                scope.launch {
-                    val id = container.noteRepository.createNote(
-                        folderId = folderId,
-                        colorIndex = folder?.colorIndex ?: 0
-                    )
-                    navController.navigate("editor/$id")
-                }
+                navController.navigate("editor/-1?folderId=$folderId")
             }
         }
         LazyColumn(

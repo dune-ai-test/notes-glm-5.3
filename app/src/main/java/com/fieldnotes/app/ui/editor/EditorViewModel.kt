@@ -22,7 +22,8 @@ import kotlinx.coroutines.launch
 
 class EditorViewModel(
     private val repo: NoteRepository,
-    val noteId: Long
+    val noteId: Long,
+    folderIdHint: Long = -1L
 ) : ViewModel() {
 
     data class EditorState(
@@ -52,30 +53,47 @@ class EditorViewModel(
     private var note: NoteEntity? = null
     private var saveJob: Job? = null
     private var dirty = false
+    private val draftFolderId: Long = if (folderIdHint > 0) folderIdHint else NoteEntity.DEFAULT_FOLDER_ID
+
+    /** True when the database row was created by this editor session (new drafts). */
+    private var createdHere = false
 
     init {
-        viewModelScope.launch {
-            val loaded: NoteWithTags? = repo.getNote(noteId)
-            if (loaded == null) {
-                _state.update { it.copy(loading = false, missing = true) }
-            } else {
-                note = loaded.note
-                var blocks = decodeBlocks(loaded.note.blocksJson)
-                if (blocks.isEmpty() && loaded.note.kind == NoteEntity.KIND_TEXT) {
-                    blocks = listOf(Block.Paragraph())
+        if (noteId <= 0L) {
+            // New, unsaved draft: nothing touches the database until the user edits.
+            val now = System.currentTimeMillis()
+            note = null
+            _state.value = EditorState(
+                loading = false,
+                blocks = listOf(Block.Paragraph()),
+                folderId = draftFolderId,
+                createdAt = now,
+                updatedAt = now
+            )
+        } else {
+            viewModelScope.launch {
+                val loaded: NoteWithTags? = repo.getNote(noteId)
+                if (loaded == null) {
+                    _state.update { it.copy(loading = false, missing = true) }
+                } else {
+                    note = loaded.note
+                    var blocks = decodeBlocks(loaded.note.blocksJson)
+                    if (blocks.isEmpty() && loaded.note.kind == NoteEntity.KIND_TEXT) {
+                        blocks = listOf(Block.Paragraph())
+                    }
+                    _state.value = EditorState(
+                        loading = false,
+                        title = loaded.note.title,
+                        blocks = blocks,
+                        tagIds = loaded.tags.map { it.id }.toSet(),
+                        pinned = loaded.note.pinned,
+                        colorIndex = loaded.note.colorIndex,
+                        folderId = loaded.note.folderId,
+                        kind = loaded.note.kind,
+                        createdAt = loaded.note.createdAt,
+                        updatedAt = loaded.note.updatedAt
+                    )
                 }
-                _state.value = EditorState(
-                    loading = false,
-                    title = loaded.note.title,
-                    blocks = blocks,
-                    tagIds = loaded.tags.map { it.id }.toSet(),
-                    pinned = loaded.note.pinned,
-                    colorIndex = loaded.note.colorIndex,
-                    folderId = loaded.note.folderId,
-                    kind = loaded.note.kind,
-                    createdAt = loaded.note.createdAt,
-                    updatedAt = loaded.note.updatedAt
-                )
             }
         }
     }
@@ -170,12 +188,6 @@ class EditorViewModel(
         }
     }
 
-    suspend fun saveNow() {
-        saveJob?.cancel()
-        saveJob = null
-        persist()
-    }
-
     private fun update(reducer: (EditorState) -> EditorState) {
         _state.update(reducer)
         markDirtyAndSchedule()
@@ -189,7 +201,7 @@ class EditorViewModel(
     }
 
     private fun markDirtyAndSchedule() {
-        if (_state.value.loading || note == null) return
+        if (_state.value.loading) return
         dirty = true
         saveJob?.cancel()
         saveJob = viewModelScope.launch {
@@ -198,10 +210,52 @@ class EditorViewModel(
         }
     }
 
+    /** True when the draft has no content worth keeping. */
+    val isEmptyDraft: Boolean
+        get() = with(_state.value) {
+            title.isBlank() && blocks.all { block ->
+                when (block) {
+                    is Block.Heading -> block.text.isBlank()
+                    is Block.Paragraph -> block.text.isBlank()
+                    is Block.Highlight -> block.text.isBlank()
+                    is Block.Checklist -> block.items.all { it.text.isBlank() }
+                    is Block.Image -> block.path.isBlank()
+                    is Block.Audio -> block.path.isBlank()
+                }
+            }
+        }
+
+    /**
+     * Finishes editing: saves pending changes, creates the row for new drafts
+     * that gained content, and deletes rows that were created here but are
+     * still empty. Returns true when a note remains in the database.
+     */
+    suspend fun finish(): Boolean {
+        saveJob?.cancel()
+        saveJob = null
+        if (dirty) persist()
+        if (createdHere && isEmptyDraft) {
+            note?.let { repo.deleteNote(it) }
+            note = null
+            return false
+        }
+        return note != null
+    }
+
     private suspend fun persist() {
         if (!dirty) return
-        val current = note ?: return
         val s = _state.value
+        var current = note
+        if (current == null) {
+            val newId = repo.createNote(
+                folderId = s.folderId,
+                colorIndex = s.colorIndex,
+                kind = s.kind
+            )
+            current = repo.getNote(newId)?.note ?: return
+            note = current
+            createdHere = true
+        }
         repo.saveNote(
             current.copy(
                 title = s.title,
