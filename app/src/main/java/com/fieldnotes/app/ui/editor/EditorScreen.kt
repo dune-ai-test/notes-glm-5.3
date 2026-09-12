@@ -312,11 +312,15 @@ fun EditorScreen(
                         Spacer(Modifier.height(90.dp))
                     }
 
+                    val boldTarget = if (state.focusedBlock in state.blocks.indices) {
+                        state.focusedBlock
+                    } else {
+                        state.blocks.indexOfLast { it is Block.Paragraph }
+                    }
+
                     EditorToolbar(
-                        emphasized = (state.blocks.getOrNull(
-                            if (state.focusedBlock in state.blocks.indices) state.focusedBlock
-                            else state.blocks.lastIndex
-                        ) as? Block.Paragraph)?.emphasized == true,
+                        emphasized = (state.blocks.getOrNull(boldTarget) as? Block.Paragraph)?.emphasized == true,
+                        boldApplicable = state.blocks.getOrNull(boldTarget) is Block.Paragraph,
                         onBold = { vm.toggleEmphasis() },
                         onChecklist = { vm.turnIntoChecklist() },
                         onImage = {
@@ -922,6 +926,7 @@ private fun NewTagDialog(onDismiss: () -> Unit, onCreate: (String) -> Unit) {
 @Composable
 private fun EditorToolbar(
     emphasized: Boolean,
+    boldApplicable: Boolean,
     onBold: () -> Unit,
     onChecklist: () -> Unit,
     onImage: () -> Unit,
@@ -946,7 +951,7 @@ private fun EditorToolbar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            EditorTool(Icons.Outlined.FormatBold, active = emphasized, "Bold", onBold)
+            EditorTool(Icons.Outlined.FormatBold, active = emphasized, enabled = boldApplicable, "Bold", onBold)
             EditorTool(
                 Icons.AutoMirrored.Outlined.FormatListBulleted,
                 active = false,
@@ -984,18 +989,30 @@ private fun EditorTool(
     label: String,
     onClick: () -> Unit
 ) {
+    EditorTool(icon = icon, active = active, enabled = true, label = label, onClick = onClick)
+}
+
+@Composable
+private fun EditorTool(
+    icon: ImageVector,
+    active: Boolean,
+    enabled: Boolean,
+    label: String,
+    onClick: () -> Unit
+) {
+    val alpha = if (enabled) 1f else 0.35f
     Box(
         Modifier
             .size(38.dp)
             .clip(CircleShape)
-            .background(if (active) FN.accent.copy(alpha = 0.16f) else Color.Transparent)
-            .clickable(onClick = onClick),
+            .background(if (active) FN.accent.copy(alpha = 0.16f * alpha) else Color.Transparent)
+            .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             icon,
             contentDescription = label,
-            tint = if (active) FN.accent else FN.textSoft,
+            tint = if (active) FN.accent else FN.textSoft.copy(alpha = alpha),
             modifier = Modifier.size(19.dp)
         )
     }

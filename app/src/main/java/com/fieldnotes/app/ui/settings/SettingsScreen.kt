@@ -433,7 +433,7 @@ fun SettingsScreen() {
             CircleIconButton(
                 icon = Icons.Outlined.Delete,
                 contentDescription = "Erase all data",
-                background = Color(0xFFF7DCD3),
+                background = FN.accentSoft,
                 tint = FN.accent,
                 size = 38.dp
             ) {
@@ -658,7 +658,7 @@ private fun Toggle(checked: Boolean, onChange: (Boolean) -> Unit) {
 private fun ValueChip(text: String, accent: Boolean = false, onClick: (() -> Unit)? = null) {
     Surface(
         shape = RoundedCornerShape(50),
-        color = if (accent) Color(0xFFF7DCD3) else FN.bg,
+        color = if (accent) FN.accentSoft else FN.bg,
         border = androidx.compose.foundation.BorderStroke(1.dp, if (accent) FN.accent else FN.line)
     ) {
         Text(

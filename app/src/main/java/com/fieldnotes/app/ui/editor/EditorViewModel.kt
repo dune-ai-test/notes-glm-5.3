@@ -114,18 +114,17 @@ class EditorViewModel(
         if (index in list.indices) list.removeAt(index)
     }
 
-    /** Toggles bold on the focused paragraph (or the last one). */
+    /** Toggles bold on the focused paragraph (or the last paragraph). */
     fun toggleEmphasis() {
         val s = _state.value
-        val target = when {
-            s.focusedBlock in s.blocks.indices -> s.focusedBlock
-            s.blocks.isNotEmpty() -> s.blocks.lastIndex
-            else -> return
+        val target = if (s.focusedBlock in s.blocks.indices && s.blocks[s.focusedBlock] is Block.Paragraph) {
+            s.focusedBlock
+        } else {
+            s.blocks.indexOfLast { it is Block.Paragraph }
         }
-        val block = s.blocks[target]
-        if (block is Block.Paragraph) {
-            updateBlock(target, block.copy(emphasized = !block.emphasized))
-        }
+        if (target == -1) return
+        val block = s.blocks[target] as Block.Paragraph
+        updateBlock(target, block.copy(emphasized = !block.emphasized))
     }
 
     fun turnIntoChecklist() {

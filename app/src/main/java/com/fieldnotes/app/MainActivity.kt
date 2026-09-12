@@ -2,7 +2,9 @@ package com.fieldnotes.app
 
 import android.content.Context
 import android.content.ContextWrapper
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.view.View
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
@@ -24,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,18 +35,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fieldnotes.app.data.repo.AppSettings
 import com.fieldnotes.app.di.AppContainer
 import com.fieldnotes.app.di.LocalAppContainer
 import com.fieldnotes.app.navigation.AppRoot
+import com.fieldnotes.app.ui.theme.DarkFN
 import com.fieldnotes.app.ui.theme.FN
+import com.fieldnotes.app.ui.theme.LightFN
 import com.fieldnotes.app.ui.theme.FT
 import com.fieldnotes.app.ui.theme.FieldNotesTheme
 import com.fieldnotes.app.ui.theme.LocalHapticsEnabled
@@ -64,7 +72,25 @@ class MainActivity : FragmentActivity() {
                 LocalHapticsEnabled provides settings.haptics,
                 LocalReducedMotion provides settings.reduceMotion
             ) {
-                FieldNotesTheme(dark = rememberDarkTheme(settings.appearance)) {
+                val dark = rememberDarkTheme(settings.appearance)
+                val view = LocalView.current
+                if (!view.isInEditMode) {
+                    val activity = view.context.findFragmentActivity()
+                    if (activity != null) {
+                        val window = activity.window
+                        // Keep the window backdrop and system bar icons in sync with the
+                        // app-selected theme (which can differ from the system setting).
+                        SideEffect {
+                            window.setBackgroundDrawable(
+                                ColorDrawable(if (dark) DarkFN.bg.toArgb() else LightFN.bg.toArgb())
+                            )
+                            val controller = WindowInsetsControllerCompat(window, view)
+                            controller.isAppearanceLightStatusBars = !dark
+                            controller.isAppearanceLightNavigationBars = !dark
+                        }
+                    }
+                }
+                FieldNotesTheme(dark = dark) {
                     LockGate(enabled = settings.biometricLock && container.biometricAvailable) {
                         AppRoot(container)
                     }

@@ -32,6 +32,7 @@ data class FNPalette(
     val strong: Color,
     val onStrong: Color,
     val accent: Color,
+    val accentSoft: Color,
     val inkCard: Color,
     val inkCardTile: Color,
     val peach: Color,
@@ -55,6 +56,7 @@ val LightFN = FNPalette(
     strong = Color(0xFF1A1A1A),
     onStrong = Color(0xFFFFF8F0),
     accent = AccentLight,
+    accentSoft = Color(0xFFF7DCD3),
     inkCard = Color(0xFF232323),
     inkCardTile = Color(0xFF2E2E2E),
     peach = PeachFixed,
@@ -78,6 +80,7 @@ val DarkFN = FNPalette(
     strong = Color(0xFF3A342E),
     onStrong = Color(0xFFF3EBE2),
     accent = AccentDark,
+    accentSoft = Color(0xFF46281F),
     inkCard = Color(0xFF1B1815),
     inkCardTile = Color(0xFF2E2E2E),
     peach = PeachFixed,
@@ -102,6 +105,7 @@ object FN {
     val strong @Composable get() = LocalFN.current.strong
     val onStrong @Composable get() = LocalFN.current.onStrong
     val accent @Composable get() = LocalFN.current.accent
+    val accentSoft @Composable get() = LocalFN.current.accentSoft
     val inkCard @Composable get() = LocalFN.current.inkCard
     val inkCardTile @Composable get() = LocalFN.current.inkCardTile
     val peach @Composable get() = LocalFN.current.peach
