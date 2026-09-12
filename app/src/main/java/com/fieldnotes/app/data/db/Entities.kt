@@ -29,6 +29,8 @@ data class NoteEntity(
     val kind: Int = KIND_TEXT,
     val pinned: Boolean = false,
     val locked: Boolean = false,
+    val trashed: Boolean = false,
+    val trashedAt: Long? = null,
     val sortIndex: Int = 0,
     val createdAt: Long,
     val updatedAt: Long

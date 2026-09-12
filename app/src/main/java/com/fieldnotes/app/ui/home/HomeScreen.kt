@@ -41,6 +41,11 @@ import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -48,6 +53,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -83,6 +89,7 @@ import com.fieldnotes.app.data.model.decodeBlocks
 import com.fieldnotes.app.data.repo.NoteRepository
 import com.fieldnotes.app.data.repo.AppSettings
 import com.fieldnotes.app.data.repo.NoteSort
+import kotlinx.coroutines.launch
 import com.fieldnotes.app.di.LocalAppContainer
 import com.fieldnotes.app.ui.components.BiometricUnlock
 import com.fieldnotes.app.ui.components.ColoredDot
@@ -123,6 +130,8 @@ fun HomeScreen(
     var gridMode by rememberSaveable { mutableStateOf(true) }
     var showFilters by remember { mutableStateOf(false) }
     var actionNote by remember { mutableStateOf<NoteWithTags?>(null) }
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     var reorderMode by rememberSaveable { mutableStateOf(false) }
 
     // Drag-to-reorder state (reorder mode only).
@@ -393,9 +402,26 @@ fun HomeScreen(
                 entry = entry,
                 onDismiss = { actionNote = null },
                 onPin = { vm.togglePin(entry) },
-                onDelete = { vm.delete(entry) }
+                onDelete = {
+                    vm.delete(entry)
+                    scope.launch {
+                        val result = snackbarHostState.showSnackbar(
+                            message = "Note moved to trash",
+                            actionLabel = "Undo",
+                            duration = SnackbarDuration.Short
+                        )
+                        if (result == SnackbarResult.ActionPerformed) vm.undoDelete(entry.note.id)
+                    }
+                }
             )
         }
+
+        SnackbarHost(
+            snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 120.dp)
+        )
     }
 
     unlockRequest?.let { pending ->

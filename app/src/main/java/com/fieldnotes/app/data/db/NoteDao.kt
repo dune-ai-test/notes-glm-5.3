@@ -53,6 +53,30 @@ interface NoteDao {
 
     @Query("UPDATE notes SET sortIndex = :index WHERE id = :id")
     suspend fun updateSortIndex(id: Long, index: Int)
+
+    @Transaction
+    @Query("SELECT * FROM notes WHERE trashed = 0 ORDER BY pinned DESC, updatedAt DESC")
+    fun observeActive(): Flow<List<NoteWithTags>>
+
+    @Transaction
+    @Query("SELECT * FROM notes WHERE folderId = :folderId AND trashed = 0 ORDER BY pinned DESC, updatedAt DESC")
+    fun observeActiveFolder(folderId: Long): Flow<List<NoteWithTags>>
+
+    @Query("SELECT COUNT(*) FROM notes WHERE trashed = 0")
+    fun observeActiveCount(): Flow<Int>
+
+    @Transaction
+    @Query("SELECT * FROM notes WHERE trashed = 1 ORDER BY trashedAt DESC")
+    fun observeTrashed(): Flow<List<NoteWithTags>>
+
+    @Query("SELECT * FROM notes WHERE trashed = 1 AND trashedAt IS NOT NULL AND trashedAt < :cutoff")
+    suspend fun getTrashedBefore(cutoff: Long): List<NoteEntity>
+
+    @Query("UPDATE notes SET trashed = 1, trashedAt = :at WHERE id = :id")
+    suspend fun setTrashed(id: Long, at: Long)
+
+    @Query("UPDATE notes SET trashed = 0, trashedAt = NULL WHERE id = :id")
+    suspend fun setNotTrashed(id: Long)
 }
 
 @Dao

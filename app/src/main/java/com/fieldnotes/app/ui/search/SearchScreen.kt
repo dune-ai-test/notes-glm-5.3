@@ -68,7 +68,7 @@ class SearchViewModel(repo: NoteRepository) : ViewModel() {
     val tagFilter = MutableStateFlow<Set<Long>>(emptySet())
 
     val results: StateFlow<List<NoteWithTags>> = combine(
-        repo.allNotes, query, tagFilter
+        repo.activeNotes, query, tagFilter
     ) { notes, q, tagIds ->
         filterNotes(notes, q, NoteSort.RECENT, tagIds, pinnedOnly = false)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())

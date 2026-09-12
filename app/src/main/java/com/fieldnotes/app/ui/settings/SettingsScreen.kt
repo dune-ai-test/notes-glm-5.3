@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.Accessibility
 import androidx.compose.material.icons.outlined.Archive
+import androidx.compose.material.icons.outlined.AutoDelete
 import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -79,6 +80,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -93,7 +95,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(navController: NavHostController) {
     val container = LocalAppContainer.current
     val vm: SettingsViewModel = viewModel(
         factory = viewModelFactory { initializer { SettingsViewModel(container) } }
@@ -396,6 +398,15 @@ fun SettingsScreen() {
                         }
                     }
                 )
+            }
+            SettingRow(
+                icon = Icons.Outlined.AutoDelete,
+                iconBg = FN.peach,
+                title = "Trash",
+                subtitle = "Deleted notes • kept 30 days",
+                onClick = { navController.navigate("trash") }
+            ) {
+                Chevron()
             }
             SettingRow(
                 icon = Icons.Outlined.DeleteSweep,

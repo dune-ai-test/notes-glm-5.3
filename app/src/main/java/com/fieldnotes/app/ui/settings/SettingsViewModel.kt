@@ -27,7 +27,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     val settings: StateFlow<AppSettings> = settingsRepo.settings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppSettings())
 
-    val noteCount: StateFlow<Int> = noteRepo.noteCount
+    val noteCount: StateFlow<Int> = noteRepo.activeNoteCount
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     val memoCount: StateFlow<Int> = noteRepo.memos

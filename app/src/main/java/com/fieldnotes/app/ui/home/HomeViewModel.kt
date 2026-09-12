@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel(private val repo: NoteRepository) : ViewModel() {
 
-    val noteCount: StateFlow<Int> = repo.noteCount
+    val noteCount: StateFlow<Int> = repo.activeNoteCount
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     val tags: StateFlow<List<TagEntity>> = repo.tags
@@ -28,13 +28,13 @@ class HomeViewModel(private val repo: NoteRepository) : ViewModel() {
     val folders: StateFlow<List<FolderEntity>> = repo.folders
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    private val allNotesRaw: StateFlow<List<NoteWithTags>> = repo.allNotes
+    private val allNotesRaw: StateFlow<List<NoteWithTags>> = repo.activeNotes
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** Non-null while the user is in / has used manual ordering this session. */
     private val customOrder = MutableStateFlow<List<Long>?>(null)
 
-    private val notesWithOrder = combine(repo.allNotes, customOrder) { notes, order ->
+    private val notesWithOrder = combine(repo.activeNotes, customOrder) { notes, order ->
         notes to order
     }
 
@@ -103,7 +103,11 @@ class HomeViewModel(private val repo: NoteRepository) : ViewModel() {
     }
 
     fun delete(entry: NoteWithTags) {
-        viewModelScope.launch { repo.deleteNote(entry.note) }
+        viewModelScope.launch { repo.trashNote(entry.note) }
+    }
+
+    fun undoDelete(noteId: Long) {
+        viewModelScope.launch { repo.restoreNote(noteId) }
     }
 
     fun toggleChecklistItem(entry: NoteWithTags, blockIndex: Int, itemIndex: Int) {

@@ -188,7 +188,7 @@ class EditorViewModel(
 
     fun deleteNote(onDone: () -> Unit) {
         viewModelScope.launch {
-            note?.let { repo.deleteNote(it) }
+            note?.let { repo.trashNote(it) }
             onDone()
         }
     }

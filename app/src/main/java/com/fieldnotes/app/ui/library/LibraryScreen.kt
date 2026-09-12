@@ -36,6 +36,11 @@ import androidx.compose.material.icons.outlined.Work
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -90,11 +95,16 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
     var showAllTags by remember { mutableStateOf(false) }
     var deleteTarget by remember { mutableStateOf<NoteWithTags?>(null) }
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    Column(
+    Box(
         Modifier
             .fillMaxSize()
             .background(FN.bg)
+    ) {
+    Column(
+        Modifier
+            .fillMaxSize()
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
@@ -248,6 +258,13 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
                 )
             }
         }
+
+        SnackbarHost(
+            snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 120.dp)
+        )
     }
 
     if (showAllTags) {
@@ -294,7 +311,17 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
                     val target = deleteTarget
                     deleteTarget = null
                     if (target != null) {
-                        scope.launch { container.noteRepository.deleteNote(target.note) }
+                        scope.launch {
+                            container.noteRepository.trashNote(target.note)
+                            val result = snackbarHostState.showSnackbar(
+                                message = "Note moved to trash",
+                                actionLabel = "Undo",
+                                duration = SnackbarDuration.Short
+                            )
+                            if (result == SnackbarResult.ActionPerformed) {
+                                container.noteRepository.restoreNote(target.note.id)
+                            }
+                        }
                     }
                 }) {
                     Text("Delete", color = FN.accent)

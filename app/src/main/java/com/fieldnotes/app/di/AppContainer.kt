@@ -29,7 +29,12 @@ class AppContainer(private val appContext: Context) {
         AppDatabase::class.java,
         "fieldnotes.db"
     )
-        .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4)
+        .addMigrations(
+            AppDatabase.MIGRATION_1_2,
+            AppDatabase.MIGRATION_2_3,
+            AppDatabase.MIGRATION_3_4,
+            AppDatabase.MIGRATION_4_5
+        )
         .fallbackToDestructiveMigration()
         .build()
 
@@ -55,6 +60,7 @@ class AppContainer(private val appContext: Context) {
 
     init {
         appScope.launch {
+            noteRepository.purgeOldTrashed(days = 30)
             noteRepository.seedDefaultsIfEmpty()
             settingsRepository.settings.collect {
                 soundsEnabled = it.sounds

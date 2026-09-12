@@ -30,6 +30,7 @@ import com.fieldnotes.app.ui.library.LibraryScreen
 import com.fieldnotes.app.ui.quick.ReminderScreen
 import com.fieldnotes.app.ui.search.SearchScreen
 import com.fieldnotes.app.ui.settings.SettingsScreen
+import com.fieldnotes.app.ui.trash.TrashScreen
 import com.fieldnotes.app.ui.theme.FN
 import kotlinx.coroutines.launch
 
@@ -81,12 +82,15 @@ fun AppRoot(container: AppContainer) {
                                 navController = navController,
                                 onCreateNote = createAndOpenNote
                             )
-                        TopLevelTab.SETTINGS -> SettingsScreen()
+                        TopLevelTab.SETTINGS -> SettingsScreen(navController = navController)
                     }
                 }
             }
             composable("search") {
                 SearchScreen(navController = navController)
+            }
+            composable("trash") {
+                TrashScreen(navController = navController)
             }
             composable(
                 route = "folder/{folderId}",

@@ -13,12 +13,17 @@ import com.fieldnotes.app.data.model.encodeBlocks
 import com.fieldnotes.app.data.model.encodeToStringList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import androidx.room.withTransaction
+import java.io.File
 
 class NoteRepository(private val db: AppDatabase) {
 
     val allNotes: Flow<List<NoteWithTags>> = db.noteDao().observeAll()
+    val activeNotes: Flow<List<NoteWithTags>> = db.noteDao().observeActive()
+    val activeNoteCount: Flow<Int> = db.noteDao().observeActiveCount()
+    val trashedNotes: Flow<List<NoteWithTags>> = db.noteDao().observeTrashed()
     val noteCount: Flow<Int> = db.noteDao().observeCount()
     val folders: Flow<List<FolderEntity>> = db.folderDao().observeAll()
     val tags: Flow<List<TagEntity>> = db.tagDao().observeAll()
@@ -41,7 +46,7 @@ class NoteRepository(private val db: AppDatabase) {
     suspend fun deleteReminder(reminder: com.fieldnotes.app.data.db.ReminderEntity) =
         db.reminderDao().delete(reminder)
 
-    fun folderNotes(folderId: Long): Flow<List<NoteWithTags>> = db.noteDao().observeFolder(folderId)
+    fun folderNotes(folderId: Long): Flow<List<NoteWithTags>> = db.noteDao().observeActiveFolder(folderId)
 
     suspend fun getNote(id: Long): NoteWithTags? = db.noteDao().getNote(id)
     suspend fun getFolder(id: Long): FolderEntity? = db.folderDao().getFolder(id)
@@ -83,6 +88,38 @@ class NoteRepository(private val db: AppDatabase) {
 
     suspend fun updateNote(note: NoteEntity) = db.noteDao().update(note)
     suspend fun deleteNote(note: NoteEntity) = db.noteDao().delete(note)
+
+    /** Soft-deletes: recoverable from Trash for 30 days. */
+    suspend fun trashNote(note: NoteEntity) =
+        db.noteDao().setTrashed(note.id, System.currentTimeMillis())
+
+    suspend fun restoreNote(id: Long) = db.noteDao().setNotTrashed(id)
+
+    /** Permanently deletes a note, its tag links, and its media files (best effort). */
+    suspend fun hardDelete(note: NoteEntity) {
+        db.noteDao().clearNoteTags(note.id)
+        decodeBlocks(note.blocksJson).forEach { block ->
+            val path = when (block) {
+                is Block.Image -> block.path
+                is Block.Audio -> block.path
+                else -> ""
+            }
+            if (path.isNotBlank()) {
+                runCatching { File(path).takeIf { it.exists() }?.delete() }
+            }
+        }
+        db.noteDao().delete(note)
+    }
+
+    suspend fun emptyTrash() {
+        db.noteDao().observeTrashed().first().forEach { hardDelete(it.note) }
+    }
+
+    /** Permanently removes trashed notes older than [days]. Call on app start. */
+    suspend fun purgeOldTrashed(days: Int = 30) {
+        val cutoff = System.currentTimeMillis() - days * 24L * 60L * 60L * 1000L
+        db.noteDao().getTrashedBefore(cutoff).forEach { hardDelete(it) }
+    }
 
     suspend fun createTag(name: String, colorIndex: Int): Long =
         db.tagDao().insert(TagEntity(name = name.trim(), colorIndex = colorIndex))
