@@ -15,29 +15,31 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.fieldnotes.app.ui.theme.Accent
-import com.fieldnotes.app.ui.theme.DotGray
-import com.fieldnotes.app.ui.theme.Ink
+import com.fieldnotes.app.ui.theme.FN
 
 /**
  * A waveform built from amplitude samples (0–24). When [progress] > 0 the bars
  * up to that fraction light up in [playedColor]; otherwise bars are statically
- * mixed like the design mockups.
+ * mixed. Pass [Color.Unspecified] to use theme defaults.
  */
 @Composable
 fun Waveform(
     amplitudes: List<Int>,
     modifier: Modifier = Modifier,
     progress: Float = 0f,
-    playedColor: Color = Accent,
-    baseColor: Color = Ink,
-    idleColor: Color = DotGray,
+    playedColor: Color = Color.Unspecified,
+    baseColor: Color = Color.Unspecified,
+    idleColor: Color = Color.Unspecified,
     maxHeight: Dp = 22.dp,
     barWidth: Dp = 5.dp,
     gap: Dp = 4.dp,
-    live: Boolean = false
+    live: Boolean = false,
+    bars: Int = 30
 ) {
-    val buckets = remember(amplitudes, live) { bucketize(amplitudes, 30, live) }
+    val played = if (playedColor.isUnspecified) FN.accent else playedColor
+    val base = if (baseColor.isUnspecified) FN.text else baseColor
+    val idle = if (idleColor.isUnspecified) FN.dotGray else idleColor
+    val buckets = remember(amplitudes, live, bars) { bucketize(amplitudes, bars, live) }
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
@@ -47,10 +49,10 @@ fun Waveform(
             val height = (6 + amp).dp.coerceAtMost(maxHeight)
             val color = when {
                 progress > 0f ->
-                    if (index.toFloat() / buckets.size <= progress) playedColor else idleColor
-                index % 3 == 1 -> playedColor
-                amp >= 12 -> baseColor
-                else -> idleColor
+                    if (index.toFloat() / buckets.size <= progress) played else idle
+                index % 3 == 1 -> played
+                amp >= 12 -> base
+                else -> idle
             }
             Box(
                 Modifier
@@ -64,7 +66,7 @@ fun Waveform(
 }
 
 private fun bucketize(amplitudes: List<Int>, target: Int, live: Boolean): List<Int> = when {
-    amplitudes.isEmpty() -> List(24) { 6 }
+    amplitudes.isEmpty() -> List(target.coerceAtMost(24)) { 6 }
     live && amplitudes.size > target -> amplitudes.takeLast(target)
     amplitudes.size <= target -> amplitudes
     else -> List(target) { i ->

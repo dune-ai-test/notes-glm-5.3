@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -29,7 +30,15 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     val noteCount: StateFlow<Int> = noteRepo.noteCount
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
+    val memoCount: StateFlow<Int> = noteRepo.memos
+        .map { it.size }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
     val biometricAvailable: Boolean = container.biometricAvailable
+
+    fun setAppearance(value: String) {
+        viewModelScope.launch { settingsRepo.setAppearance(value) }
+    }
 
     fun setUserName(value: String) {
         if (value.isBlank()) return
@@ -77,12 +86,41 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
-    /** Erases everything: notes, memos, media and settings. */
+    /** Erases everything: notes, memos, media and settings, then restores the
+     *  default folder/tag structure. */
     fun wipeAll(onDone: () -> Unit) {
         viewModelScope.launch {
             noteRepo.wipeAll()
+            noteRepo.seedDefaultsIfEmpty()
             settingsRepo.clearAll()
             onDone()
+        }
+    }
+
+    /** Restores a Field Notes ZIP backup picked by the user. */
+    fun importBackup(target: Uri, onDone: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val summary = withContext(Dispatchers.IO) {
+                try {
+                    val input = container.context.contentResolver.openInputStream(target)
+                        ?: return@withContext null
+                    com.fieldnotes.app.data.export.BackupImporter.import(
+                        container.context,
+                        container.database,
+                        input
+                    )
+                } catch (_: Exception) {
+                    null
+                }
+            }
+            onDone(
+                summary != null && !summary.skipped,
+                when {
+                    summary == null -> "Couldn't read that file"
+                    summary.skipped -> "Not a Field Notes backup"
+                    else -> "Imported ${summary.notes} notes • ${summary.memos} memos"
+                }
+            )
         }
     }
 }

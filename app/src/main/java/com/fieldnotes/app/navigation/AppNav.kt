@@ -24,16 +24,16 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.fieldnotes.app.di.AppContainer
+import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.components.PillBottomBar
 import com.fieldnotes.app.ui.components.topLevelRoutes
 import com.fieldnotes.app.ui.editor.EditorScreen
 import com.fieldnotes.app.ui.home.HomeScreen
 import com.fieldnotes.app.ui.library.FolderScreen
 import com.fieldnotes.app.ui.library.LibraryScreen
-import com.fieldnotes.app.ui.quick.QuickScreen
+import com.fieldnotes.app.ui.quick.ReminderScreen
 import com.fieldnotes.app.ui.search.SearchScreen
 import com.fieldnotes.app.ui.settings.SettingsScreen
-import com.fieldnotes.app.ui.theme.WarmPaper
 import kotlinx.coroutines.launch
 
 @Composable
@@ -59,14 +59,14 @@ fun AppRoot(container: AppContainer) {
     Box(
         Modifier
             .fillMaxSize()
-            .background(WarmPaper)
+            .background(FN.bg)
     ) {
         NavHost(navController = navController, startDestination = "home") {
             composable("home") {
                 HomeScreen(navController = navController)
             }
             composable("quick") {
-                QuickScreen(navController = navController, onCreateNote = createAndOpenNote)
+                ReminderScreen(navController = navController, onCreateNote = createAndOpenNote)
             }
             composable("library") {
                 LibraryScreen(navController = navController, onCreateNote = createAndOpenNote)

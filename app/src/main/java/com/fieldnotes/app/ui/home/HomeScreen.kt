@@ -80,16 +80,9 @@ import com.fieldnotes.app.ui.components.PillChip
 import com.fieldnotes.app.ui.components.SectionLabel
 import com.fieldnotes.app.ui.components.TagChipView
 import com.fieldnotes.app.ui.components.noteCardKind
-import com.fieldnotes.app.ui.theme.Accent
-import com.fieldnotes.app.ui.theme.CardWhite
-import com.fieldnotes.app.ui.theme.DotGray
+import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
-import com.fieldnotes.app.ui.theme.Ink
-import com.fieldnotes.app.ui.theme.InkSoft
-import com.fieldnotes.app.ui.theme.Line
 import com.fieldnotes.app.ui.theme.LocalHapticsEnabled
-import com.fieldnotes.app.ui.theme.Muted
-import com.fieldnotes.app.ui.theme.WarmPaper
 import com.fieldnotes.app.ui.theme.noteColor
 import com.fieldnotes.app.util.TimeFormat
 import java.util.Calendar
@@ -121,13 +114,13 @@ fun HomeScreen(navController: NavHostController) {
 
     val openNote: (Long) -> Unit = { id -> navController.navigate("editor/$id") }
     val dotColorFor: (NoteWithTags) -> Color = { entry ->
-        foldersById[entry.note.folderId]?.let { noteColor(it.colorIndex) } ?: Accent
+        foldersById[entry.note.folderId]?.let { noteColor(it.colorIndex) } ?: FN.accent
     }
 
     Box(
         Modifier
             .fillMaxSize()
-            .background(WarmPaper)
+            .background(FN.bg)
     ) {
         LazyVerticalStaggeredGrid(
             columns = StaggeredGridCells.Fixed(2),
@@ -189,8 +182,8 @@ fun HomeScreen(navController: NavHostController) {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text("Nothing here yet", style = FT.sectionTitle, color = Ink)
-                        Text("Tap + to capture something.", style = FT.bodySmall, color = Muted)
+                        Text("Nothing here yet", style = FT.sectionTitle, color = FN.text)
+                        Text("Tap + to capture something.", style = FT.bodySmall, color = FN.muted)
                     }
                 }
             }
@@ -199,8 +192,7 @@ fun HomeScreen(navController: NavHostController) {
                 notes.forEach { entry ->
                     val blocks = decodeBlocks(entry.note.blocksJson)
                     val kind = noteCardKind(entry.note, blocks)
-                    val wide = kind == com.fieldnotes.app.ui.components.NoteCardKind.HERO ||
-                        kind == com.fieldnotes.app.ui.components.NoteCardKind.AUDIO
+                    val wide = kind == com.fieldnotes.app.ui.components.NoteCardKind.HERO
                     val card: @Composable () -> Unit = {
                         HomeNoteCard(
                             entry = entry,
@@ -277,21 +269,21 @@ private fun HeaderRow(noteCount: Int, initial: String, onAvatar: () -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(TimeFormat.greeting(hour), style = FT.greeting, color = Ink)
+            Text(TimeFormat.greeting(hour), style = FT.greeting, color = FN.text)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(today, style = FT.monoTiny, color = Muted)
-                ColoredDot(DotGray, size = 3.dp)
-                Text("$noteCount notes", style = FT.monoTiny, color = Muted)
+                Text(today, style = FT.monoTiny, color = FN.muted)
+                ColoredDot(FN.dotGray, size = 3.dp)
+                Text("$noteCount notes", style = FT.monoTiny, color = FN.muted)
             }
         }
         Box(Modifier.size(44.dp)) {
             Surface(
                 shape = CircleShape,
-                color = CardWhite,
-                border = BorderStroke(1.dp, Line),
+                color = FN.surface,
+                border = BorderStroke(1.dp, FN.line),
                 shadowElevation = 2.dp,
                 modifier = Modifier.fillMaxSize()
             ) {
@@ -300,7 +292,7 @@ private fun HeaderRow(noteCount: Int, initial: String, onAvatar: () -> Unit) {
                         .clickable(onClick = onAvatar),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(initial, style = FT.cardTitle.copy(fontSize = 17.sp), color = Ink)
+                    Text(initial, style = FT.cardTitle.copy(fontSize = 17.sp), color = FN.text)
                 }
             }
             Box(
@@ -309,7 +301,7 @@ private fun HeaderRow(noteCount: Int, initial: String, onAvatar: () -> Unit) {
                     .offset(x = (-2).dp, y = 2.dp)
                     .size(10.dp)
                     .clip(CircleShape)
-                    .background(Accent)
+                    .background(FN.accent)
             )
         }
     }
@@ -319,8 +311,8 @@ private fun HeaderRow(noteCount: Int, initial: String, onAvatar: () -> Unit) {
 private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(50),
-        color = CardWhite,
-        border = BorderStroke(1.dp, Line),
+        color = FN.surface,
+        border = BorderStroke(1.dp, FN.line),
         shadowElevation = 2.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -334,21 +326,21 @@ private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit) {
             Icon(
                 imageVector = Icons.Outlined.Search,
                 contentDescription = null,
-                tint = Muted,
+                tint = FN.muted,
                 modifier = Modifier.size(18.dp)
             )
             Text(
                 text = "Search notes, tags, sketches…",
                 style = FT.bodySmall.copy(fontSize = 13.5.sp),
-                color = Muted,
+                color = FN.muted,
                 modifier = Modifier.weight(1f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Surface(
                 shape = RoundedCornerShape(50),
-                color = WarmPaper,
-                border = BorderStroke(1.dp, Line)
+                color = FN.bg,
+                border = BorderStroke(1.dp, FN.line)
             ) {
                 Row(
                     Modifier
@@ -360,10 +352,10 @@ private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit) {
                     Icon(
                         imageVector = Icons.Outlined.Tune,
                         contentDescription = null,
-                        tint = InkSoft,
+                        tint = FN.textSoft,
                         modifier = Modifier.size(13.dp)
                     )
-                    Text("Filters", style = FT.chipSmall, color = InkSoft)
+                    Text("Filters", style = FT.chipSmall, color = FN.textSoft)
                 }
             }
         }
@@ -374,8 +366,8 @@ private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit) {
 private fun GridListToggle(gridMode: Boolean, onGrid: () -> Unit, onList: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(50),
-        color = CardWhite,
-        border = BorderStroke(1.dp, Line)
+        color = FN.surface,
+        border = BorderStroke(1.dp, FN.line)
     ) {
         Row(
             Modifier.padding(3.dp),
@@ -398,7 +390,7 @@ private fun SegToggleLabel(
     Row(
         Modifier
             .clip(RoundedCornerShape(50))
-            .background(if (selected) Ink else Color.Transparent)
+            .background(if (selected) FN.strong else Color.Transparent)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -407,13 +399,13 @@ private fun SegToggleLabel(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = if (selected) CardWhite else Muted,
+            tint = if (selected) FN.onStrong else FN.muted,
             modifier = Modifier.size(14.dp)
         )
         Text(
             label,
             style = FT.chip.copy(fontSize = 11.sp),
-            color = if (selected) CardWhite else Muted
+            color = if (selected) FN.onStrong else FN.muted
         )
     }
 }
@@ -439,7 +431,7 @@ private fun FilterSheet(
                 .padding(bottom = 30.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text("Filters", style = FT.sectionTitle, color = Ink)
+            Text("Filters", style = FT.sectionTitle, color = FN.text)
             SectionLabel("Sort by")
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 listOf(
@@ -472,14 +464,14 @@ private fun FilterSheet(
                 Text(
                     "Reset",
                     style = FT.button,
-                    color = Muted,
+                    color = FN.muted,
                     modifier = Modifier.clickable(onClick = onReset)
                 )
                 Spacer(Modifier.size(20.dp))
                 Text(
                     "Done",
                     style = FT.button,
-                    color = Ink,
+                    color = FN.text,
                     modifier = Modifier.clickable(onClick = onDismiss)
                 )
             }
@@ -509,7 +501,7 @@ private fun NoteActionSheet(
             Text(
                 entry.note.title.ifBlank { "Untitled" },
                 style = FT.sectionTitle,
-                color = Ink,
+                color = FN.text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -517,12 +509,12 @@ private fun NoteActionSheet(
             SheetAction(
                 icon = Icons.Outlined.PushPin,
                 label = if (entry.note.pinned) "Unpin note" else "Pin note",
-                tint = Ink
+                tint = FN.text
             ) {
                 onPin()
                 onDismiss()
             }
-            SheetAction(icon = Icons.Outlined.Delete, label = "Delete note", tint = Accent) {
+            SheetAction(icon = Icons.Outlined.Delete, label = "Delete note", tint = FN.accent) {
                 confirmDelete = true
             }
         }
@@ -530,12 +522,12 @@ private fun NoteActionSheet(
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text("Delete note?", style = FT.sectionTitle, color = Ink) },
+            title = { Text("Delete note?", style = FT.sectionTitle, color = FN.text) },
             text = {
                 Text(
                     "“${entry.note.title.ifBlank { "Untitled" }}” will be removed permanently.",
                     style = FT.body,
-                    color = InkSoft
+                    color = FN.textSoft
                 )
             },
             confirmButton = {
@@ -544,12 +536,12 @@ private fun NoteActionSheet(
                     onDelete()
                     onDismiss()
                 }) {
-                    Text("Delete", color = Accent)
+                    Text("Delete", color = FN.accent)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { confirmDelete = false }) {
-                    Text("Cancel", color = InkSoft)
+                    Text("Cancel", color = FN.textSoft)
                 }
             }
         )

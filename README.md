@@ -14,7 +14,7 @@ Library, Settings).
 | **Home** | Time-based greeting, live note count, search entry, All/Pinned chips, Grid (staggered) / List toggle, pinned hero cards, checklist cards with tappable checkboxes + progress, audio cards with real playback waveform, quote & recipe cards, long-press → pin/delete, filters sheet (sort + tag filter) |
 | **Editor** | Block-based editor: paragraphs, headings, highlight callouts, interactive checklists, images (photo picker), voice memo blocks (real recording), bold toggle, tags, note color, folder, pin, delete, share as Markdown, debounced autosave |
 | **Library** | Folder cards with live counts, tags with usage counts, recent activity, All/Recent/Favorites filters, note list per folder |
-| **Quick** | Intentionally empty — reserved for a future capture hub |
+| **Reminder** | Upcoming list plus a mini month calendar (dotted on busy days), reminders with date & time, one-tap add-to-calendar |
 | **Settings** | Local profile (editable name), appearance/language (visual), functional haptics & reduce-motion toggles, default capture, audio bitrate, notification permission, biometric app lock, clear cache, **export all notes as ZIP (Markdown + JSON + media)**, erase everything |
 
 ## Try it
@@ -42,7 +42,7 @@ leaving the app. The app ships with no demo content.
 ## Scope notes (v1)
 
 Placeholder / intentionally simple:
-- **Quick** tab is an empty canvas for now
+- Reminder tab: upcoming list + mini calendar with add-to-calendar handoff
 - **Sketch** capture and the **Scan** / **AI assistant** ideas from the mockups were cut per scope decision
 - Appearance is light-only; language is English (US); "Sync" is local-only by design
 - Notes with audio blocks you recorded play fully; anything without a real file shows a friendly hint

@@ -1,5 +1,6 @@
 package com.fieldnotes.app.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.BarChart
-import androidx.compose.material.icons.outlined.Bolt
+import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
@@ -28,14 +29,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fieldnotes.app.ui.theme.CardWhite
+import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
-import com.fieldnotes.app.ui.theme.Ink
-import com.fieldnotes.app.ui.theme.Muted
 
 enum class TopLevelTab(val route: String, val label: String, val icon: ImageVector) {
     HOME("home", "Home", Icons.Outlined.Home),
-    QUICK("quick", "Quick", Icons.Outlined.Bolt),
+    REMINDER("quick", "Reminder", Icons.Outlined.Event),
     LIBRARY("library", "Library", Icons.Outlined.BarChart),
     SETTINGS("settings", "Settings", Icons.Outlined.Settings)
 }
@@ -57,12 +56,13 @@ fun PillBottomBar(
     ) {
         Surface(
             shape = CircleShape,
-            color = Ink,
+            color = FN.strong,
+            border = BorderStroke(1.dp, FN.line),
             shadowElevation = 10.dp,
             modifier = Modifier.weight(1f)
         ) {
             Row(
-                Modifier.padding(6.dp),
+                Modifier.padding(5.dp),
                 horizontalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 TopLevelTab.entries.forEach { tab ->
@@ -70,35 +70,36 @@ fun PillBottomBar(
                     Row(
                         modifier = Modifier
                             .clip(CircleShape)
-                            .background(if (selected) CardWhite else Color.Transparent)
+                            .background(if (selected) FN.onStrong else Color.Transparent)
                             .clickable { onSelect(tab.route) }
-                            .padding(horizontal = 13.dp, vertical = 12.dp),
+                            .padding(horizontal = 12.dp, vertical = 11.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Icon(
                             imageVector = tab.icon,
                             contentDescription = tab.label,
-                            tint = if (selected) Ink else Muted,
-                            modifier = Modifier.size(21.dp)
+                            tint = if (selected) FN.inkFixed else FN.onStrong.copy(alpha = 0.6f),
+                            modifier = Modifier.size(20.dp)
                         )
                         if (selected) {
                             Text(
                                 text = tab.label,
-                                style = FT.cardTitle.copy(fontSize = 13.sp),
-                                color = Ink
+                                style = FT.cardTitle.copy(fontSize = 12.sp),
+                                color = FN.inkFixed
                             )
                         }
                     }
                 }
             }
         }
-        Spacer(Modifier.width(10.dp))
+        Spacer(Modifier.width(8.dp))
         Surface(
             shape = CircleShape,
-            color = Ink,
+            color = FN.strong,
+            border = BorderStroke(1.dp, FN.line),
             shadowElevation = 10.dp,
-            modifier = Modifier.size(64.dp)
+            modifier = Modifier.size(52.dp)
         ) {
             Box(
                 Modifier.clickable(onClick = onFab),
@@ -107,8 +108,8 @@ fun PillBottomBar(
                 Icon(
                     imageVector = Icons.Outlined.Add,
                     contentDescription = "New note",
-                    tint = CardWhite,
-                    modifier = Modifier.size(26.dp)
+                    tint = FN.onStrong,
+                    modifier = Modifier.size(21.dp)
                 )
             }
         }

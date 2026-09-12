@@ -68,17 +68,8 @@ import com.fieldnotes.app.ui.components.ListRowNote
 import com.fieldnotes.app.ui.components.PillChip
 import com.fieldnotes.app.ui.components.SectionLabel
 import com.fieldnotes.app.ui.components.TagChipView
-import com.fieldnotes.app.ui.theme.Accent
-import com.fieldnotes.app.ui.theme.Butter
-import com.fieldnotes.app.ui.theme.CardWhite
-import com.fieldnotes.app.ui.theme.DotGray
+import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
-import com.fieldnotes.app.ui.theme.Ink
-import com.fieldnotes.app.ui.theme.InkSoft
-import com.fieldnotes.app.ui.theme.Line
-import com.fieldnotes.app.ui.theme.Muted
-import com.fieldnotes.app.ui.theme.Sage
-import com.fieldnotes.app.ui.theme.WarmPaper
 import com.fieldnotes.app.ui.theme.noteColor
 import com.fieldnotes.app.util.TimeFormat
 import kotlinx.coroutines.launch
@@ -103,7 +94,7 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
     Column(
         Modifier
             .fillMaxSize()
-            .background(WarmPaper)
+            .background(FN.bg)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
@@ -118,18 +109,18 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Library", style = FT.screenTitle, color = Ink)
+                Text("Library", style = FT.screenTitle, color = FN.text)
                 Text(
                     "${folders.size} folders • $noteCount notes",
                     style = FT.bodySmall.copy(fontSize = 13.sp),
-                    color = Muted
+                    color = FN.muted
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 CircleIconButton(Icons.Outlined.Search, "Search") {
                     navController.navigate("search")
                 }
-                CircleIconButton(Icons.Outlined.Add, "New note", background = Ink, tint = CardWhite) {
+                CircleIconButton(Icons.Outlined.Add, "New note", background = FN.strong, tint = FN.onStrong) {
                     onCreateNote()
                 }
             }
@@ -170,7 +161,7 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
         if (tab != LibraryTab.FAVORITES) {
             Surface(
                 shape = RoundedCornerShape(24.dp),
-                color = CardWhite,
+                color = FN.surface,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -182,17 +173,17 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Tags", style = FT.sectionTitle, color = Ink)
+                        Text("Tags", style = FT.sectionTitle, color = FN.text)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(2.dp),
                             modifier = Modifier.clickable { showAllTags = true }
                         ) {
-                            Text("View all", style = FT.chipSmall, color = Muted)
+                            Text("View all", style = FT.chipSmall, color = FN.muted)
                             Icon(
                                 Icons.Outlined.ChevronRight,
                                 contentDescription = null,
-                                tint = Muted,
+                                tint = FN.muted,
                                 modifier = Modifier.size(14.dp)
                             )
                         }
@@ -210,7 +201,7 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
 
             Surface(
                 shape = RoundedCornerShape(24.dp),
-                color = CardWhite,
+                color = FN.surface,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -222,8 +213,8 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Recent activity", style = FT.sectionTitle, color = Ink)
-                        Text("Today", style = FT.monoTiny, color = DotGray)
+                        Text("Recent activity", style = FT.sectionTitle, color = FN.text)
+                        Text("Today", style = FT.monoTiny, color = FN.dotGray)
                     }
                     allNotes.take(4).forEach { entry ->
                         ActivityRow(
@@ -245,13 +236,13 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
                 Text(
                     if (tab == LibraryTab.FAVORITES) "Pin notes to find them here." else "No notes yet.",
                     style = FT.bodySmall,
-                    color = Muted
+                    color = FN.muted
                 )
             }
             visibleNotes.forEach { entry ->
                 ListRowNote(
                     entry = entry,
-                    dotColor = Accent,
+                    dotColor = FN.accent,
                     onOpen = { navController.navigate("editor/${entry.note.id}") },
                     onLongPress = { deleteTarget = entry }
                 )
@@ -271,7 +262,7 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
                     .padding(bottom = 30.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("All tags", style = FT.sectionTitle, color = Ink)
+                Text("All tags", style = FT.sectionTitle, color = FN.text)
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(7.dp),
                     verticalArrangement = Arrangement.spacedBy(7.dp)
@@ -290,12 +281,12 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
     deleteTarget?.let { entry ->
         AlertDialog(
             onDismissRequest = { deleteTarget = null },
-            title = { Text("Remove note?", style = FT.sectionTitle, color = Ink) },
+            title = { Text("Remove note?", style = FT.sectionTitle, color = FN.text) },
             text = {
                 Text(
                     "“${entry.note.title.ifBlank { "Untitled" }}” will be deleted permanently.",
                     style = FT.body,
-                    color = InkSoft
+                    color = FN.textSoft
                 )
             },
             confirmButton = {
@@ -306,11 +297,11 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
                         scope.launch { container.noteRepository.deleteNote(target.note) }
                     }
                 }) {
-                    Text("Delete", color = Accent)
+                    Text("Delete", color = FN.accent)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { deleteTarget = null }) { Text("Cancel", color = InkSoft) }
+                TextButton(onClick = { deleteTarget = null }) { Text("Cancel", color = FN.textSoft) }
             }
         )
     }
@@ -340,23 +331,23 @@ private fun ActivityRow(
             Text(
                 entry.note.title.ifBlank { "Untitled" },
                 style = FT.cardTitle.copy(fontSize = 13.sp),
-                color = Ink,
+                color = FN.text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 "Edited ${TimeFormat.relative(entry.note.updatedAt)} • $folderName",
                 style = FT.monoTiny,
-                color = Muted,
+                color = FN.muted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
         }
-        Surface(shape = CircleShape, color = WarmPaper) {
+        Surface(shape = CircleShape, color = FN.bg) {
             Icon(
                 Icons.Outlined.ChevronRight,
                 contentDescription = null,
-                tint = Muted,
+                tint = FN.muted,
                 modifier = Modifier.padding(4.dp).size(14.dp)
             )
         }
@@ -371,7 +362,10 @@ private fun FolderCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val bg = if (folder.colorIndex == 0) CardWhite else noteColor(folder.colorIndex)
+    val pastel = folder.colorIndex != 0
+    val bg = if (pastel) noteColor(folder.colorIndex) else FN.surface
+    val ink = if (pastel) FN.inkFixed else FN.text
+    val soft = if (pastel) Color(0xFF6B665F) else FN.muted
     Surface(
         shape = RoundedCornerShape(28.dp),
         color = bg,
@@ -388,27 +382,27 @@ private fun FolderCard(
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Surface(shape = RoundedCornerShape(14.dp), color = CardWhite) {
+                Surface(shape = RoundedCornerShape(14.dp), color = FN.onStrong) {
                     Box(Modifier.padding(9.dp)) {
                         Icon(
                             imageVector = folderIcon(folder.iconKey),
                             contentDescription = null,
-                            tint = Ink,
+                            tint = FN.inkFixed,
                             modifier = Modifier.size(19.dp)
                         )
                     }
                 }
                 ColoredDot(
-                    if (count > 0) Accent else DotGray,
+                    if (count > 0) FN.accent else FN.dotGray,
                     size = 8.dp,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
-            Text(folder.name, style = FT.sectionTitle.copy(fontSize = 19.sp), color = Ink)
+            Text(folder.name, style = FT.sectionTitle.copy(fontSize = 19.sp), color = FN.text)
             Text(
                 if (lastUpdated > 0) "Updated ${TimeFormat.relative(lastUpdated)}" else "No activity yet",
                 style = FT.bodySmall.copy(fontSize = 11.5.sp),
-                color = InkSoft.copy(alpha = 0.75f),
+                color = soft.copy(alpha = 0.9f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -421,20 +415,20 @@ private fun FolderCard(
                     Text(
                         count.toString(),
                         style = FT.statNumber.copy(fontSize = 26.sp),
-                        color = Ink
+                        color = ink
                     )
                     Text(
                         "notes",
                         style = FT.monoTiny,
-                        color = InkSoft.copy(alpha = 0.5f),
+                        color = soft.copy(alpha = 0.6f),
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
                 }
-                Surface(shape = CircleShape, color = CardWhite.copy(alpha = 0.7f)) {
+                Surface(shape = CircleShape, color = FN.onStrong.copy(alpha = 0.7f)) {
                     Icon(
                         Icons.Outlined.ChevronRight,
                         contentDescription = "Open",
-                        tint = Ink,
+                        tint = FN.inkFixed,
                         modifier = Modifier.padding(6.dp).size(14.dp)
                     )
                 }

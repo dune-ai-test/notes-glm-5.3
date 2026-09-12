@@ -1,5 +1,7 @@
 package com.fieldnotes.app.ui.settings
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -32,6 +34,7 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.GraphicEq
 import androidx.compose.material.icons.outlined.HelpOutline
@@ -80,21 +83,8 @@ import com.fieldnotes.app.data.repo.AppSettings
 import com.fieldnotes.app.di.LocalAppContainer
 import com.fieldnotes.app.ui.components.CircleIconButton
 import com.fieldnotes.app.ui.components.SectionLabel
-import com.fieldnotes.app.ui.theme.Accent
-import com.fieldnotes.app.ui.theme.Butter
-import com.fieldnotes.app.ui.theme.CardWhite
-import com.fieldnotes.app.ui.theme.DotGray
+import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
-import com.fieldnotes.app.ui.theme.Ink
-import com.fieldnotes.app.ui.theme.InkCard
-import com.fieldnotes.app.ui.theme.InkSoft
-import com.fieldnotes.app.ui.theme.Line
-import com.fieldnotes.app.ui.theme.Lilac
-import com.fieldnotes.app.ui.theme.Muted
-import com.fieldnotes.app.ui.theme.Peach
-import com.fieldnotes.app.ui.theme.Sage
-import com.fieldnotes.app.ui.theme.Sky
-import com.fieldnotes.app.ui.theme.WarmPaper
 import com.fieldnotes.app.util.TimeFormat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -107,14 +97,17 @@ fun SettingsScreen() {
     )
     val settings by vm.settings.collectAsStateWithLifecycle()
     val noteCount by vm.noteCount.collectAsStateWithLifecycle()
+    val memoCount by vm.memoCount.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
     var showNameDialog by remember { mutableStateOf(false) }
-    var showCaptureDialog by remember { mutableStateOf(false) }
     var showQualityDialog by remember { mutableStateOf(false) }
     var showEraseDialog by remember { mutableStateOf(false) }
-    var appearanceMenu by remember { mutableStateOf(false) }
+    var showAppearanceDialog by remember { mutableStateOf(false) }
+    var showLanguageDialog by remember { mutableStateOf(false) }
+    var showHelpDialog by remember { mutableStateOf(false) }
+    var showWhatsNewDialog by remember { mutableStateOf(false) }
     var syncing by remember { mutableStateOf(false) }
 
     val cacheSize by produceState(initialValue = 0L) {
@@ -126,11 +119,23 @@ fun SettingsScreen() {
     ) { uri ->
         if (uri != null) {
             vm.exportAll(uri) { ok ->
+                container.playChime()
                 Toast.makeText(
                     context,
                     if (ok) "Backup exported" else "Export failed",
                     Toast.LENGTH_SHORT
                 ).show()
+            }
+        }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            vm.importBackup(uri) { ok, message ->
+                if (ok) container.playChime()
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -149,7 +154,7 @@ fun SettingsScreen() {
     Column(
         Modifier
             .fillMaxSize()
-            .background(WarmPaper)
+            .background(FN.bg)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
@@ -164,11 +169,11 @@ fun SettingsScreen() {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Settings", style = FT.screenTitle.copy(fontSize = 30.sp), color = Ink)
+                Text("Settings", style = FT.screenTitle.copy(fontSize = 30.sp), color = FN.text)
                 Text(
                     "${settings.userName} • Local • $noteCount notes",
                     style = FT.monoTiny,
-                    color = Muted
+                    color = FN.muted
                 )
             }
             CircleIconButton(Icons.Outlined.Search, "Search") {
@@ -177,7 +182,7 @@ fun SettingsScreen() {
         }
 
         // Profile card
-        Surface(shape = RoundedCornerShape(24.dp), color = Ink, modifier = Modifier.fillMaxWidth()) {
+        Surface(shape = RoundedCornerShape(24.dp), color = FN.strong, modifier = Modifier.fillMaxWidth()) {
             Column(
                 Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -186,17 +191,17 @@ fun SettingsScreen() {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Surface(shape = RoundedCornerShape(14.dp), color = Peach) {
+                    Surface(shape = RoundedCornerShape(14.dp), color = FN.peach) {
                         Box(Modifier.padding(12.dp)) {
                             Text(
                                 settings.userName.take(1).uppercase(),
                                 style = FT.cardTitleLarge,
-                                color = Ink
+                                color = FN.inkFixed
                             )
                         }
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text(settings.userName, style = FT.sectionTitle, color = CardWhite)
+                        Text(settings.userName, style = FT.sectionTitle, color = FN.onStrong)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -204,33 +209,34 @@ fun SettingsScreen() {
                             Icon(
                                 Icons.Outlined.CheckCircle,
                                 contentDescription = null,
-                                tint = Sage,
+                                tint = FN.sage,
                                 modifier = Modifier.size(12.dp)
                             )
                             Text(
                                 "All notes on this device • $noteCount notes",
                                 style = FT.monoTiny,
-                                color = Muted,
+                                color = FN.muted,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
                 }
-                Surface(shape = RoundedCornerShape(50), color = Color(0xFF2E2E2E)) {
+                Surface(shape = RoundedCornerShape(50), color = FN.inkCardTile) {
                     Text(
-                        if (syncing) "Syncing…" else "Sync",
+                        if (syncing) "Checking…" else "Sync",
                         style = FT.button,
-                        color = CardWhite,
+                        color = FN.onStrong,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
                                 if (!syncing) {
                                     syncing = true
                                     scope.launch {
-                                        delay(900)
+                                        delay(600)
                                         syncing = false
-                                        toast("You're up to date — everything is on this device")
+                                        container.playChime()
+                                        toast("$noteCount notes • $memoCount memos stored on this device")
                                     }
                                 }
                             }
@@ -244,7 +250,7 @@ fun SettingsScreen() {
         Section("Account") {
             SettingRow(
                 icon = Icons.Outlined.Person,
-                iconBg = Lilac,
+                iconBg = FN.lilac,
                 title = "Personal information",
                 subtitle = "Name, profile photo",
                 onClick = { showNameDialog = true }
@@ -256,81 +262,40 @@ fun SettingsScreen() {
         Section("Preferences") {
             SettingRow(
                 icon = Icons.Outlined.Palette,
-                iconBg = Lilac,
+                iconBg = FN.lilac,
                 title = "Appearance",
-                subtitle = "Light • Warm paper"
+                subtitle = when (settings.appearance) {
+                    "dark" -> "Dark"
+                    "light" -> "Light • Warm paper"
+                    else -> "System"
+                },
+                onClick = { showAppearanceDialog = true }
             ) {
-                Box {
-                    ValueChip(
-                        text = settings.appearance.replaceFirstChar { it.uppercase() },
-                        onClick = { appearanceMenu = true }
-                    )
-                    DropdownMenu(expanded = appearanceMenu, onDismissRequest = { appearanceMenu = false }) {
-                        DropdownMenuItem(
-                            text = { Text("Light • Warm paper", style = FT.bodySmall, color = Ink) },
-                            onClick = { appearanceMenu = false }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Dark — coming soon", style = FT.bodySmall, color = Muted) },
-                            onClick = { toast("Dark mode is coming soon") ; appearanceMenu = false }
-                        )
-                    }
-                }
+                Chevron()
             }
             SettingRow(
                 icon = Icons.Outlined.Language,
-                iconBg = Sky,
+                iconBg = FN.sky,
                 title = "Language",
                 subtitle = "English (US)",
-                onClick = { toast("English (US) is the only language in v1") }
+                onClick = { showLanguageDialog = true }
             ) {
                 Chevron()
             }
             SettingRow(
                 icon = Icons.Outlined.Vibration,
-                iconBg = Sage,
+                iconBg = FN.sage,
                 title = "Haptics",
                 subtitle = "Subtle feedback on capture"
             ) {
                 Toggle(settings.haptics) { vm.setHaptics(it) }
             }
-            SettingRow(
-                icon = Icons.Outlined.Accessibility,
-                iconBg = Sky,
-                title = "Reduce motion",
-                subtitle = "Minimize animations"
-            ) {
-                Toggle(settings.reduceMotion) { vm.setReduceMotion(it) }
-            }
         }
 
-        Section("Capture & Play") {
-            SettingRow(
-                icon = Icons.Outlined.PhotoCamera,
-                iconBg = Peach,
-                title = "Default capture",
-                subtitle = "Used by the Quick tab"
-            ) {
-                ValueChip(
-                    text = when (settings.defaultCapture) {
-                        "text" -> "Text"
-                        "photo" -> "Photo"
-                        else -> "Voice"
-                    },
-                    onClick = { showCaptureDialog = true }
-                )
-            }
-            SettingRow(
-                icon = Icons.Outlined.Mic,
-                iconBg = Sage,
-                title = "Auto-transcribe",
-                subtitle = "Turn voice into searchable notes — soon"
-            ) {
-                Toggle(settings.autoTranscribe) { vm.setAutoTranscribe(it) }
-            }
+        Section("Audio") {
             SettingRow(
                 icon = Icons.Outlined.GraphicEq,
-                iconBg = Butter,
+                iconBg = FN.butter,
                 title = "Audio quality",
                 subtitle = if (settings.audioQuality == "high") "High • 256 kbps" else "Standard • 128 kbps"
             ) {
@@ -344,7 +309,7 @@ fun SettingsScreen() {
         Section("Notifications") {
             SettingRow(
                 icon = Icons.Outlined.Notifications,
-                iconBg = Lilac,
+                iconBg = FN.lilac,
                 title = "Push notifications",
                 subtitle = "Reminders & mentions"
             ) {
@@ -358,7 +323,7 @@ fun SettingsScreen() {
             }
             SettingRow(
                 icon = Icons.Outlined.VolumeUp,
-                iconBg = Butter,
+                iconBg = FN.butter,
                 title = "Sounds",
                 subtitle = "Playback ticks & success chimes"
             ) {
@@ -369,7 +334,7 @@ fun SettingsScreen() {
         Section("Privacy & Data") {
             SettingRow(
                 icon = Icons.Outlined.Fingerprint,
-                iconBg = Lilac,
+                iconBg = FN.lilac,
                 title = "Biometric lock",
                 subtitle = "Require unlock on open"
             ) {
@@ -383,7 +348,7 @@ fun SettingsScreen() {
             }
             SettingRow(
                 icon = Icons.Outlined.DeleteSweep,
-                iconBg = Sky,
+                iconBg = FN.sky,
                 title = "Clear cache",
                 subtitle = "${formatBytes(cacheSize)} • Previews & temp files"
             ) {
@@ -391,39 +356,56 @@ fun SettingsScreen() {
             }
             SettingRow(
                 icon = Icons.Outlined.UploadFile,
-                iconBg = Sage,
+                iconBg = FN.sage,
                 title = "Export all notes",
                 subtitle = "ZIP • Markdown + media"
             ) {
                 ValueChip(text = "Export") { exportLauncher.launch("field-notes-backup.zip") }
+            }
+            SettingRow(
+                icon = Icons.Outlined.Download,
+                iconBg = FN.sky,
+                title = "Import backup",
+                subtitle = "Restore from a Field Notes ZIP"
+            ) {
+                ValueChip(text = "Import") {
+                    importLauncher.launch(arrayOf("application/zip"))
+                }
             }
         }
 
         Section("More") {
             SettingRow(
                 icon = Icons.Outlined.HelpOutline,
-                iconBg = Sky,
+                iconBg = FN.sky,
                 title = "Help & guides",
-                subtitle = "Tutorials, shortcuts, FAQs",
-                onClick = { toast("Help center is coming soon") }
+                subtitle = "Tips, shortcuts, how it works",
+                onClick = { showHelpDialog = true }
             ) {
                 Chevron()
             }
             SettingRow(
                 icon = Icons.Outlined.CardGiftcard,
-                iconBg = Peach,
+                iconBg = FN.peach,
                 title = "What's new",
-                subtitle = "v1.0 • Capture & Play",
-                onClick = { toast("You're on the latest version") }
+                subtitle = "v1.1 • Dark mode & reminders",
+                onClick = { showWhatsNewDialog = true }
             ) {
                 Chevron()
             }
             SettingRow(
                 icon = Icons.Outlined.StarBorder,
-                iconBg = Butter,
+                iconBg = FN.butter,
                 title = "Rate the app",
                 subtitle = "Loving the capture flow?",
-                onClick = { toast("Thanks for the love!") }
+                onClick = {
+                    val intent = Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("market://details?id=com.fieldnotes.app")
+                    )
+                    runCatching { context.startActivity(intent) }
+                        .onFailure { toast("Thanks for the love!") }
+                }
             ) {
                 Chevron()
             }
@@ -442,17 +424,17 @@ fun SettingsScreen() {
                 Icon(
                     Icons.AutoMirrored.Outlined.Logout,
                     contentDescription = null,
-                    tint = Accent,
+                    tint = FN.accent,
                     modifier = Modifier.size(17.dp)
                 )
-                Text("Log out", style = FT.button, color = Accent)
+                Text("Log out", style = FT.button, color = FN.accent)
             }
             Spacer(Modifier.size(18.dp))
             CircleIconButton(
                 icon = Icons.Outlined.Delete,
                 contentDescription = "Erase all data",
                 background = Color(0xFFF7DCD3),
-                tint = Accent,
+                tint = FN.accent,
                 size = 38.dp
             ) {
                 showEraseDialog = true
@@ -464,8 +446,8 @@ fun SettingsScreen() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Text("Version 1.0 • Build 1", style = FT.monoTiny, color = DotGray)
-            Text("Privacy • Terms • Acknowledgements", style = FT.monoTiny, color = DotGray)
+            Text("Version 1.0 • Build 1", style = FT.monoTiny, color = FN.dotGray)
+            Text("Privacy • Terms • Acknowledgements", style = FT.monoTiny, color = FN.dotGray)
         }
     }
 
@@ -477,19 +459,6 @@ fun SettingsScreen() {
                 showNameDialog = false
                 vm.setUserName(it)
             }
-        )
-    }
-
-    if (showCaptureDialog) {
-        ChoiceDialog(
-            title = "Default capture",
-            options = listOf("text" to "Text", "voice" to "Voice", "photo" to "Photo"),
-            selected = settings.defaultCapture,
-            onSelect = {
-                showCaptureDialog = false
-                vm.setDefaultCapture(it)
-            },
-            onDismiss = { showCaptureDialog = false }
         )
     }
 
@@ -506,27 +475,102 @@ fun SettingsScreen() {
         )
     }
 
+    if (showAppearanceDialog) {
+        ChoiceDialog(
+            title = "Appearance",
+            options = listOf(
+                "system" to "System",
+                "light" to "Light • Warm paper",
+                "dark" to "Dark"
+            ),
+            selected = settings.appearance,
+            onSelect = {
+                showAppearanceDialog = false
+                vm.setAppearance(it)
+            },
+            onDismiss = { showAppearanceDialog = false }
+        )
+    }
+
+    if (showLanguageDialog) {
+        AlertDialog(
+            onDismissRequest = { showLanguageDialog = false },
+            title = { Text("Language", style = FT.sectionTitle, color = FN.text) },
+            text = {
+                Text(
+                    "English (US) is the only language available right now. More languages are planned.",
+                    style = FT.body,
+                    color = FN.textSoft
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showLanguageDialog = false }) { Text("OK", color = FN.text) }
+            }
+        )
+    }
+
+    if (showHelpDialog) {
+        AlertDialog(
+            onDismissRequest = { showHelpDialog = false },
+            title = { Text("How Field Notes works", style = FT.sectionTitle, color = FN.text) },
+            text = {
+                Text(
+                    "• Tap + on any screen to start a note.\n" +
+                        "• Use the editor toolbar to add checklists, images and voice memos.\n" +
+                        "• Long-press a card on Home to pin or delete it.\n" +
+                        "• Export creates a ZIP you can re-import anytime from this screen.",
+                    style = FT.body,
+                    color = FN.textSoft
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showHelpDialog = false }) { Text("Got it", color = FN.text) }
+            }
+        )
+    }
+
+    if (showWhatsNewDialog) {
+        AlertDialog(
+            onDismissRequest = { showWhatsNewDialog = false },
+            title = { Text("What's new", style = FT.sectionTitle, color = FN.text) },
+            text = {
+                Text(
+                    "v1.1\n• Dark mode (Settings → Appearance)\n" +
+                        "• Reminders with a mini calendar\n" +
+                        "• Import & export full backups\n" +
+                        "• Faster, cleaner note editor",
+                    style = FT.body,
+                    color = FN.textSoft
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showWhatsNewDialog = false }) { Text("Nice", color = FN.text) }
+            }
+        )
+    }
+
     if (showEraseDialog) {
         AlertDialog(
             onDismissRequest = { showEraseDialog = false },
-            title = { Text("Erase everything?", style = FT.sectionTitle, color = Ink) },
+            title = { Text("Erase everything?", style = FT.sectionTitle, color = FN.text) },
             text = {
                 Text(
                     "All notes, memos and settings will be wiped permanently. This can't be undone.",
                     style = FT.body,
-                    color = InkSoft
+                    color = FN.textSoft
                 )
             },
             confirmButton = {
                 TextButton(onClick = {
                     showEraseDialog = false
+                    container.playChime()
                     vm.wipeAll { toast("Everything erased") }
                 }) {
-                    Text("Erase", color = Accent)
+                    Text("Erase", color = FN.accent)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showEraseDialog = false }) { Text("Cancel", color = InkSoft) }
+                TextButton(onClick = { showEraseDialog = false }) { Text("Cancel", color = FN.textSoft) }
             }
         )
     }
@@ -535,10 +579,10 @@ fun SettingsScreen() {
 @Composable
 private fun Section(title: String, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        SectionLabel(title, modifier = Modifier.padding(start = 6.dp), color = DotGray)
+        SectionLabel(title, modifier = Modifier.padding(start = 6.dp), color = FN.dotGray)
         Surface(
             shape = RoundedCornerShape(20.dp),
-            color = CardWhite,
+            color = FN.onStrong,
             modifier = Modifier.fillMaxWidth()
         ) {
             Column { content() }
@@ -565,18 +609,18 @@ private fun SettingRow(
     ) {
         Surface(shape = RoundedCornerShape(12.dp), color = iconBg) {
             Box(Modifier.padding(8.dp)) {
-                Icon(icon, contentDescription = null, tint = Ink, modifier = Modifier.size(17.dp))
+                Icon(icon, contentDescription = null, tint = FN.inkFixed, modifier = Modifier.size(17.dp))
             }
         }
         Column(
             Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            Text(title, style = FT.chip.copy(fontSize = 13.sp), color = Ink)
+            Text(title, style = FT.chip.copy(fontSize = 13.sp), color = FN.text)
             Text(
                 subtitle,
                 style = FT.bodySmall.copy(fontSize = 11.sp),
-                color = Muted,
+                color = FN.muted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -590,7 +634,7 @@ private fun Chevron() {
     Icon(
         Icons.Outlined.ChevronRight,
         contentDescription = null,
-        tint = DotGray,
+        tint = FN.dotGray,
         modifier = Modifier.size(16.dp)
     )
 }
@@ -601,11 +645,11 @@ private fun Toggle(checked: Boolean, onChange: (Boolean) -> Unit) {
         checked = checked,
         onCheckedChange = onChange,
         colors = SwitchDefaults.colors(
-            checkedThumbColor = CardWhite,
-            checkedTrackColor = Ink,
-            uncheckedThumbColor = CardWhite,
-            uncheckedTrackColor = Line,
-            uncheckedBorderColor = Line
+            checkedThumbColor = FN.onStrong,
+            checkedTrackColor = FN.strong,
+            uncheckedThumbColor = FN.onStrong,
+            uncheckedTrackColor = FN.line,
+            uncheckedBorderColor = FN.line
         )
     )
 }
@@ -614,13 +658,13 @@ private fun Toggle(checked: Boolean, onChange: (Boolean) -> Unit) {
 private fun ValueChip(text: String, accent: Boolean = false, onClick: (() -> Unit)? = null) {
     Surface(
         shape = RoundedCornerShape(50),
-        color = if (accent) Color(0xFFF7DCD3) else WarmPaper,
-        border = androidx.compose.foundation.BorderStroke(1.dp, if (accent) Accent else Line)
+        color = if (accent) Color(0xFFF7DCD3) else FN.bg,
+        border = androidx.compose.foundation.BorderStroke(1.dp, if (accent) FN.accent else FN.line)
     ) {
         Text(
             text,
             style = FT.monoChip,
-            color = if (accent) Accent else Ink,
+            color = if (accent) FN.accent else FN.text,
             modifier = Modifier
                 .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
                 .padding(horizontal = 11.dp, vertical = 6.dp)
@@ -633,24 +677,24 @@ private fun NameDialog(current: String, onDismiss: () -> Unit, onSave: (String) 
     var name by remember { mutableStateOf(current) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Your name", style = FT.sectionTitle, color = Ink) },
+        title = { Text("Your name", style = FT.sectionTitle, color = FN.text) },
         text = {
             BasicTextField(
                 value = name,
                 onValueChange = { name = it },
-                textStyle = FT.body.copy(color = Ink),
-                cursorBrush = androidx.compose.ui.graphics.SolidColor(Accent),
+                textStyle = FT.body.copy(color = FN.text),
+                cursorBrush = androidx.compose.ui.graphics.SolidColor(FN.accent),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(WarmPaper, RoundedCornerShape(12.dp))
+                    .background(FN.bg, RoundedCornerShape(12.dp))
                     .padding(12.dp)
             )
         },
         confirmButton = {
-            TextButton(onClick = { onSave(name) }) { Text("Save", color = Ink) }
+            TextButton(onClick = { onSave(name) }) { Text("Save", color = FN.text) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = Muted) }
+            TextButton(onClick = onDismiss) { Text("Cancel", color = FN.muted) }
         }
     )
 }
@@ -665,7 +709,7 @@ private fun ChoiceDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title, style = FT.sectionTitle, color = Ink) },
+        title = { Text(title, style = FT.sectionTitle, color = FN.text) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 options.forEach { (value, label) ->
@@ -682,21 +726,21 @@ private fun ChoiceDialog(
                             Modifier
                                 .size(18.dp)
                                 .clip(CircleShape)
-                                .background(if (value == selected) Ink else WarmPaper)
+                                .background(if (value == selected) FN.strong else FN.bg)
                                 .border(
                                     1.dp,
-                                    if (value == selected) Ink else Line,
+                                    if (value == selected) FN.strong else FN.line,
                                     CircleShape
                                 )
                         )
-                        Text(label, style = FT.body, color = if (value == selected) Ink else InkSoft)
+                        Text(label, style = FT.body, color = if (value == selected) FN.text else FN.textSoft)
                     }
                 }
             }
         },
         confirmButton = {},
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = Muted) }
+            TextButton(onClick = onDismiss) { Text("Cancel", color = FN.muted) }
         }
     )
 }

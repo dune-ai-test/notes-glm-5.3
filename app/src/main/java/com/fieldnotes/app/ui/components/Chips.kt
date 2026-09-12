@@ -24,21 +24,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.fieldnotes.app.ui.theme.CardWhite
-import com.fieldnotes.app.ui.theme.DotGray
+import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
-import com.fieldnotes.app.ui.theme.Ink
-import com.fieldnotes.app.ui.theme.Line
-import com.fieldnotes.app.ui.theme.tagColor
 
 /** Uppercase mono label used for section headers, e.g. "YOUR NOTES". */
 @Composable
-fun SectionLabel(text: String, modifier: Modifier = Modifier, color: Color = DotGray) {
+fun SectionLabel(text: String, modifier: Modifier = Modifier, color: Color = Color.Unspecified) {
     Text(
         text = text.uppercase(),
         modifier = modifier,
         style = FT.monoLabel,
-        color = color
+        color = if (color.isUnspecified) FN.dotGray else color
     )
 }
 
@@ -54,7 +50,7 @@ fun PillChip(
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(50))
-            .background(if (selected) Ink else CardWhite)
+            .background(if (selected) FN.strong else FN.surface)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -64,13 +60,17 @@ fun PillChip(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = if (selected) CardWhite else Ink,
+                tint = if (selected) FN.onStrong else FN.text,
                 modifier = Modifier.size(13.dp)
             )
         }
-        Text(label, style = FT.chip, color = if (selected) CardWhite else Ink)
+        Text(label, style = FT.chip, color = if (selected) FN.onStrong else FN.text)
         if (count != null) {
-            Text(text = count.toString(), style = FT.monoTiny, color = DotGray)
+            Text(
+                text = count.toString(),
+                style = FT.monoTiny,
+                color = if (selected) FN.onStrong.copy(alpha = 0.6f) else FN.dotGray
+            )
         }
     }
 }
@@ -83,12 +83,10 @@ fun TagChipView(
     selected: Boolean = false,
     onClick: (() -> Unit)? = null
 ) {
-    val bg = tagColor(colorIndex)
-    val onColor = if (colorIndex == 6) CardWhite else Ink
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(50))
-            .background(if (selected) Ink else bg)
+            .background(if (selected) FN.strong else tagColor(colorIndex))
             .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
             .padding(horizontal = 11.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -97,7 +95,7 @@ fun TagChipView(
         Text(
             text = "#$name",
             style = FT.chip,
-            color = if (selected) CardWhite else onColor
+            color = if (selected) FN.onStrong else tagTextColor(colorIndex)
         )
     }
 }
@@ -108,13 +106,16 @@ fun CircleIconButton(
     contentDescription: String,
     modifier: Modifier = Modifier,
     size: Dp = 44.dp,
-    background: Color = CardWhite,
-    tint: Color = Ink,
+    background: Color = Color.Unspecified,
+    tint: Color = Color.Unspecified,
     onClick: () -> Unit
 ) {
+    val bgColor = if (background.isUnspecified) FN.surface else background
+    val iconTint = if (tint.isUnspecified) FN.text else tint
     Surface(
         shape = CircleShape,
-        color = background,
+        color = bgColor,
+        border = BorderStroke(1.dp, FN.line),
         shadowElevation = 2.dp,
         modifier = modifier.size(size)
     ) {
@@ -125,7 +126,7 @@ fun CircleIconButton(
             Icon(
                 imageVector = icon,
                 contentDescription = contentDescription,
-                tint = tint,
+                tint = iconTint,
                 modifier = Modifier.size(19.dp)
             )
         }
@@ -146,15 +147,15 @@ fun ColoredDot(color: Color, modifier: Modifier = Modifier, size: Dp = 8.dp) {
 fun MetaPill(text: String, modifier: Modifier = Modifier) {
     Surface(
         shape = RoundedCornerShape(50),
-        color = CardWhite,
-        border = BorderStroke(1.dp, Line),
+        color = FN.surface,
+        border = BorderStroke(1.dp, FN.line),
         modifier = modifier
     ) {
         Text(
             text = text,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
             style = FT.monoTiny,
-            color = DotGray
+            color = FN.dotGray
         )
     }
 }
@@ -166,12 +167,12 @@ fun MiniCheckbox(done: Boolean, onToggle: (() -> Unit)? = null) {
         modifier = Modifier
             .size(16.dp)
             .clip(RoundedCornerShape(4.dp))
-            .background(if (done) Ink else CardWhite)
+            .background(if (done) FN.strong else FN.surface)
             .then(
                 if (done) {
                     Modifier
                 } else {
-                    Modifier.border(BorderStroke(1.dp, Line), RoundedCornerShape(4.dp))
+                    Modifier.border(BorderStroke(1.dp, FN.line), RoundedCornerShape(4.dp))
                 }
             )
             .then(
@@ -183,7 +184,7 @@ fun MiniCheckbox(done: Boolean, onToggle: (() -> Unit)? = null) {
             Icon(
                 imageVector = Icons.Filled.Check,
                 contentDescription = null,
-                tint = CardWhite,
+                tint = FN.onStrong,
                 modifier = Modifier.size(10.dp)
             )
         }

@@ -43,13 +43,12 @@ import com.fieldnotes.app.data.repo.AppSettings
 import com.fieldnotes.app.di.AppContainer
 import com.fieldnotes.app.di.LocalAppContainer
 import com.fieldnotes.app.navigation.AppRoot
-import com.fieldnotes.app.ui.theme.CardWhite
+import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
 import com.fieldnotes.app.ui.theme.FieldNotesTheme
-import com.fieldnotes.app.ui.theme.Ink
 import com.fieldnotes.app.ui.theme.LocalHapticsEnabled
 import com.fieldnotes.app.ui.theme.LocalReducedMotion
-import com.fieldnotes.app.ui.theme.WarmPaper
+import com.fieldnotes.app.ui.theme.rememberDarkTheme
 
 class MainActivity : FragmentActivity() {
 
@@ -65,7 +64,7 @@ class MainActivity : FragmentActivity() {
                 LocalHapticsEnabled provides settings.haptics,
                 LocalReducedMotion provides settings.reduceMotion
             ) {
-                FieldNotesTheme {
+                FieldNotesTheme(dark = rememberDarkTheme(settings.appearance)) {
                     LockGate(enabled = settings.biometricLock && container.biometricAvailable) {
                         AppRoot(container)
                     }
@@ -133,12 +132,12 @@ private fun LockScreen(onUnlock: () -> Unit) {
     Column(
         Modifier
             .fillMaxSize()
-            .background(WarmPaper)
+            .background(FN.bg)
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Surface(shape = CircleShape, color = Ink, modifier = Modifier.size(84.dp)) {
+        Surface(shape = CircleShape, color = FN.strong, modifier = Modifier.size(84.dp)) {
             Column(
                 Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -147,29 +146,29 @@ private fun LockScreen(onUnlock: () -> Unit) {
                 Icon(
                     imageVector = Icons.Outlined.Fingerprint,
                     contentDescription = null,
-                    tint = CardWhite,
+                    tint = FN.onStrong,
                     modifier = Modifier.size(34.dp)
                 )
             }
         }
         Spacer(Modifier.height(20.dp))
-        Text("Field Notes is locked", style = FT.sectionTitle, color = Ink)
+        Text("Field Notes is locked", style = FT.sectionTitle, color = FN.text)
         Spacer(Modifier.height(8.dp))
         Text(
             "Authenticate to open your notes",
             style = FT.bodySmall,
-            color = com.fieldnotes.app.ui.theme.Muted
+            color = FN.muted
         )
         Spacer(Modifier.height(24.dp))
         Surface(
             shape = RoundedCornerShape(50),
-            color = Ink,
+            color = FN.strong,
             modifier = Modifier.padding(horizontal = 24.dp)
         ) {
             Text(
                 "Unlock",
                 style = FT.button,
-                color = CardWhite,
+                color = FN.onStrong,
                 modifier = Modifier
                     .clickable(onClick = onUnlock)
                     .padding(horizontal = 32.dp, vertical = 12.dp)

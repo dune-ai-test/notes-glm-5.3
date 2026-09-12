@@ -51,12 +51,8 @@ import com.fieldnotes.app.ui.components.CircleIconButton
 import com.fieldnotes.app.ui.components.ListRowNote
 import com.fieldnotes.app.ui.components.SectionLabel
 import com.fieldnotes.app.ui.components.TagChipView
-import com.fieldnotes.app.ui.theme.Accent
-import com.fieldnotes.app.ui.theme.CardWhite
+import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
-import com.fieldnotes.app.ui.theme.Ink
-import com.fieldnotes.app.ui.theme.Muted
-import com.fieldnotes.app.ui.theme.WarmPaper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -107,7 +103,7 @@ fun SearchScreen(navController: NavHostController) {
     Column(
         Modifier
             .fillMaxSize()
-            .background(WarmPaper)
+            .background(FN.bg)
             .statusBarsPadding()
     ) {
         Row(
@@ -122,7 +118,7 @@ fun SearchScreen(navController: NavHostController) {
             }
             Surface(
                 shape = CircleShape,
-                color = CardWhite,
+                color = FN.surface,
                 modifier = Modifier
                     .weight(1f)
                     .padding(vertical = 2.dp)
@@ -135,14 +131,14 @@ fun SearchScreen(navController: NavHostController) {
                     Icon(
                         Icons.Outlined.Search,
                         contentDescription = null,
-                        tint = Muted,
+                        tint = FN.muted,
                         modifier = Modifier.size(17.dp)
                     )
                     BasicTextField(
                         value = query,
                         onValueChange = vm::setQuery,
-                        textStyle = FT.body.copy(color = Ink, fontSize = 14.sp),
-                        cursorBrush = SolidColor(Accent),
+                        textStyle = FT.body.copy(color = FN.text, fontSize = 14.sp),
+                        cursorBrush = SolidColor(FN.accent),
                         modifier = Modifier
                             .weight(1f)
                             .focusRequester(focusRequester),
@@ -152,7 +148,7 @@ fun SearchScreen(navController: NavHostController) {
                                     Text(
                                         "Search notes, tags, sketches…",
                                         style = FT.body.copy(fontSize = 14.sp),
-                                        color = Muted
+                                        color = FN.muted
                                     )
                                 }
                                 inner()
@@ -184,7 +180,7 @@ fun SearchScreen(navController: NavHostController) {
                     }
                 }
             }
-            SectionLabel("${results.size} results", color = Muted)
+            SectionLabel("${results.size} results", color = FN.muted)
         }
 
         LazyColumn(
@@ -205,7 +201,7 @@ fun SearchScreen(navController: NavHostController) {
                         Text(
                             if (query.isBlank()) "Type to search your notes." else "No matches found.",
                             style = FT.bodySmall,
-                            color = Muted
+                            color = FN.muted
                         )
                     }
                 }
@@ -213,7 +209,7 @@ fun SearchScreen(navController: NavHostController) {
             items(results, key = { it.note.id }) { entry ->
                 ListRowNote(
                     entry = entry,
-                    dotColor = Accent,
+                    dotColor = FN.accent,
                     onOpen = { navController.navigate("editor/${entry.note.id}") },
                     onLongPress = { }
                 )

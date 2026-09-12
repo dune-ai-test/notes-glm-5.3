@@ -51,6 +51,7 @@ class EditorViewModel(
 
     private var note: NoteEntity? = null
     private var saveJob: Job? = null
+    private var dirty = false
 
     init {
         viewModelScope.launch {
@@ -148,6 +149,16 @@ class EditorViewModel(
     }
 
     fun setTags(ids: Set<Long>) = update { it.copy(tagIds = ids) }
+
+    fun selectTag(id: Long) = update { it.copy(tagIds = it.tagIds + id) }
+
+    fun createTag(name: String, onCreated: (Long) -> Unit = {}) {
+        val trimmed = name.trim().removePrefix("#")
+        if (trimmed.isEmpty()) return
+        viewModelScope.launch {
+            onCreated(repo.createTag(trimmed, (0..5).random()))
+        }
+    }
     fun setColor(index: Int) = update { it.copy(colorIndex = index) }
     fun setPinned(value: Boolean) = update { it.copy(pinned = value) }
     fun setFolder(id: Long) = update { it.copy(folderId = id) }
@@ -167,18 +178,19 @@ class EditorViewModel(
 
     private fun update(reducer: (EditorState) -> EditorState) {
         _state.update(reducer)
-        scheduleSave()
+        markDirtyAndSchedule()
     }
 
     private fun mutateBlocks(operation: (MutableList<Block>) -> Unit) {
         val list = _state.value.blocks.toMutableList()
         operation(list)
         _state.update { it.copy(blocks = list) }
-        scheduleSave()
+        markDirtyAndSchedule()
     }
 
-    private fun scheduleSave() {
+    private fun markDirtyAndSchedule() {
         if (_state.value.loading || note == null) return
+        dirty = true
         saveJob?.cancel()
         saveJob = viewModelScope.launch {
             delay(600)
@@ -187,6 +199,7 @@ class EditorViewModel(
     }
 
     private suspend fun persist() {
+        if (!dirty) return
         val current = note ?: return
         val s = _state.value
         repo.saveNote(
@@ -199,6 +212,7 @@ class EditorViewModel(
             s.blocks,
             s.tagIds
         )
+        dirty = false
         _state.update { it.copy(updatedAt = System.currentTimeMillis()) }
     }
 }

@@ -68,6 +68,9 @@ interface TagDao {
     @Query("SELECT * FROM tags WHERE id = :id")
     suspend fun getTag(id: Long): TagEntity?
 
+    @Query("SELECT * FROM tags WHERE name = :name COLLATE NOCASE LIMIT 1")
+    suspend fun getTagByName(name: String): TagEntity?
+
     @Insert
     suspend fun insert(tag: TagEntity): Long
 
@@ -94,6 +97,9 @@ interface FolderDao {
 
     @Query("SELECT * FROM folders WHERE id = :id")
     suspend fun getFolder(id: Long): FolderEntity?
+
+    @Query("SELECT * FROM folders WHERE name = :name COLLATE NOCASE LIMIT 1")
+    suspend fun getFolderByName(name: String): FolderEntity?
 
     @Insert
     suspend fun insert(folder: FolderEntity): Long

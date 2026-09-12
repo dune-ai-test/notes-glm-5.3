@@ -27,12 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.fieldnotes.app.data.media.AudioRecorder
-import com.fieldnotes.app.ui.theme.Accent
-import com.fieldnotes.app.ui.theme.CardWhite
+import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
-import com.fieldnotes.app.ui.theme.Ink
-import com.fieldnotes.app.ui.theme.Muted
-import com.fieldnotes.app.ui.theme.WarmPaper
 import com.fieldnotes.app.util.TimeFormat
 
 @Composable
@@ -54,18 +50,18 @@ fun RecordSheet(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-            Text("Voice memo", style = FT.sectionTitle, color = Ink)
+            Text("Voice memo", style = FT.sectionTitle, color = FN.text)
             Text(
                 TimeFormat.duration(recorderState.elapsedMs),
                 style = FT.statNumber,
-                color = if (recorderState.isRecording) Accent else Ink
+                color = if (recorderState.isRecording) FN.accent else FN.text
             )
             Box(
                 Modifier
                     .fillMaxWidth()
                     .height(60.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(WarmPaper),
+                    .background(FN.surfaceAlt),
                 contentAlignment = Alignment.Center
             ) {
                 if (recorderState.isRecording) {
@@ -75,7 +71,7 @@ fun RecordSheet(
                         modifier = Modifier.padding(horizontal = 12.dp)
                     )
                 } else {
-                    Text("Tap the button to record", style = FT.bodySmall, color = Muted)
+                    Text("Tap the button to record", style = FT.bodySmall, color = FN.muted)
                 }
             }
             Row(
@@ -85,12 +81,12 @@ fun RecordSheet(
                 Text(
                     "Cancel",
                     style = FT.button,
-                    color = Muted,
+                    color = FN.muted,
                     modifier = Modifier.clickable(onClick = onDismiss)
                 )
                 Surface(
                     shape = CircleShape,
-                    color = if (recorderState.isRecording) Ink else Accent,
+                    color = if (recorderState.isRecording) FN.strong else FN.accent,
                     modifier = Modifier.size(64.dp)
                 ) {
                     Box(
@@ -102,7 +98,7 @@ fun RecordSheet(
                         Icon(
                             imageVector = Icons.Outlined.Mic,
                             contentDescription = if (recorderState.isRecording) "Stop" else "Record",
-                            tint = CardWhite,
+                            tint = FN.onStrong,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -110,7 +106,7 @@ fun RecordSheet(
                 Text(
                     "Save",
                     style = FT.button,
-                    color = if (recorderState.isRecording) Ink else Muted,
+                    color = if (recorderState.isRecording) FN.text else FN.muted,
                     modifier = Modifier.clickable(
                         enabled = recorderState.isRecording,
                         onClick = onSave

@@ -35,12 +35,8 @@ import com.fieldnotes.app.data.repo.NoteRepository
 import com.fieldnotes.app.di.LocalAppContainer
 import com.fieldnotes.app.ui.components.CircleIconButton
 import com.fieldnotes.app.ui.components.ListRowNote
-import com.fieldnotes.app.ui.theme.Accent
-import com.fieldnotes.app.ui.theme.CardWhite
+import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
-import com.fieldnotes.app.ui.theme.Ink
-import com.fieldnotes.app.ui.theme.Muted
-import com.fieldnotes.app.ui.theme.WarmPaper
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
@@ -71,7 +67,7 @@ fun FolderScreen(folderId: Long, navController: NavHostController) {
     Column(
         Modifier
             .fillMaxSize()
-            .background(WarmPaper)
+            .background(FN.bg)
             .statusBarsPadding()
     ) {
         Row(
@@ -91,11 +87,11 @@ fun FolderScreen(folderId: Long, navController: NavHostController) {
                 Text(
                     folder?.name ?: "Folder",
                     style = FT.sectionTitle.copy(fontSize = 20.sp),
-                    color = Ink
+                    color = FN.text
                 )
-                Text("${notes.size} notes", style = FT.monoTiny, color = Muted)
+                Text("${notes.size} notes", style = FT.monoTiny, color = FN.muted)
             }
-            CircleIconButton(Icons.Outlined.Add, "New note", background = Ink, tint = CardWhite) {
+            CircleIconButton(Icons.Outlined.Add, "New note", background = FN.strong, tint = FN.onStrong) {
                 scope.launch {
                     val id = container.noteRepository.createNote(
                         folderId = folderId,
@@ -120,14 +116,14 @@ fun FolderScreen(folderId: Long, navController: NavHostController) {
                             .padding(top = 80.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Nothing in this folder yet.", style = FT.bodySmall, color = Muted)
+                        Text("Nothing in this folder yet.", style = FT.bodySmall, color = FN.muted)
                     }
                 }
             }
             items(notes, key = { it.note.id }) { entry ->
                 ListRowNote(
                     entry = entry,
-                    dotColor = Accent,
+                    dotColor = FN.accent,
                     onOpen = { navController.navigate("editor/${entry.note.id}") },
                     onLongPress = { }
                 )

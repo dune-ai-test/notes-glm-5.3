@@ -38,6 +38,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
@@ -51,11 +52,13 @@ import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.TextFields
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -102,20 +105,8 @@ import com.fieldnotes.app.ui.components.RecordSheet
 import com.fieldnotes.app.ui.components.SectionLabel
 import com.fieldnotes.app.ui.components.TagChipView
 import com.fieldnotes.app.ui.components.Waveform
-import com.fieldnotes.app.ui.theme.Accent
-import com.fieldnotes.app.ui.theme.Butter
-import com.fieldnotes.app.ui.theme.CardWhite
-import com.fieldnotes.app.ui.theme.DotGray
+import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
-import com.fieldnotes.app.ui.theme.Ink
-import com.fieldnotes.app.ui.theme.InkSoft
-import com.fieldnotes.app.ui.theme.Lilac
-import com.fieldnotes.app.ui.theme.Line
-import com.fieldnotes.app.ui.theme.Muted
-import com.fieldnotes.app.ui.theme.Peach
-import com.fieldnotes.app.ui.theme.Sage
-import com.fieldnotes.app.ui.theme.Sky
-import com.fieldnotes.app.ui.theme.WarmPaper
 import com.fieldnotes.app.ui.theme.noteColor
 import com.fieldnotes.app.util.TimeFormat
 import java.io.File
@@ -209,7 +200,7 @@ fun EditorScreen(noteId: Long, navController: NavHostController) {
         context.startActivity(Intent.createChooser(intent, "Share note"))
     }
 
-    Surface(Modifier.fillMaxSize(), color = WarmPaper) {
+    Surface(Modifier.fillMaxSize(), color = FN.bg) {
         Column(
             Modifier
                 .fillMaxSize()
@@ -226,7 +217,7 @@ fun EditorScreen(noteId: Long, navController: NavHostController) {
             when {
                 state.loading -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = Ink)
+                        CircularProgressIndicator(color = FN.text)
                     }
                 }
                 state.missing || state.kind == NoteEntity.KIND_SKETCH -> {
@@ -247,13 +238,13 @@ fun EditorScreen(noteId: Long, navController: NavHostController) {
                         BasicTextField(
                             value = state.title,
                             onValueChange = vm::setTitle,
-                            textStyle = FT.editorTitle.copy(color = Ink),
-                            cursorBrush = SolidColor(Accent),
+                            textStyle = FT.editorTitle.copy(color = FN.text),
+                            cursorBrush = SolidColor(FN.accent),
                             modifier = Modifier.fillMaxWidth(),
                             decorationBox = { inner ->
                                 Box {
                                     if (state.title.isEmpty()) {
-                                        Text("Title", style = FT.editorTitle, color = DotGray)
+                                        Text("Title", style = FT.editorTitle, color = FN.dotGray)
                                     }
                                     inner()
                                 }
@@ -293,7 +284,8 @@ fun EditorScreen(noteId: Long, navController: NavHostController) {
                                 vm.setTags(
                                     if (id in state.tagIds) state.tagIds - id else state.tagIds + id
                                 )
-                            }
+                            },
+                            onCreateTag = { name -> vm.createTag(name) { vm.selectTag(it) } }
                         )
                         Spacer(Modifier.height(90.dp))
                     }
@@ -423,13 +415,13 @@ private fun EditorTopBar(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            Text("Field Notes", style = FT.cardTitle, color = Ink, maxLines = 1)
+            Text("Field Notes", style = FT.cardTitle, color = FN.text, maxLines = 1)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(5.dp)
             ) {
-                ColoredDot(Accent, size = 5.dp)
-                Text(editedLabel, style = FT.monoTiny, color = Muted, maxLines = 1)
+                ColoredDot(FN.accent, size = 5.dp)
+                Text(editedLabel, style = FT.monoTiny, color = FN.muted, maxLines = 1)
             }
         }
         CircleTool(Icons.Outlined.Share, "Share", onShare)
@@ -442,8 +434,8 @@ private fun EditorTopBar(
 private fun CircleTool(icon: ImageVector, label: String, onClick: () -> Unit) {
     Surface(
         shape = CircleShape,
-        color = CardWhite,
-        border = BorderStroke(1.dp, Line),
+        color = FN.surface,
+        border = BorderStroke(1.dp, FN.line),
         modifier = Modifier.size(42.dp)
     ) {
         Box(
@@ -451,7 +443,7 @@ private fun CircleTool(icon: ImageVector, label: String, onClick: () -> Unit) {
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center
         ) {
-            Icon(icon, contentDescription = label, tint = Ink, modifier = Modifier.size(18.dp))
+            Icon(icon, contentDescription = label, tint = FN.text, modifier = Modifier.size(18.dp))
         }
     }
 }
@@ -465,26 +457,26 @@ private fun SketchPlaceholder(onBack: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Surface(shape = RoundedCornerShape(24.dp), color = Butter) {
+        Surface(shape = RoundedCornerShape(24.dp), color = FN.butter) {
             Box(Modifier.padding(22.dp)) {
                 Icon(
                     imageVector = Icons.Outlined.Edit,
                     contentDescription = null,
-                    tint = Ink,
+                    tint = FN.text,
                     modifier = Modifier.size(30.dp)
                 )
             }
         }
         Spacer(Modifier.height(16.dp))
-        Text("Sketching is coming soon", style = FT.sectionTitle, color = Ink)
+        Text("Sketching is coming soon", style = FT.sectionTitle, color = FN.text)
         Spacer(Modifier.height(6.dp))
         Text(
             "This note is a sketch. Finger drawing arrives in a later update.",
             style = FT.bodySmall,
-            color = Muted
+            color = FN.muted
         )
         Spacer(Modifier.height(20.dp))
-        Text("Go back", style = FT.button, color = Accent, modifier = Modifier.clickable(onClick = onBack))
+        Text("Go back", style = FT.button, color = FN.accent, modifier = Modifier.clickable(onClick = onBack))
     }
 }
 
@@ -523,7 +515,7 @@ private fun BlockEditor(
         )
         is Block.Highlight -> Surface(
             shape = RoundedCornerShape(14.dp),
-            color = Butter,
+            color = FN.butter,
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -535,15 +527,15 @@ private fun BlockEditor(
                         Icon(
                             imageVector = Icons.Outlined.MenuBook,
                             contentDescription = null,
-                            tint = Ink,
+                            tint = FN.text,
                             modifier = Modifier.size(12.dp)
                         )
-                        Text("HIGHLIGHT", style = FT.monoBadge, color = Ink)
+                        Text("HIGHLIGHT", style = FT.monoBadge, color = FN.text)
                     }
                     Icon(
                         imageVector = Icons.Outlined.Close,
                         contentDescription = "Remove",
-                        tint = Ink.copy(alpha = 0.4f),
+                        tint = FN.inkFixed.copy(alpha = 0.4f),
                         modifier = Modifier
                             .size(14.dp)
                             .clickable(onClick = onRemove)
@@ -572,9 +564,9 @@ private fun BlockEditor(
                         value = item.text,
                         onValueChange = { onChecklistText(itemIndex, it) },
                         textStyle = FT.bodySmall.copy(
-                            color = if (item.done) Muted else Ink
+                            color = if (item.done) FN.muted else FN.text
                         ),
-                        cursorBrush = SolidColor(Accent),
+                        cursorBrush = SolidColor(FN.accent),
                         modifier = Modifier
                             .weight(1f)
                             .focusRequester(focusRequester)
@@ -582,7 +574,7 @@ private fun BlockEditor(
                         decorationBox = { inner ->
                             Box {
                                 if (item.text.isEmpty()) {
-                                    Text("List item", style = FT.bodySmall, color = DotGray)
+                                    Text("List item", style = FT.bodySmall, color = FN.dotGray)
                                 }
                                 inner()
                             }
@@ -591,7 +583,7 @@ private fun BlockEditor(
                     Icon(
                         imageVector = Icons.Outlined.Close,
                         contentDescription = "Remove item",
-                        tint = DotGray,
+                        tint = FN.dotGray,
                         modifier = Modifier
                             .size(13.dp)
                             .clickable { onChecklistRemove(itemIndex) }
@@ -605,24 +597,39 @@ private fun BlockEditor(
             ) {
                 Surface(
                     shape = RoundedCornerShape(4.dp),
-                    color = CardWhite,
-                    border = BorderStroke(1.dp, Line)
+                    color = FN.surface,
+                    border = BorderStroke(1.dp, FN.line)
                 ) {
                     Text(
                         "+",
                         style = FT.bodySmall,
-                        color = Muted,
+                        color = FN.muted,
                         modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
                     )
                 }
-                Text("Add item", style = FT.bodySmall, color = Muted)
+                Text("Add item", style = FT.bodySmall, color = FN.muted)
+            }
+            if (block.items.all { it.text.isBlank() }) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.clickable(onClick = onRemove)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Close,
+                        contentDescription = null,
+                        tint = FN.accent,
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Text("Delete empty list", style = FT.bodySmall, color = FN.accent)
+                }
             }
         }
         is Block.Image -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Surface(
                 shape = RoundedCornerShape(20.dp),
-                color = CardWhite,
-                border = BorderStroke(1.dp, Line),
+                color = FN.surface,
+                border = BorderStroke(1.dp, FN.line),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column {
@@ -640,13 +647,13 @@ private fun BlockEditor(
                                 Modifier
                                     .fillMaxWidth()
                                     .height(120.dp)
-                                    .background(WarmPaper),
+                                    .background(FN.bg),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Outlined.Image,
                                     contentDescription = null,
-                                    tint = DotGray,
+                                    tint = FN.dotGray,
                                     modifier = Modifier.size(28.dp)
                                 )
                             }
@@ -654,7 +661,7 @@ private fun BlockEditor(
                         Icon(
                             imageVector = Icons.Outlined.Close,
                             contentDescription = "Remove",
-                            tint = CardWhite,
+                            tint = FN.onStrong,
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .padding(10.dp)
@@ -665,8 +672,8 @@ private fun BlockEditor(
                     BasicTextField(
                         value = block.caption,
                         onValueChange = { onUpdate(block.copy(caption = it)) },
-                        textStyle = FT.monoTiny.copy(color = Muted),
-                        cursorBrush = SolidColor(Accent),
+                        textStyle = FT.monoTiny.copy(color = FN.muted),
+                        cursorBrush = SolidColor(FN.accent),
                         modifier = Modifier
                             .fillMaxWidth()
                             .focusRequester(focusRequester)
@@ -678,7 +685,7 @@ private fun BlockEditor(
                                     Text(
                                         "Add a caption…",
                                         style = FT.monoTiny,
-                                        color = DotGray,
+                                        color = FN.dotGray,
                                         modifier = Modifier.padding(horizontal = 0.dp, vertical = 10.dp)
                                     )
                                 }
@@ -694,8 +701,8 @@ private fun BlockEditor(
             val active = playback.activeId == audioId
             Surface(
                 shape = RoundedCornerShape(16.dp),
-                color = CardWhite,
-                border = BorderStroke(1.dp, Line),
+                color = FN.surface,
+                border = BorderStroke(1.dp, FN.line),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -707,7 +714,7 @@ private fun BlockEditor(
                         Modifier
                             .size(44.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(Ink)
+                            .background(FN.strong)
                             .clickable { onTogglePlay(audioId, block.path) },
                         contentAlignment = Alignment.Center
                     ) {
@@ -718,7 +725,7 @@ private fun BlockEditor(
                                 Icons.Outlined.PlayArrow
                             },
                             contentDescription = if (active && playback.isPlaying) "Pause" else "Play",
-                            tint = CardWhite,
+                            tint = FN.onStrong,
                             modifier = Modifier.size(16.dp)
                         )
                     }
@@ -729,7 +736,7 @@ private fun BlockEditor(
                         Text(
                             text = block.title,
                             style = FT.cardTitleSmall.copy(fontSize = 12.sp),
-                            color = Ink,
+                            color = FN.text,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -742,12 +749,12 @@ private fun BlockEditor(
                     Text(
                         text = TimeFormat.duration(block.durationMs),
                         style = FT.monoTiny,
-                        color = Muted
+                        color = FN.muted
                     )
                     Icon(
                         imageVector = Icons.Outlined.Close,
                         contentDescription = "Remove",
-                        tint = DotGray,
+                        tint = FN.dotGray,
                         modifier = Modifier
                             .size(14.dp)
                             .clickable(onClick = onRemove)
@@ -770,8 +777,8 @@ private fun TextField(
     BasicTextField(
         value = text,
         onValueChange = onText,
-        textStyle = style.copy(color = Ink),
-        cursorBrush = SolidColor(Accent),
+        textStyle = style.copy(color = FN.text),
+        cursorBrush = SolidColor(FN.accent),
         modifier = Modifier
             .fillMaxWidth()
             .focusRequester(focusRequester)
@@ -779,7 +786,7 @@ private fun TextField(
         decorationBox = { inner ->
             Box {
                 if (text.isEmpty()) {
-                    Text(hint, style = style, color = DotGray)
+                    Text(hint, style = style, color = FN.dotGray)
                 }
                 inner()
             }
@@ -791,19 +798,21 @@ private fun TextField(
 private fun TagsCard(
     assignedIds: Set<Long>,
     allTags: List<com.fieldnotes.app.data.db.TagEntity>,
-    onToggleTag: (Long) -> Unit
+    onToggleTag: (Long) -> Unit,
+    onCreateTag: (String) -> Unit
 ) {
+    var showNewTag by remember { mutableStateOf(false) }
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = CardWhite,
-        border = BorderStroke(1.dp, Line),
+        color = FN.surface,
+        border = BorderStroke(1.dp, FN.line),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
             Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Tags", style = FT.sectionTitle, color = Ink)
+            Text("Tags", style = FT.sectionTitle, color = FN.text)
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(7.dp),
                 verticalArrangement = Arrangement.spacedBy(7.dp)
@@ -816,9 +825,74 @@ private fun TagsCard(
                         onClick = { onToggleTag(tag.id) }
                     )
                 }
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = Color.Transparent,
+                    border = BorderStroke(1.dp, FN.line)
+                ) {
+                    Row(
+                        Modifier
+                            .clickable { showNewTag = true }
+                            .padding(horizontal = 11.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Add,
+                            contentDescription = null,
+                            tint = FN.text,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text("New tag", style = FT.chip, color = FN.text)
+                    }
+                }
             }
         }
     }
+    if (showNewTag) {
+        NewTagDialog(
+            onDismiss = { showNewTag = false },
+            onCreate = { name ->
+                showNewTag = false
+                onCreateTag(name)
+            }
+        )
+    }
+}
+
+@Composable
+private fun NewTagDialog(onDismiss: () -> Unit, onCreate: (String) -> Unit) {
+    var name by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("New tag", style = FT.sectionTitle, color = FN.text) },
+        text = {
+            BasicTextField(
+                value = name,
+                onValueChange = { name = it },
+                textStyle = FT.body.copy(color = FN.text),
+                cursorBrush = SolidColor(FN.accent),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(FN.surfaceAlt, RoundedCornerShape(12.dp))
+                    .padding(12.dp),
+                decorationBox = { inner ->
+                    Box {
+                        if (name.isEmpty()) Text("e.g. recipes", style = FT.body, color = FN.muted)
+                        inner()
+                    }
+                }
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { if (name.isNotBlank()) onCreate(name) }) {
+                Text("Create", color = FN.text)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel", color = FN.muted) }
+        }
+    )
 }
 
 @Composable
@@ -833,8 +907,8 @@ private fun EditorToolbar(
 ) {
     Surface(
         shape = RoundedCornerShape(50),
-        color = CardWhite,
-        border = BorderStroke(1.dp, Line),
+        color = FN.surface,
+        border = BorderStroke(1.dp, FN.line),
         shadowElevation = 8.dp,
         modifier = Modifier
             .fillMaxWidth()
@@ -845,44 +919,61 @@ private fun EditorToolbar(
             Modifier
                 .navigationBarsPadding()
                 .padding(horizontal = 10.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            ToolIcon(Icons.Outlined.FormatBold, "Bold", if (emphasized) Accent else InkSoft, onBold)
-            ToolIcon(Icons.AutoMirrored.Outlined.FormatListBulleted, "Checklist", InkSoft, onChecklist)
-            ToolIcon(Icons.Outlined.Image, "Image", InkSoft, onImage)
+            EditorTool(Icons.Outlined.FormatBold, active = emphasized, "Bold", onBold)
+            EditorTool(
+                Icons.AutoMirrored.Outlined.FormatListBulleted,
+                active = false,
+                "Checklist",
+                onChecklist
+            )
+            EditorTool(Icons.Outlined.Image, active = false, "Image", onImage)
             Spacer(Modifier.weight(1f))
             Box(
                 Modifier
-                    .size(46.dp)
+                    .size(44.dp)
                     .clip(CircleShape)
-                    .background(Accent)
+                    .background(FN.accent)
                     .clickable(onClick = onAddBlock),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Edit,
                     contentDescription = "Add block",
-                    tint = CardWhite,
+                    tint = FN.onStrong,
                     modifier = Modifier.size(19.dp)
                 )
             }
             Spacer(Modifier.weight(1f))
-            ToolIcon(Icons.Outlined.Mic, "Record", InkSoft, onMic)
-            ToolIcon(Icons.Outlined.MoreHoriz, "More", InkSoft, onMore)
+            EditorTool(Icons.Outlined.Mic, active = false, "Record", onMic)
+            EditorTool(Icons.Outlined.MoreHoriz, active = false, "More", onMore)
         }
     }
 }
 
 @Composable
-private fun ToolIcon(icon: ImageVector, label: String, tint: Color, onClick: () -> Unit) {
+private fun EditorTool(
+    icon: ImageVector,
+    active: Boolean,
+    label: String,
+    onClick: () -> Unit
+) {
     Box(
         Modifier
-            .size(40.dp)
+            .size(38.dp)
             .clip(CircleShape)
+            .background(if (active) FN.accent.copy(alpha = 0.16f) else Color.Transparent)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(icon, contentDescription = label, tint = tint, modifier = Modifier.size(19.dp))
+        Icon(
+            icon,
+            contentDescription = label,
+            tint = if (active) FN.accent else FN.textSoft,
+            modifier = Modifier.size(19.dp)
+        )
     }
 }
 
@@ -904,7 +995,7 @@ private fun AddBlockSheet(
                 .padding(bottom = 30.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text("Add block", style = FT.sectionTitle, color = Ink)
+            Text("Add block", style = FT.sectionTitle, color = FN.text)
             Spacer(Modifier.height(6.dp))
             BlockAction(Icons.Outlined.TextFields, "Paragraph") { onAdd(Block.Paragraph()) }
             BlockAction(Icons.Outlined.MenuBook, "Heading") { onAdd(Block.Heading()) }
@@ -930,8 +1021,8 @@ private fun BlockAction(icon: ImageVector, label: String, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Icon(icon, contentDescription = null, tint = Ink, modifier = Modifier.size(19.dp))
-        Text(label, style = FT.button, color = Ink)
+        Icon(icon, contentDescription = null, tint = FN.text, modifier = Modifier.size(19.dp))
+        Text(label, style = FT.button, color = FN.text)
     }
 }
 
@@ -963,11 +1054,11 @@ private fun MoreSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Note options", style = FT.sectionTitle, color = Ink)
+                Text("Note options", style = FT.sectionTitle, color = FN.text)
                 Icon(
                     imageVector = Icons.Outlined.PushPin,
                     contentDescription = "Pin",
-                    tint = if (state.pinned) Accent else DotGray,
+                    tint = if (state.pinned) FN.accent else FN.dotGray,
                     modifier = Modifier
                         .size(20.dp)
                         .clickable(onClick = onPin)
@@ -975,7 +1066,7 @@ private fun MoreSheet(
             }
             SectionLabel("Card color")
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                listOf(CardWhite, Peach, Butter, com.fieldnotes.app.ui.theme.Sage, com.fieldnotes.app.ui.theme.Lilac, com.fieldnotes.app.ui.theme.Sky)
+                (0..5).map { noteColor(it) }
                     .forEachIndexed { index, color ->
                         val selected = state.colorIndex == index
                         Box(
@@ -985,7 +1076,7 @@ private fun MoreSheet(
                                 .background(color)
                                 .border(
                                     width = if (selected) 2.dp else 1.dp,
-                                    color = if (selected) Accent else Line,
+                                    color = if (selected) FN.accent else FN.line,
                                     shape = CircleShape
                                 )
                                 .clickable { onColor(index) }
@@ -1030,8 +1121,8 @@ private fun MoreSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(Icons.Outlined.Delete, contentDescription = null, tint = Accent, modifier = Modifier.size(19.dp))
-                Text("Delete note", style = FT.button, color = Accent)
+                Icon(Icons.Outlined.Delete, contentDescription = null, tint = FN.accent, modifier = Modifier.size(19.dp))
+                Text("Delete note", style = FT.button, color = FN.accent)
             }
         }
     }

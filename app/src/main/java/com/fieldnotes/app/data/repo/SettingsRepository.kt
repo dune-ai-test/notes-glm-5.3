@@ -71,6 +71,7 @@ class SettingsRepository(private val context: Context) {
     suspend fun setBiometricLock(value: Boolean) = edit { it[Keys.biometricLock] = value }
     suspend fun setDefaultCapture(value: String) = edit { it[Keys.defaultCapture] = value }
     suspend fun setAudioQuality(value: String) = edit { it[Keys.audioQuality] = value }
+    suspend fun setAppearance(value: String) = edit { it[Keys.appearance] = value }
 
     /** Marks today as active and returns the updated streak count. */
     suspend fun touchStreak(todayEpochDay: Long): Int {

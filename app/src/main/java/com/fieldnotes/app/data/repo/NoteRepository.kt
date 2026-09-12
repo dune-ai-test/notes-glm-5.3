@@ -22,7 +22,21 @@ class NoteRepository(private val db: AppDatabase) {
     val tagCounts: Flow<List<TagIdCount>> = db.tagDao().observeCounts()
     val memos: Flow<List<MemoEntity>> = db.memoDao().observeAll()
 
+    val reminders: Flow<List<com.fieldnotes.app.data.db.ReminderEntity>> = db.reminderDao().observeAll()
+
     fun memosSince(since: Long): Flow<Int> = db.memoDao().observeCountSince(since)
+
+    suspend fun createReminder(title: String, dueAt: Long): Long =
+        db.reminderDao().insert(
+            com.fieldnotes.app.data.db.ReminderEntity(
+                title = title,
+                dueAt = dueAt,
+                createdAt = System.currentTimeMillis()
+            )
+        )
+
+    suspend fun deleteReminder(reminder: com.fieldnotes.app.data.db.ReminderEntity) =
+        db.reminderDao().delete(reminder)
 
     fun folderNotes(folderId: Long): Flow<List<NoteWithTags>> = db.noteDao().observeFolder(folderId)
 
@@ -95,5 +109,31 @@ class NoteRepository(private val db: AppDatabase) {
         db.tagDao().clearAllTags()
         db.folderDao().clearAllFolders()
         db.memoDao().clearAllMemos()
+    }
+
+    /**
+     * Seeds the permanent starter structure: default folders and a base tag set.
+     * Runs only when the respective tables are empty (first launch or after a wipe).
+     */
+    suspend fun seedDefaultsIfEmpty() {
+        if (db.folderDao().count() == 0) {
+            listOf(
+                FolderEntity(name = "Work", iconKey = "work", colorIndex = 5),
+                FolderEntity(name = "Personal", iconKey = "heart", colorIndex = 1),
+                FolderEntity(name = "Ideas", iconKey = "bulb", colorIndex = 3),
+                FolderEntity(name = "Archive", iconKey = "archive", colorIndex = 0)
+            ).forEach { db.folderDao().insert(it) }
+        }
+        if (db.tagDao().count() == 0) {
+            listOf(
+                TagEntity(name = "work", colorIndex = 6),
+                TagEntity(name = "personal", colorIndex = 1),
+                TagEntity(name = "ideas", colorIndex = 3),
+                TagEntity(name = "travel", colorIndex = 5),
+                TagEntity(name = "reading", colorIndex = 2),
+                TagEntity(name = "recipes", colorIndex = 4),
+                TagEntity(name = "inspiration", colorIndex = 0)
+            ).forEach { db.tagDao().insert(it) }
+        }
     }
 }
