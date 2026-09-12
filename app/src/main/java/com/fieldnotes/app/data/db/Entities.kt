@@ -28,6 +28,7 @@ data class NoteEntity(
     val colorIndex: Int = 0,
     val kind: Int = KIND_TEXT,
     val pinned: Boolean = false,
+    val locked: Boolean = false,
     val sortIndex: Int = 0,
     val createdAt: Long,
     val updatedAt: Long

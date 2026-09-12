@@ -33,6 +33,7 @@ class EditorViewModel(
         val blocks: List<Block> = emptyList(),
         val tagIds: Set<Long> = emptySet(),
         val pinned: Boolean = false,
+        val locked: Boolean = false,
         val colorIndex: Int = 0,
         val folderId: Long = NoteEntity.DEFAULT_FOLDER_ID,
         val kind: Int = NoteEntity.KIND_TEXT,
@@ -87,6 +88,7 @@ class EditorViewModel(
                         blocks = blocks,
                         tagIds = loaded.tags.map { it.id }.toSet(),
                         pinned = loaded.note.pinned,
+                        locked = loaded.note.locked,
                         colorIndex = loaded.note.colorIndex,
                         folderId = loaded.note.folderId,
                         kind = loaded.note.kind,
@@ -180,6 +182,8 @@ class EditorViewModel(
     }
     fun setColor(index: Int) = update { it.copy(colorIndex = index) }
     fun setPinned(value: Boolean) = update { it.copy(pinned = value) }
+
+    fun setLocked(value: Boolean) = update { it.copy(locked = value) }
     fun setFolder(id: Long) = update { it.copy(folderId = id) }
 
     fun deleteNote(onDone: () -> Unit) {
@@ -262,6 +266,7 @@ class EditorViewModel(
                 title = s.title,
                 colorIndex = s.colorIndex,
                 pinned = s.pinned,
+                locked = s.locked,
                 folderId = s.folderId
             ),
             s.blocks,

@@ -20,7 +20,8 @@ fun filterNotes(
         if (tagFilter.isNotEmpty() && note.tags.none { it.id in tagFilter }) return@filter false
         if (q.isEmpty()) return@filter true
         val inTitle = note.note.title.lowercase().contains(q)
-        val inBody = decodeBlocks(note.note.blocksJson).plainText().lowercase().contains(q)
+        // Locked notes: title and tags stay searchable, the body does not.
+        val inBody = !note.note.locked && decodeBlocks(note.note.blocksJson).plainText().lowercase().contains(q)
         val inTags = note.tags.any { it.name.lowercase().contains(q) }
         inTitle || inBody || inTags
     }

@@ -45,6 +45,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.FormatBold
 import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.MoreHoriz
@@ -58,6 +59,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -370,8 +373,21 @@ fun EditorScreen(
             state = state,
             folders = folders,
             allTags = allTags,
+            locked = state.locked,
+            biometricAvailable = container.biometricAvailable,
             onDismiss = { showMore = false },
             onPin = { vm.setPinned(!state.pinned) },
+            onToggleLock = { lock ->
+                if (lock && !container.biometricAvailable) {
+                    Toast.makeText(
+                        context,
+                        "Set up biometrics or a screen lock first",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    vm.setLocked(lock)
+                }
+            },
             onColor = { vm.setColor(it) },
             onFolder = { vm.setFolder(it) },
             onToggleTag = { id ->
@@ -1080,8 +1096,11 @@ private fun MoreSheet(
     state: EditorViewModel.EditorState,
     folders: List<com.fieldnotes.app.data.db.FolderEntity>,
     allTags: List<com.fieldnotes.app.data.db.TagEntity>,
+    locked: Boolean,
+    biometricAvailable: Boolean,
     onDismiss: () -> Unit,
     onPin: () -> Unit,
+    onToggleLock: (Boolean) -> Unit,
     onColor: (Int) -> Unit,
     onFolder: (Long) -> Unit,
     onToggleTag: (Long) -> Unit,
@@ -1111,6 +1130,37 @@ private fun MoreSheet(
                     modifier = Modifier
                         .size(20.dp)
                         .clickable(onClick = onPin)
+                )
+            }
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Lock,
+                    contentDescription = null,
+                    tint = if (locked) FN.accent else FN.textSoft,
+                    modifier = Modifier.size(19.dp)
+                )
+                Column(Modifier.weight(1f)) {
+                    Text("Lock this note", style = FT.button, color = FN.text)
+                    Text(
+                        "Ask for biometrics before opening",
+                        style = FT.bodySmall.copy(fontSize = 11.sp),
+                        color = FN.muted
+                    )
+                }
+                Switch(
+                    checked = locked,
+                    onCheckedChange = onToggleLock,
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = FN.onStrong,
+                        checkedTrackColor = FN.strong,
+                        uncheckedThumbColor = FN.onStrong,
+                        uncheckedTrackColor = FN.line,
+                        uncheckedBorderColor = FN.line
+                    )
                 )
             }
             SectionLabel("Card color")

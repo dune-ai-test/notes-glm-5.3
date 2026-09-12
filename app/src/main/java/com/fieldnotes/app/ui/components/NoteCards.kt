@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.GraphicEq
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material.icons.outlined.Pause
@@ -74,11 +75,15 @@ fun HomeNoteCard(
     dotColor: Color,
     playbackState: AudioPlayer.State,
     onOpen: () -> Unit,
-    onLongPress: () -> Unit,
+    onLongPress: (() -> Unit)?,
     onToggleChecklistItem: (blockIndex: Int, itemIndex: Int) -> Unit,
     onTogglePlay: (audioId: String, path: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    if (entry.note.locked) {
+        LockedCard(entry, onOpen, onLongPress)
+        return
+    }
     val blocks = remember(entry.note.blocksJson) { decodeBlocks(entry.note.blocksJson) }
     when (noteCardKind(entry.note, blocks)) {
         NoteCardKind.HERO -> HeroCard(entry, blocks, onOpen, onLongPress)
@@ -87,6 +92,52 @@ fun HomeNoteCard(
         NoteCardKind.SKETCH -> SketchCard(entry, onOpen, onLongPress)
         NoteCardKind.QUOTE -> QuoteCard(entry, blocks, onOpen, onLongPress)
         NoteCardKind.TEXT -> TextCard(entry, blocks, dotColor, onOpen, onLongPress)
+    }
+}
+
+@Composable
+private fun LockedCard(
+    entry: NoteWithTags,
+    onOpen: () -> Unit,
+    onLongPress: (() -> Unit)?
+) {
+    val pastel = isPastelColor(entry.note.colorIndex)
+    val ink = if (pastel) FN.inkFixed else FN.text
+    val soft = if (pastel) PastelSoft else FN.muted
+    CardShell(noteColor(entry.note.colorIndex), onOpen, onLongPress) {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Lock,
+                    contentDescription = null,
+                    tint = FN.accent,
+                    modifier = Modifier.size(14.dp)
+                )
+                Text("LOCKED", style = FT.monoBadge, color = ink)
+            }
+            Text(
+                text = TimeFormat.smartDate(entry.note.updatedAt),
+                style = FT.monoTiny,
+                color = soft
+            )
+        }
+        Text(
+            text = entry.note.title.ifBlank { "Untitled" },
+            style = FT.cardTitle,
+            color = ink
+        )
+        Text(
+            text = "Authenticate to view this note.",
+            style = FT.bodySmall.copy(fontSize = 11.5.sp),
+            color = soft
+        )
     }
 }
 
@@ -140,13 +191,23 @@ fun ListRowNote(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Text(
-                    text = previewText(blocks),
-                    style = FT.bodySmall.copy(fontSize = 11.5.sp, lineHeight = 16.sp),
-                    color = FN.muted,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+                if (entry.note.locked) {
+                    Text(
+                        text = "Locked — authenticate to view",
+                        style = FT.bodySmall.copy(fontSize = 11.5.sp, lineHeight = 16.sp),
+                        color = FN.muted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                } else {
+                    Text(
+                        text = previewText(blocks),
+                        style = FT.bodySmall.copy(fontSize = 11.5.sp, lineHeight = 16.sp),
+                        color = FN.muted,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(

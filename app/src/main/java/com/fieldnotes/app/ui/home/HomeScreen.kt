@@ -60,9 +60,11 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import android.widget.Toast
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.zIndex
@@ -81,6 +83,7 @@ import com.fieldnotes.app.data.repo.NoteRepository
 import com.fieldnotes.app.data.repo.AppSettings
 import com.fieldnotes.app.data.repo.NoteSort
 import com.fieldnotes.app.di.LocalAppContainer
+import com.fieldnotes.app.ui.components.BiometricUnlock
 import com.fieldnotes.app.ui.components.ColoredDot
 import com.fieldnotes.app.ui.components.HomeNoteCard
 import com.fieldnotes.app.ui.components.ListRowNote
@@ -101,6 +104,7 @@ fun HomeScreen(
     onOpenSettings: () -> Unit
 ) {
     val container = LocalAppContainer.current
+    val context = LocalContext.current
     val vm: HomeViewModel = viewModel(
         factory = viewModelFactory { initializer { HomeViewModel(container.noteRepository) } }
     )
@@ -128,6 +132,12 @@ fun HomeScreen(
     val haptic = LocalHapticFeedback.current
     val hapticsEnabled = LocalHapticsEnabled.current
     val foldersById = remember(folders) { folders.associateBy { it.id } }
+
+    // Locked notes: authenticate before opening.
+    var unlockRequest by remember { mutableStateOf<NoteWithTags?>(null) }
+    val tryOpen: (NoteWithTags) -> Unit = { entry ->
+        if (entry.note.locked) unlockRequest = entry else openNote(entry.note.id)
+    }
 
     fun onDragGrab(id: Long) {
         dragId = id
@@ -321,7 +331,7 @@ fun HomeScreen(
                                 dotColor = dotColorFor(entry),
                                 playbackState = playback,
                                 onOpen = {
-                                    if (!reorderMode) openNote(entry.note.id)
+                                    if (!reorderMode) tryOpen(entry)
                                 },
                                 onLongPress = if (reorderMode) {
                                     null
@@ -352,7 +362,7 @@ fun HomeScreen(
                         ListRowNote(
                             entry = entry,
                             dotColor = dotColorFor(entry),
-                            onOpen = { openNote(entry.note.id) },
+                            onOpen = { tryOpen(entry) },
                             onLongPress = {
                                 if (hapticsEnabled) {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -385,6 +395,26 @@ fun HomeScreen(
                 onDelete = { vm.delete(entry) }
             )
         }
+    }
+
+    unlockRequest?.let { pending ->
+        BiometricUnlock(
+            title = "Unlock note",
+            subtitle = pending.note.title.ifBlank { "Locked note" },
+            onSuccess = {
+                unlockRequest = null
+                openNote(pending.note.id)
+            },
+            onDismiss = { unlockRequest = null },
+            onUnavailable = {
+                Toast.makeText(
+                    context,
+                    "Set up biometrics or a screen lock to open locked notes",
+                    Toast.LENGTH_SHORT
+                ).show()
+                unlockRequest = null
+            }
+        )
     }
 }
 
