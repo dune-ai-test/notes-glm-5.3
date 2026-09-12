@@ -284,7 +284,7 @@ private fun HeroCard(
     entry: NoteWithTags,
     blocks: List<Block>,
     onOpen: () -> Unit,
-    onLongPress: () -> Unit
+    onLongPress: (() -> Unit)?
 ) {
     val snippet = blocks.filterIsInstance<Block.Paragraph>().firstOrNull()?.text ?: ""
     CardShell(FN.peach, onOpen, onLongPress, cornerRadius = 28) {
@@ -436,7 +436,7 @@ private fun ChecklistCard(
 private fun SketchCard(
     entry: NoteWithTags,
     onOpen: () -> Unit,
-    onLongPress: () -> Unit
+    onLongPress: (() -> Unit)?
 ) {
     CardShell(FN.butter, onOpen, onLongPress) {
         Row(
@@ -600,7 +600,7 @@ private fun QuoteCard(
     entry: NoteWithTags,
     blocks: List<Block>,
     onOpen: () -> Unit,
-    onLongPress: () -> Unit
+    onLongPress: (() -> Unit)?
 ) {
     val highlight = blocks.filterIsInstance<Block.Highlight>().firstOrNull()
     val pastel = isPastelColor(entry.note.colorIndex)
@@ -665,7 +665,7 @@ private fun TextCard(
     blocks: List<Block>,
     dotColor: Color,
     onOpen: () -> Unit,
-    onLongPress: () -> Unit
+    onLongPress: (() -> Unit)?
 ) {
     val snippet = blocks.filterIsInstance<Block.Paragraph>().firstOrNull()?.text ?: ""
     val image = blocks.filterIsInstance<Block.Image>().firstOrNull()
