@@ -43,8 +43,8 @@ val topLevelRoutes: Set<String> = TopLevelTab.entries.map { it.route }.toSet()
 
 @Composable
 fun PillBottomBar(
-    currentRoute: String?,
-    onSelect: (String) -> Unit,
+    selectedTab: Int,
+    onSelect: (Int) -> Unit,
     onFab: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -65,13 +65,13 @@ fun PillBottomBar(
                 Modifier.padding(6.dp),
                 horizontalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                TopLevelTab.entries.forEach { tab ->
-                    val selected = currentRoute == tab.route
+                TopLevelTab.entries.forEachIndexed { index, tab ->
+                    val selected = selectedTab == index
                     Row(
                         modifier = Modifier
                             .clip(CircleShape)
                             .background(if (selected) FN.onStrong else Color.Transparent)
-                            .clickable { onSelect(tab.route) }
+                            .clickable { onSelect(index) }
                             .padding(horizontal = 13.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)

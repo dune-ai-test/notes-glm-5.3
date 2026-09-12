@@ -72,7 +72,6 @@ import com.fieldnotes.app.data.repo.NoteRepository
 import com.fieldnotes.app.data.repo.AppSettings
 import com.fieldnotes.app.data.repo.NoteSort
 import com.fieldnotes.app.di.LocalAppContainer
-import com.fieldnotes.app.navigation.navigateTopLevel
 import com.fieldnotes.app.ui.components.ColoredDot
 import com.fieldnotes.app.ui.components.HomeNoteCard
 import com.fieldnotes.app.ui.components.ListRowNote
@@ -88,7 +87,10 @@ import com.fieldnotes.app.util.TimeFormat
 import java.util.Calendar
 
 @Composable
-fun HomeScreen(navController: NavHostController) {
+fun HomeScreen(
+    navController: NavHostController,
+    onOpenSettings: () -> Unit
+) {
     val container = LocalAppContainer.current
     val vm: HomeViewModel = viewModel(
         factory = viewModelFactory { initializer { HomeViewModel(container.noteRepository) } }
@@ -139,7 +141,7 @@ fun HomeScreen(navController: NavHostController) {
                     HeaderRow(
                         noteCount = noteCount,
                         initial = settings.userName.take(1).uppercase().ifBlank { "F" }
-                    ) { navController.navigateTopLevel("settings") }
+                    ) { onOpenSettings() }
                     SearchBarRow(
                         onSearch = { navController.navigate("search") },
                         onFilters = { showFilters = true }
