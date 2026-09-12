@@ -1,11 +1,14 @@
 @file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package com.fieldnotes.app.ui.quick
 
 import android.content.Intent
 import android.provider.CalendarContract
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -78,7 +81,7 @@ import java.util.Locale
 private val ReminderTabs = listOf("Upcoming", "Calendar")
 
 @Composable
-fun QuickScreen(navController: androidx.navigation.NavHostController, onCreateNote: () -> Unit) {
+fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreateNote: () -> Unit) {
     val container = LocalAppContainer.current
     val vm: ReminderViewModel = viewModel(
         key = "reminders",
@@ -443,7 +446,7 @@ private fun CalendarTab(
             ReminderRow(
                 reminder = reminder,
                 onAddToCalendar = { onAddToCalendar(reminder.title, reminder.dueAt) },
-                onDelete = onDelete
+                onDelete = { onDelete(reminder) }
             )
         }
     }

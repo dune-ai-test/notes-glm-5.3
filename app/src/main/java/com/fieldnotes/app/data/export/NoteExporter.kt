@@ -9,6 +9,7 @@ import com.fieldnotes.app.data.model.decodeBlocks
 import com.fieldnotes.app.data.model.decodeStringList
 import com.fieldnotes.app.data.model.encodeBlocks
 import com.fieldnotes.app.util.TimeFormat
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.Serializable
 import java.io.File
 import java.io.OutputStream

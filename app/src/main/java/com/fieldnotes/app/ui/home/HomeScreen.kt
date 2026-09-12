@@ -113,7 +113,7 @@ fun HomeScreen(navController: NavHostController) {
     val foldersById = remember(folders) { folders.associateBy { it.id } }
 
     val openNote: (Long) -> Unit = { id -> navController.navigate("editor/$id") }
-    val dotColorFor: (NoteWithTags) -> Color = { entry ->
+    val dotColorFor: @Composable (NoteWithTags) -> Color = { entry ->
         foldersById[entry.note.folderId]?.let { noteColor(it.colorIndex) } ?: FN.accent
     }
 

@@ -21,10 +21,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.fieldnotes.app.ui.theme.FN
+import com.fieldnotes.app.ui.theme.tagColor
+import com.fieldnotes.app.ui.theme.tagTextColor
 import com.fieldnotes.app.ui.theme.FT
 
 /** Uppercase mono label used for section headers, e.g. "YOUR NOTES". */
