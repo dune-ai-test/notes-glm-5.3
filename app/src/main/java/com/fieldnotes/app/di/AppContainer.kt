@@ -24,6 +24,9 @@ class AppContainer(private val appContext: Context) {
 
     val context: Context get() = appContext
 
+    /** Note the user tapped into from a reminder notification; consumed by AppRoot. */
+    val pendingOpenNoteId = kotlinx.coroutines.flow.MutableStateFlow<Long?>(null)
+
     val database: AppDatabase = Room.databaseBuilder(
         context,
         AppDatabase::class.java,
@@ -33,7 +36,8 @@ class AppContainer(private val appContext: Context) {
             AppDatabase.MIGRATION_1_2,
             AppDatabase.MIGRATION_2_3,
             AppDatabase.MIGRATION_3_4,
-            AppDatabase.MIGRATION_4_5
+            AppDatabase.MIGRATION_4_5,
+            AppDatabase.MIGRATION_5_6
         )
         .fallbackToDestructiveMigration()
         .build()

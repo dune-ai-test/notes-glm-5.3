@@ -14,7 +14,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         MemoEntity::class,
         ReminderEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -53,6 +53,14 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE `notes` ADD COLUMN `trashed` INTEGER NOT NULL DEFAULT 0")
                 db.execSQL("ALTER TABLE `notes` ADD COLUMN `trashedAt` INTEGER")
+            }
+        }
+
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `reminders` ADD COLUMN `completed` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `reminders` ADD COLUMN `repeat` TEXT NOT NULL DEFAULT 'none'")
+                db.execSQL("ALTER TABLE `reminders` ADD COLUMN `noteId` INTEGER")
             }
         }
     }

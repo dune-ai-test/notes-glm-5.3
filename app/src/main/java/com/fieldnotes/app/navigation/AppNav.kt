@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -52,6 +53,16 @@ fun AppRoot(container: AppContainer) {
 
     val switchTab: (Int) -> Unit = { index ->
         scope.launch { pagerState.animateScrollToPage(index) }
+    }
+
+    // Notification taps: open the linked note once, then clear.
+    LaunchedEffect(Unit) {
+        container.pendingOpenNoteId.collect { noteId ->
+            if (noteId != null && noteId > 0) {
+                navController.navigate("editor/$noteId")
+                container.pendingOpenNoteId.value = null
+            }
+        }
     }
 
     Box(

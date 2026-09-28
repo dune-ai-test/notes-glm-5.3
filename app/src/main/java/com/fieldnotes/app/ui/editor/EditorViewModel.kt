@@ -247,6 +247,14 @@ class EditorViewModel(
         return note != null
     }
 
+    /** Persists pending edits and returns the note id (null while missing). */
+    suspend fun ensureSaved(): Long? {
+        saveJob?.cancel()
+        saveJob = null
+        if (dirty) persist()
+        return note?.id
+    }
+
     private suspend fun persist() {
         if (!dirty) return
         val s = _state.value

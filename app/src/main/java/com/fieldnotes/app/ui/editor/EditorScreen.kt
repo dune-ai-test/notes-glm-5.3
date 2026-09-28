@@ -40,6 +40,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Alarm
+import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
@@ -106,6 +108,7 @@ import com.fieldnotes.app.ui.components.ColoredDot
 import com.fieldnotes.app.ui.components.MiniCheckbox
 import com.fieldnotes.app.ui.components.MetaPill
 import com.fieldnotes.app.ui.components.RecordSheet
+import com.fieldnotes.app.ui.components.ReminderDialog
 import com.fieldnotes.app.ui.components.SectionLabel
 import com.fieldnotes.app.ui.components.TagChipView
 import com.fieldnotes.app.ui.components.Waveform
@@ -141,6 +144,7 @@ fun EditorScreen(
     var showMore by remember { mutableStateOf(false) }
     var showAddBlock by remember { mutableStateOf(false) }
     var showRecord by remember { mutableStateOf(false) }
+    var showReminder by remember { mutableStateOf(false) }
     var pendingFocusIndex by remember { mutableStateOf(-1) }
     val focusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
 
@@ -376,6 +380,10 @@ fun EditorScreen(
             locked = state.locked,
             biometricAvailable = container.biometricAvailable,
             onDismiss = { showMore = false },
+            onRemind = {
+                showMore = false
+                showReminder = true
+            },
             onPin = { vm.setPinned(!state.pinned) },
             onToggleLock = { lock ->
                 if (lock && !container.biometricAvailable) {
@@ -396,6 +404,34 @@ fun EditorScreen(
             onDelete = {
                 showMore = false
                 vm.deleteNote { navController.popBackStack() }
+            }
+        )
+    }
+
+    if (showReminder) {
+        ReminderDialog(
+            initialDate = java.time.LocalDate.now(),
+            initialTitle = state.title,
+            titleHint = "Reminder label",
+            onDismiss = { showReminder = false },
+            onCreate = { title, dueAt, repeat ->
+                showReminder = false
+                scope.launch {
+                    val savedId = vm.ensureSaved()
+                    if (savedId == null) {
+                        Toast.makeText(context, "Open the note first", Toast.LENGTH_SHORT).show()
+                    } else {
+                        val id = container.noteRepository.createReminder(
+                            title = title,
+                            dueAt = dueAt,
+                            repeat = repeat.key,
+                            noteId = savedId
+                        )
+                        com.fieldnotes.app.data.reminder.ReminderScheduler.schedule(context, id, dueAt)
+                        container.playChime()
+                        Toast.makeText(context, "Reminder set", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         )
     }
@@ -1099,6 +1135,7 @@ private fun MoreSheet(
     locked: Boolean,
     biometricAvailable: Boolean,
     onDismiss: () -> Unit,
+    onRemind: () -> Unit,
     onPin: () -> Unit,
     onToggleLock: (Boolean) -> Unit,
     onColor: (Int) -> Unit,
@@ -1130,6 +1167,36 @@ private fun MoreSheet(
                     modifier = Modifier
                         .size(20.dp)
                         .clickable(onClick = onPin)
+                )
+            }
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(onClick = onRemind)
+                    .padding(vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Alarm,
+                    contentDescription = null,
+                    tint = FN.textSoft,
+                    modifier = Modifier.size(19.dp)
+                )
+                Column(Modifier.weight(1f)) {
+                    Text("Remind me", style = FT.button, color = FN.text)
+                    Text(
+                        "Notify at a date & time",
+                        style = FT.bodySmall.copy(fontSize = 11.sp),
+                        color = FN.muted
+                    )
+                }
+                Icon(
+                    Icons.Outlined.ChevronRight,
+                    contentDescription = null,
+                    tint = FN.dotGray,
+                    modifier = Modifier.size(16.dp)
                 )
             }
             Row(

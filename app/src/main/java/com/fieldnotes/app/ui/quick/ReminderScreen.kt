@@ -5,14 +5,14 @@
 
 package com.fieldnotes.app.ui.quick
 
-import android.content.Intent
-import android.provider.CalendarContract
+import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,29 +24,28 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Alarm
 import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Event
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material.icons.outlined.Replay
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,7 +55,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -66,8 +65,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.fieldnotes.app.data.db.ReminderEntity
+import com.fieldnotes.app.data.db.RepeatMode
+import com.fieldnotes.app.data.reminder.ReminderScheduler
 import com.fieldnotes.app.di.LocalAppContainer
 import com.fieldnotes.app.ui.components.ColoredDot
+import com.fieldnotes.app.ui.components.ReminderDialog
 import com.fieldnotes.app.ui.components.SectionLabel
 import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
@@ -86,9 +88,12 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
     val container = LocalAppContainer.current
     val vm: ReminderViewModel = viewModel(
         key = "reminders",
-        factory = viewModelFactory { initializer { ReminderViewModel(container.noteRepository) } }
+        factory = viewModelFactory {
+            initializer { ReminderViewModel(container.noteRepository, container.context) }
+        }
     )
-    val reminders by vm.reminders.collectAsStateWithLifecycle()
+    val pending by vm.pending.collectAsStateWithLifecycle()
+    val completed by vm.completed.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     var tab by rememberSaveable { mutableStateOf(0) }
@@ -96,12 +101,24 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
     var pendingDate by remember { mutableStateOf(LocalDate.now()) }
     var deleteTarget by remember { mutableStateOf<ReminderEntity?>(null) }
 
+    val notificationPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { }
+
+    val requestNotifications: () -> Unit = {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            !ReminderScheduler.hasNotificationPermission(context)
+        ) {
+            notificationPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
     fun addToCalendar(title: String, dueAt: Long) {
-        val intent = Intent(Intent.ACTION_INSERT)
-            .setData(CalendarContract.Events.CONTENT_URI)
-            .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, dueAt)
-            .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, dueAt + 60 * 60_000L)
-            .putExtra(CalendarContract.Events.TITLE, title)
+        val intent = android.content.Intent(android.provider.CalendarContract.Events.CONTENT_URI)
+            .setAction(android.content.Intent.ACTION_INSERT)
+            .putExtra(android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME, dueAt)
+            .putExtra(android.provider.CalendarContract.EXTRA_EVENT_END_TIME, dueAt + 60 * 60_000L)
+            .putExtra(android.provider.CalendarContract.Events.TITLE, title)
         runCatching { context.startActivity(intent) }
             .onFailure { Toast.makeText(context, "No calendar app found", Toast.LENGTH_SHORT).show() }
     }
@@ -130,7 +147,11 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
                 modifier = Modifier.size(44.dp)
             ) {
                 Box(
-                    Modifier.clickable { showAdd = true },
+                    Modifier.clickable {
+                        requestNotifications()
+                        pendingDate = LocalDate.now()
+                        showAdd = true
+                    },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -159,7 +180,7 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
                     Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(50))
-                        .background(if (selected) FN.strong else androidx.compose.ui.graphics.Color.Transparent)
+                        .background(if (selected) FN.strong else Color.Transparent)
                         .clickable { tab = index }
                         .padding(vertical = 9.dp),
                     contentAlignment = Alignment.Center
@@ -176,42 +197,54 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
         ) {
             if (tab == 0) {
                 UpcomingTab(
-                    reminders = reminders,
+                    pending = pending,
+                    completed = completed,
+                    onComplete = vm::complete,
+                    onRestore = vm::restore,
+                    onSnooze1h = { vm.snooze(it, ReminderScheduler.snoozeUntil1h()) },
+                    onSnoozeTomorrow = { vm.snooze(it, ReminderScheduler.tomorrowAt()) },
+                    onOpenNote = { noteId -> navController.navigate("editor/$noteId") },
+                    onDelete = { deleteTarget = it },
                     onAddToCalendar = ::addToCalendar,
-                    onDelete = { deleteTarget = it }
+                    onAddForDate = {
+                        pendingDate = it
+                        showAdd = true
+                    }
                 )
             } else {
                 CalendarTab(
-                    reminders = reminders,
+                    reminders = pending,
                     onAddForDate = { date ->
                         pendingDate = date
                         showAdd = true
                     },
                     onAddToCalendar = ::addToCalendar,
-                    onDelete = { deleteTarget = it }
+                    onDelete = { deleteTarget = it },
+                    onComplete = vm::complete,
+                    onOpenNote = { noteId -> navController.navigate("editor/$noteId") }
                 )
             }
         }
     }
 
     if (showAdd) {
-        AddReminderDialog(
+        ReminderDialog(
             initialDate = pendingDate,
             onDismiss = { showAdd = false },
-            onCreate = { title, dueAt ->
+            onCreate = { title, dueAt, repeat ->
                 showAdd = false
-                vm.add(title, dueAt)
+                vm.add(title, dueAt, repeat)
             }
         )
     }
 
     deleteTarget?.let { target ->
-        AlertDialog(
+        androidx.compose.material3.AlertDialog(
             onDismissRequest = { deleteTarget = null },
             title = { Text("Delete reminder?", style = FT.sectionTitle, color = FN.text) },
             text = { Text("“${target.title}” will be removed.", style = FT.body, color = FN.textSoft) },
             confirmButton = {
-                TextButton(onClick = {
+                androidx.compose.material3.TextButton(onClick = {
                     val t = deleteTarget
                     deleteTarget = null
                     if (t != null) vm.delete(t)
@@ -220,7 +253,9 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
                 }
             },
             dismissButton = {
-                TextButton(onClick = { deleteTarget = null }) { Text("Cancel", color = FN.muted) }
+                androidx.compose.material3.TextButton(onClick = { deleteTarget = null }) {
+                    Text("Cancel", color = FN.muted)
+                }
             }
         )
     }
@@ -228,11 +263,17 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
 
 @Composable
 private fun UpcomingTab(
-    reminders: List<ReminderEntity>,
-    onAddToCalendar: (String, Long) -> Unit,
-    onDelete: (ReminderEntity) -> Unit
+    pending: List<ReminderEntity>,
+    completed: List<ReminderEntity>,
+    onComplete: (Long) -> Unit,
+    onRestore: (Long) -> Unit,
+    onSnooze1h: (Long) -> Unit,
+    onSnoozeTomorrow: (Long) -> Unit,
+    onOpenNote: (Long) -> Unit,
+    onDelete: (ReminderEntity) -> Unit,
+    onAddToCalendar: (String, Long) -> Unit
 ) {
-    if (reminders.isEmpty()) {
+    if (pending.isEmpty() && completed.isEmpty()) {
         Column(
             Modifier
                 .fillMaxWidth()
@@ -247,7 +288,7 @@ private fun UpcomingTab(
                 modifier = Modifier.size(30.dp)
             )
             Text("No reminders yet", style = FT.sectionTitle, color = FN.text)
-            Text("Tap + to add your first one.", style = FT.bodySmall, color = FN.muted)
+            Text("Swipe right to complete · long-press for more.", style = FT.bodySmall, color = FN.muted)
         }
         return
     }
@@ -258,24 +299,103 @@ private fun UpcomingTab(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 16.dp, bottom = 130.dp)
     ) {
-        items(reminders, key = { it.id }) { reminder ->
-            ReminderRow(
+        items(pending, key = { it.id }) { reminder ->
+            SwipeableReminderRow(
                 reminder = reminder,
+                onComplete = { onComplete(reminder.id) },
+                onSnooze1h = { onSnooze1h(reminder.id) },
+                onSnoozeTomorrow = { onSnoozeTomorrow(reminder.id) },
+                onOpenNote = reminder.noteId?.let { noteId -> { onOpenNote(noteId) } },
                 onAddToCalendar = { onAddToCalendar(reminder.title, reminder.dueAt) },
                 onDelete = { onDelete(reminder) }
             )
         }
+        if (completed.isNotEmpty()) {
+            item(key = "completed-header") {
+                SectionLabel("Completed", color = FN.muted)
+            }
+            items(completed, key = { "done-${it.id}" }) { reminder ->
+                CompletedRow(
+                    reminder = reminder,
+                    onRestore = { onRestore(reminder.id) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SwipeableReminderRow(
+    reminder: ReminderEntity,
+    onComplete: () -> Unit,
+    onSnooze1h: () -> Unit,
+    onSnoozeTomorrow: () -> Unit,
+    onOpenNote: (() -> Unit)?,
+    onAddToCalendar: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.StartToEnd) {
+                onComplete()
+                true
+            } else {
+                false
+            }
+        }
+    )
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromEndToStart = false,
+        backgroundContent = {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(FN.sage),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Row(
+                    Modifier.padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        Icons.Outlined.Event,
+                        contentDescription = null,
+                        tint = FN.inkFixed,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text("Complete", style = FT.button, color = FN.inkFixed)
+                }
+            }
+        }
+    ) {
+        ReminderRow(
+            reminder = reminder,
+            onSnooze1h = onSnooze1h,
+            onSnoozeTomorrow = onSnoozeTomorrow,
+            onOpenNote = onOpenNote,
+            onAddToCalendar = onAddToCalendar,
+            onDelete = onDelete
+        )
     }
 }
 
 @Composable
 private fun ReminderRow(
     reminder: ReminderEntity,
+    onSnooze1h: () -> Unit,
+    onSnoozeTomorrow: () -> Unit,
+    onOpenNote: (() -> Unit)?,
     onAddToCalendar: () -> Unit,
     onDelete: () -> Unit
 ) {
     val date = remember(reminder.dueAt) { millisToDate(reminder.dueAt) }
     val time = remember(reminder.dueAt) { millisToTime(reminder.dueAt) }
+    val repeat = RepeatMode.fromKey(reminder.repeat)
+    var showSnoozeMenu by remember { mutableStateOf(false) }
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = FN.surface,
@@ -288,7 +408,7 @@ private fun ReminderRow(
         Row(
             Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -326,9 +446,63 @@ private fun ReminderRow(
                 ) {
                     ColoredDot(FN.accent, size = 5.dp)
                     Text(
-                        "${TimeFormatSmart(date, time)}",
+                        formatWhen(date, time),
                         style = FT.monoTiny,
                         color = FN.muted
+                    )
+                    if (repeat != RepeatMode.NONE) {
+                        Icon(
+                            Icons.Outlined.Replay,
+                            contentDescription = repeat.label,
+                            tint = FN.sage,
+                            modifier = Modifier.size(11.dp)
+                        )
+                    }
+                    if (reminder.noteId != null) {
+                        Icon(
+                            Icons.Outlined.Description,
+                            contentDescription = "Linked note",
+                            tint = FN.sky,
+                            modifier = Modifier.size(11.dp)
+                        )
+                    }
+                }
+            }
+            Box {
+                Surface(
+                    shape = CircleShape,
+                    color = FN.surfaceAlt,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Box(
+                        Modifier.clickable { showSnoozeMenu = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Outlined.Alarm,
+                            contentDescription = "Snooze",
+                            tint = FN.text,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+                DropdownMenu(
+                    expanded = showSnoozeMenu,
+                    onDismissRequest = { showSnoozeMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Snooze 1 hour", style = FT.bodySmall, color = FN.text) },
+                        onClick = {
+                            showSnoozeMenu = false
+                            onSnooze1h()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Tomorrow 9:00", style = FT.bodySmall, color = FN.text) },
+                        onClick = {
+                            showSnoozeMenu = false
+                            onSnoozeTomorrow()
+                        }
                     )
                 }
             }
@@ -349,6 +523,56 @@ private fun ReminderRow(
                     )
                 }
             }
+            if (onOpenNote != null) {
+                Surface(
+                    shape = CircleShape,
+                    color = FN.sky,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Box(
+                        Modifier.clickable(onClick = onOpenNote),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Outlined.Description,
+                            contentDescription = "Open note",
+                            tint = FN.inkFixed,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CompletedRow(reminder: ReminderEntity, onRestore: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = FN.surfaceAlt,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            ColoredDot(FN.sage, size = 8.dp)
+            Text(
+                reminder.title,
+                style = FT.bodySmall.copy(fontSize = 12.5.sp),
+                color = FN.muted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                "Restore",
+                style = FT.button,
+                color = FN.text,
+                modifier = Modifier.clickable(onClick = onRestore)
+            )
         }
     }
 }
@@ -358,7 +582,9 @@ private fun CalendarTab(
     reminders: List<ReminderEntity>,
     onAddForDate: (LocalDate) -> Unit,
     onAddToCalendar: (String, Long) -> Unit,
-    onDelete: (ReminderEntity) -> Unit
+    onDelete: (ReminderEntity) -> Unit,
+    onComplete: (Long) -> Unit,
+    onOpenNote: (Long) -> Unit
 ) {
     var month by remember { mutableStateOf(YearMonth.now()) }
     var selected by remember { mutableStateOf(LocalDate.now()) }
@@ -444,12 +670,17 @@ private fun CalendarTab(
             Text("Nothing planned for this day.", style = FT.bodySmall, color = FN.muted)
         }
         dayReminders.forEach { reminder ->
-            ReminderRow(
+            SwipeableReminderRow(
                 reminder = reminder,
+                onComplete = { onComplete(reminder.id) },
+                onSnooze1h = { },
+                onSnoozeTomorrow = { },
+                onOpenNote = reminder.noteId?.let { noteId -> { onOpenNote(noteId) } },
                 onAddToCalendar = { onAddToCalendar(reminder.title, reminder.dueAt) },
                 onDelete = { onDelete(reminder) }
             )
         }
+        Spacer(Modifier.height(8.dp))
     }
 }
 
@@ -494,12 +725,7 @@ private fun MonthGrid(
                                 Modifier
                                     .size(30.dp)
                                     .clip(CircleShape)
-                                    .background(
-                                        when {
-                                            isSelected -> FN.strong
-                                            else -> androidx.compose.ui.graphics.Color.Transparent
-                                        }
-                                    )
+                                    .background(if (isSelected) FN.strong else Color.Transparent)
                                     .then(
                                         if (isToday && !isSelected) {
                                             Modifier.border(1.dp, FN.accent, CircleShape)
@@ -532,143 +758,12 @@ private fun MonthGrid(
     }
 }
 
-@Composable
-private fun AddReminderDialog(
-    initialDate: LocalDate,
-    onDismiss: () -> Unit,
-    onCreate: (String, Long) -> Unit
-) {
-    var title by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf(initialDate) }
-    var time by remember { mutableStateOf(LocalTime.of(9, 0)) }
-    var showDatePicker by remember { mutableStateOf(false) }
-    var showTimePicker by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("New reminder", style = FT.sectionTitle, color = FN.text) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                BasicTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    textStyle = FT.body.copy(color = FN.text),
-                    cursorBrush = SolidColor(FN.accent),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(FN.surfaceAlt, RoundedCornerShape(12.dp))
-                        .padding(12.dp),
-                    decorationBox = { inner ->
-                        Box {
-                            if (title.isEmpty()) {
-                                Text("What should I remind you about?", style = FT.body, color = FN.muted)
-                            }
-                            inner()
-                        }
-                    }
-                )
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(FN.surfaceAlt)
-                        .clickable { showDatePicker = true }
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Date", style = FT.chip, color = FN.muted)
-                    Text(
-                        date.format(java.time.format.DateTimeFormatter.ofPattern("EEE, MMM d yyyy")),
-                        style = FT.bodySmall,
-                        color = FN.text
-                    )
-                }
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(FN.surfaceAlt)
-                        .clickable { showTimePicker = true }
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Time", style = FT.chip, color = FN.muted)
-                    Text(
-                        time.format(java.time.format.DateTimeFormatter.ofPattern("h:mm a")),
-                        style = FT.bodySmall,
-                        color = FN.text
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    val dueAt = date.atTime(time).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-                    if (title.isNotBlank()) onCreate(title, dueAt)
-                }
-            ) {
-                Text("Create", color = FN.text)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = FN.muted) }
-        }
-    )
-
-    if (showDatePicker) {
-        val state = rememberDatePickerState(
-            initialSelectedDateMillis = date.atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
-        )
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    state.selectedDateMillis?.let { millis ->
-                        date = Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate()
-                    }
-                    showDatePicker = false
-                }) { Text("OK", color = FN.text) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("Cancel", color = FN.muted) }
-            }
-        ) {
-            DatePicker(state = state)
-        }
-    }
-
-    if (showTimePicker) {
-        val state = rememberTimePickerState(
-            initialHour = time.hour,
-            initialMinute = time.minute,
-            is24Hour = false
-        )
-        AlertDialog(
-            onDismissRequest = { showTimePicker = false },
-            title = { Text("Pick a time", style = FT.sectionTitle, color = FN.text) },
-            text = { TimePicker(state = state) },
-            confirmButton = {
-                TextButton(onClick = {
-                    time = LocalTime.of(state.hour, state.minute)
-                    showTimePicker = false
-                }) { Text("OK", color = FN.text) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showTimePicker = false }) { Text("Cancel", color = FN.muted) }
-            }
-        )
-    }
-}
-
 private fun millisToDate(ms: Long): LocalDate =
     Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).toLocalDate()
 
 private fun millisToTime(ms: Long): LocalTime =
     Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).toLocalTime()
 
-private fun TimeFormatSmart(date: LocalDate, time: LocalTime): String =
+private fun formatWhen(date: LocalDate, time: LocalTime): String =
     "${date.month.getDisplayName(JavaTextStyle.SHORT, Locale.getDefault())} ${date.dayOfMonth} · " +
         time.format(java.time.format.DateTimeFormatter.ofPattern("h:mm a"))

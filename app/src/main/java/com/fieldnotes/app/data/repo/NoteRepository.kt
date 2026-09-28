@@ -30,18 +30,40 @@ class NoteRepository(private val db: AppDatabase) {
     val tagCounts: Flow<List<TagIdCount>> = db.tagDao().observeCounts()
     val memos: Flow<List<MemoEntity>> = db.memoDao().observeAll()
 
-    val reminders: Flow<List<com.fieldnotes.app.data.db.ReminderEntity>> = db.reminderDao().observeAll()
+    val pendingReminders: Flow<List<com.fieldnotes.app.data.db.ReminderEntity>> =
+        db.reminderDao().observePending()
+
+    val completedReminders: Flow<List<com.fieldnotes.app.data.db.ReminderEntity>> =
+        db.reminderDao().observeCompleted()
 
     fun memosSince(since: Long): Flow<Int> = db.memoDao().observeCountSince(since)
 
-    suspend fun createReminder(title: String, dueAt: Long): Long =
+    suspend fun getReminder(id: Long): com.fieldnotes.app.data.db.ReminderEntity? =
+        db.reminderDao().getReminder(id)
+
+    suspend fun createReminder(
+        title: String,
+        dueAt: Long,
+        repeat: String = com.fieldnotes.app.data.db.RepeatMode.NONE.key,
+        noteId: Long? = null
+    ): Long =
         db.reminderDao().insert(
             com.fieldnotes.app.data.db.ReminderEntity(
                 title = title,
                 dueAt = dueAt,
-                createdAt = System.currentTimeMillis()
+                createdAt = System.currentTimeMillis(),
+                repeat = repeat,
+                noteId = noteId
             )
         )
+
+    suspend fun setReminderDueAt(id: Long, dueAt: Long) = db.reminderDao().setDueAt(id, dueAt)
+
+    suspend fun setReminderCompleted(id: Long, completed: Boolean) =
+        db.reminderDao().setCompleted(id, completed)
+
+    suspend fun pendingFutureReminders(now: Long): List<com.fieldnotes.app.data.db.ReminderEntity> =
+        db.reminderDao().getPendingAfter(now)
 
     suspend fun deleteReminder(reminder: com.fieldnotes.app.data.db.ReminderEntity) =
         db.reminderDao().delete(reminder)

@@ -1,6 +1,7 @@
 package com.fieldnotes.app
 
 import android.content.Context
+import android.content.Intent
 import android.content.ContextWrapper
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
@@ -49,6 +50,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fieldnotes.app.data.repo.AppSettings
+import com.fieldnotes.app.data.reminder.ReminderContract
 import com.fieldnotes.app.di.AppContainer
 import com.fieldnotes.app.di.LocalAppContainer
 import com.fieldnotes.app.navigation.AppRoot
@@ -67,6 +69,7 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val container = (application as FieldNotesApp).container
+        consumeOpenNoteIntent(container, intent)
         setContent {
             val settings by container.settingsRepository.settings
                 .collectAsStateWithLifecycle(initialValue = AppSettings())
@@ -103,6 +106,18 @@ class MainActivity : FragmentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val app = application as? FieldNotesApp ?: return
+        consumeOpenNoteIntent(app.container, intent)
+    }
+
+    private fun consumeOpenNoteIntent(container: AppContainer, intent: Intent?) {
+        val noteId = intent?.getLongExtra(ReminderContract.EXTRA_OPEN_NOTE, -1L) ?: -1L
+        if (noteId > 0) container.pendingOpenNoteId.value = noteId
     }
 }
 
