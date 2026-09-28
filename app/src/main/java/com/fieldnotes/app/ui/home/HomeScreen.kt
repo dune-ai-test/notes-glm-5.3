@@ -186,20 +186,13 @@ fun HomeScreen(
             .fillMaxSize()
             .background(FN.bg)
     ) {
-        LazyVerticalStaggeredGrid(
-            columns = StaggeredGridCells.Fixed(2),
-            modifier = Modifier.fillMaxSize(),
-            verticalItemSpacing = 14.dp,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 132.dp)
-        ) {
-            item(key = "header", span = StaggeredGridItemSpan.FullLine) {
-                Column(
-                    Modifier
-                        .statusBarsPadding()
-                        .padding(top = 18.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
+        Column(Modifier.fillMaxSize()) {
+            Column(
+                Modifier
+                    .statusBarsPadding()
+                    .padding(start = 16.dp, end = 16.dp, top = 18.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
                     HeaderRow(
                         noteCount = noteCount,
                         initial = settings.userName.take(1).uppercase().ifBlank { "F" }
@@ -279,9 +272,15 @@ fun HomeScreen(
                             onList = { gridMode = false }
                         )
                     }
-                }
             }
 
+            LazyVerticalStaggeredGrid(
+                columns = StaggeredGridCells.Fixed(2),
+                modifier = Modifier.fillMaxSize(),
+                verticalItemSpacing = 14.dp,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 132.dp)
+            ) {
             if (notes.isEmpty()) {
                 item(key = "empty", span = StaggeredGridItemSpan.FullLine) {
                     Column(
@@ -383,6 +382,7 @@ fun HomeScreen(
                     }
                 }
             }
+        }
         }
 
         if (showFilters) {

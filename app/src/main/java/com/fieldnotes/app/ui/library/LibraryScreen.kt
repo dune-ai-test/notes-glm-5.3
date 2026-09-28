@@ -102,19 +102,12 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
             .fillMaxSize()
             .background(FN.bg)
     ) {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 132.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    Column(Modifier.fillMaxSize()) {
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(top = 18.dp),
+                .statusBarsPadding()
+                .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -136,6 +129,14 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
             }
         }
 
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 132.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
         Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             LibraryTab.entries.forEach { tabValue ->
                 PillChip(
@@ -257,6 +258,7 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
                     onLongPress = { deleteTarget = entry }
                 )
             }
+        }
         }
     }
 

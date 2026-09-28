@@ -163,16 +163,12 @@ fun SettingsScreen(navController: NavHostController) {
         Modifier
             .fillMaxSize()
             .background(FN.bg)
-            .statusBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 132.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(top = 18.dp),
+                .statusBarsPadding()
+                .padding(start = 16.dp, end = 16.dp, top = 18.dp, bottom = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -189,6 +185,14 @@ fun SettingsScreen(navController: NavHostController) {
             }
         }
 
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 132.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
         // Profile card
         Surface(shape = RoundedCornerShape(24.dp), color = FN.strong, modifier = Modifier.fillMaxWidth()) {
             Column(
@@ -510,6 +514,7 @@ fun SettingsScreen(navController: NavHostController) {
         ) {
             Text("Version 1.0 • Build 1", style = FT.monoTiny, color = FN.dotGray)
             Text("Privacy • Terms • Acknowledgements", style = FT.monoTiny, color = FN.dotGray)
+        }
         }
     }
 
