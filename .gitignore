@@ -8,3 +8,8 @@ captures/
 .externalNativeBuild
 .cxx/
 *.apk.idsig
+
+# Logo design exploration (chosen: 4-sticky-fold, wired into app resources)
+/logo-concepts/*
+!/logo-concepts/4-sticky-fold.svg
+!/logo-concepts/4-sticky-fold.png
