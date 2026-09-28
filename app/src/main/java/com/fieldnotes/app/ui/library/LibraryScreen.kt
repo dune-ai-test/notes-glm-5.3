@@ -266,6 +266,7 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
                 .padding(bottom = 120.dp)
         )
     }
+    }
 
     if (showAllTags) {
         ModalBottomSheet(
