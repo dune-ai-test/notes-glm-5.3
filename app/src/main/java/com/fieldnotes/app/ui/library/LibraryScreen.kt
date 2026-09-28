@@ -258,6 +258,7 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
                 )
             }
         }
+    }
 
         SnackbarHost(
             snackbarHostState,
@@ -265,7 +266,6 @@ fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 120.dp)
         )
-    }
     }
 
     if (showAllTags) {

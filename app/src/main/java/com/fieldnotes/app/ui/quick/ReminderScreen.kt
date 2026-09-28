@@ -114,11 +114,13 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
     }
 
     fun addToCalendar(title: String, dueAt: Long) {
-        val intent = android.content.Intent(android.provider.CalendarContract.Events.CONTENT_URI)
-            .setAction(android.content.Intent.ACTION_INSERT)
-            .putExtra(android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME, dueAt)
-            .putExtra(android.provider.CalendarContract.EXTRA_EVENT_END_TIME, dueAt + 60 * 60_000L)
-            .putExtra(android.provider.CalendarContract.Events.TITLE, title)
+        val intent = android.content.Intent().apply {
+            action = android.content.Intent.ACTION_INSERT
+            data = android.provider.CalendarContract.Events.CONTENT_URI
+            putExtra(android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME, dueAt)
+            putExtra(android.provider.CalendarContract.EXTRA_EVENT_END_TIME, dueAt + 60 * 60_000L)
+            putExtra(android.provider.CalendarContract.Events.TITLE, title)
+        }
         runCatching { context.startActivity(intent) }
             .onFailure { Toast.makeText(context, "No calendar app found", Toast.LENGTH_SHORT).show() }
     }
@@ -205,11 +207,7 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
                     onSnoozeTomorrow = { vm.snooze(it, ReminderScheduler.tomorrowAt()) },
                     onOpenNote = { noteId -> navController.navigate("editor/$noteId") },
                     onDelete = { deleteTarget = it },
-                    onAddToCalendar = ::addToCalendar,
-                    onAddForDate = {
-                        pendingDate = it
-                        showAdd = true
-                    }
+                    onAddToCalendar = ::addToCalendar
                 )
             } else {
                 CalendarTab(

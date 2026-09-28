@@ -9,6 +9,7 @@ import com.fieldnotes.app.data.db.NoteWithTags
 import com.fieldnotes.app.data.db.TagEntity
 import com.fieldnotes.app.data.db.TagIdCount
 import com.fieldnotes.app.data.model.Block
+import com.fieldnotes.app.data.model.decodeBlocks
 import com.fieldnotes.app.data.model.encodeBlocks
 import com.fieldnotes.app.data.model.encodeToStringList
 import kotlinx.coroutines.Dispatchers
