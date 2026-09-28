@@ -20,7 +20,6 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,12 +27,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.fieldnotes.app.ui.theme.FN
-import com.fieldnotes.app.ui.theme.FT
 
 enum class TopLevelTab(val route: String, val label: String, val icon: ImageVector) {
     HOME("home", "Home", Icons.Outlined.Home),
+    ZONE("zone", "Zone", Icons.Outlined.Explore),
     REMINDER("quick", "Reminder", Icons.Outlined.Event),
     LIBRARY("library", "Library", Icons.Outlined.BarChart),
     SETTINGS("settings", "Settings", Icons.Outlined.Settings)
@@ -67,14 +65,13 @@ fun PillBottomBar(
             ) {
                 TopLevelTab.entries.forEachIndexed { index, tab ->
                     val selected = selectedTab == index
-                    Row(
+                    Box(
                         modifier = Modifier
                             .clip(CircleShape)
                             .background(if (selected) FN.onStrong else Color.Transparent)
                             .clickable { onSelect(index) }
-                            .padding(horizontal = 13.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = tab.icon,
@@ -82,13 +79,6 @@ fun PillBottomBar(
                             tint = if (selected) FN.inkFixed else FN.onStrong.copy(alpha = 0.6f),
                             modifier = Modifier.size(21.dp)
                         )
-                        if (selected) {
-                            Text(
-                                text = tab.label,
-                                style = FT.cardTitle.copy(fontSize = 13.sp),
-                                color = FN.inkFixed
-                            )
-                        }
                     }
                 }
             }

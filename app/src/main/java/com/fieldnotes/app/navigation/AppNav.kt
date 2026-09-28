@@ -31,6 +31,7 @@ import com.fieldnotes.app.ui.library.LibraryScreen
 import com.fieldnotes.app.ui.quick.ReminderScreen
 import com.fieldnotes.app.ui.search.SearchScreen
 import com.fieldnotes.app.ui.settings.SettingsScreen
+import com.fieldnotes.app.ui.zone.ZoneScreen
 import com.fieldnotes.app.ui.trash.TrashScreen
 import com.fieldnotes.app.ui.theme.FN
 import kotlinx.coroutines.launch
@@ -83,6 +84,8 @@ fun AppRoot(container: AppContainer) {
                                 navController = navController,
                                 onOpenSettings = { switchTab(TopLevelTab.SETTINGS.ordinal) }
                             )
+                        TopLevelTab.ZONE ->
+                            ZoneScreen()
                         TopLevelTab.REMINDER ->
                             ReminderScreen(
                                 navController = navController,
