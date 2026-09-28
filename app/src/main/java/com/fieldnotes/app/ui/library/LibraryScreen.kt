@@ -1,4 +1,7 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@file:OptIn(
+    androidx.compose.foundation.layout.ExperimentalLayoutApi::class,
+    androidx.compose.material3.ExperimentalMaterial3Api::class
+)
 
 package com.fieldnotes.app.ui.library
 
@@ -16,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,12 +27,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.Work
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -45,7 +45,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -159,13 +158,6 @@ fun LibraryScreen(navController: NavHostController) {
     }
 }
 
-private val FolderIconChoices: List<Pair<String, ImageVector>> = listOf(
-    "work" to Icons.Outlined.Work,
-    "heart" to Icons.Outlined.FavoriteBorder,
-    "bulb" to Icons.Outlined.Lightbulb,
-    "archive" to Icons.Outlined.Archive
-)
-
 @Composable
 private fun NewFolderDialog(
     onDismiss: () -> Unit,
@@ -199,7 +191,10 @@ private fun NewFolderDialog(
                     }
                 )
                 SectionLabel("Icon", color = FN.muted)
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     FolderIconChoices.forEach { (key, icon) ->
                         val selected = iconKey == key
                         Surface(
@@ -210,7 +205,7 @@ private fun NewFolderDialog(
                             } else {
                                 BorderStroke(1.dp, FN.line)
                             },
-                            modifier = Modifier.size(44.dp)
+                            modifier = Modifier.size(40.dp)
                         ) {
                             Box(
                                 Modifier.clickable { iconKey = key },
@@ -220,7 +215,7 @@ private fun NewFolderDialog(
                                     icon,
                                     contentDescription = key,
                                     tint = if (selected) FN.onStrong else FN.textSoft,
-                                    modifier = Modifier.size(19.dp)
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
                         }
@@ -339,6 +334,3 @@ private fun FolderCard(
         }
     }
 }
-
-private fun folderIcon(iconKey: String): ImageVector =
-    FolderIconChoices.firstOrNull { it.first == iconKey }?.second ?: Icons.Outlined.Work
