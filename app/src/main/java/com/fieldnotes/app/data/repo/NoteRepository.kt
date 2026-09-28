@@ -74,6 +74,11 @@ class NoteRepository(private val db: AppDatabase) {
     suspend fun getNote(id: Long): NoteWithTags? = db.noteDao().getNote(id)
     suspend fun getFolder(id: Long): FolderEntity? = db.folderDao().getFolder(id)
 
+    suspend fun createFolder(name: String, iconKey: String, colorIndex: Int): Long =
+        db.folderDao().insert(
+            FolderEntity(name = name.trim(), iconKey = iconKey, colorIndex = colorIndex)
+        )
+
     suspend fun createNote(
         title: String = "",
         folderId: Long = NoteEntity.DEFAULT_FOLDER_ID,

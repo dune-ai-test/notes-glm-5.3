@@ -92,10 +92,7 @@ fun AppRoot(container: AppContainer) {
                                 onCreateNote = createAndOpenNote
                             )
                         TopLevelTab.LIBRARY ->
-                            LibraryScreen(
-                                navController = navController,
-                                onCreateNote = createAndOpenNote
-                            )
+                            LibraryScreen(navController = navController)
                         TopLevelTab.SETTINGS -> SettingsScreen(navController = navController)
                     }
                 }

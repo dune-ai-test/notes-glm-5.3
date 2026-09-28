@@ -1,11 +1,10 @@
-@file:OptIn(
-    androidx.compose.foundation.layout.ExperimentalLayoutApi::class,
-    androidx.compose.material3.ExperimentalMaterial3Api::class
-)
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 
 package com.fieldnotes.app.ui.library
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,15 +13,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
@@ -30,21 +27,13 @@ import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Lightbulb
-import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Work
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -65,14 +55,10 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavHostController
 import com.fieldnotes.app.data.db.FolderEntity
-import com.fieldnotes.app.data.db.NoteWithTags
 import com.fieldnotes.app.di.LocalAppContainer
 import com.fieldnotes.app.ui.components.CircleIconButton
 import com.fieldnotes.app.ui.components.ColoredDot
-import com.fieldnotes.app.ui.components.ListRowNote
-import com.fieldnotes.app.ui.components.PillChip
 import com.fieldnotes.app.ui.components.SectionLabel
-import com.fieldnotes.app.ui.components.TagChipView
 import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
 import com.fieldnotes.app.ui.theme.noteColor
@@ -80,308 +66,195 @@ import com.fieldnotes.app.util.TimeFormat
 import kotlinx.coroutines.launch
 
 @Composable
-fun LibraryScreen(navController: NavHostController, onCreateNote: () -> Unit) {
+fun LibraryScreen(navController: NavHostController) {
     val container = LocalAppContainer.current
     val vm: LibraryViewModel = viewModel(
         factory = viewModelFactory { initializer { LibraryViewModel(container.noteRepository) } }
     )
     val folders by vm.folders.collectAsStateWithLifecycle()
-    val noteCount by vm.noteCount.collectAsStateWithLifecycle()
-    val visibleNotes by vm.visibleNotes.collectAsStateWithLifecycle()
     val allNotes by vm.notes.collectAsStateWithLifecycle()
-    val tagsWithUsage by vm.tagsWithUsage.collectAsStateWithLifecycle()
-    val tab by vm.tab.collectAsStateWithLifecycle()
-
-    var showAllTags by remember { mutableStateOf(false) }
-    var deleteTarget by remember { mutableStateOf<NoteWithTags?>(null) }
     val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
+
+    var showNewFolder by remember { mutableStateOf(false) }
 
     Box(
         Modifier
             .fillMaxSize()
             .background(FN.bg)
     ) {
-    Column(Modifier.fillMaxSize()) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Library", style = FT.screenTitle, color = FN.text)
-                Text(
-                    "${folders.size} folders • $noteCount notes",
-                    style = FT.bodySmall.copy(fontSize = 13.sp),
-                    color = FN.muted
-                )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                CircleIconButton(Icons.Outlined.Search, "Search") {
-                    navController.navigate("search")
-                }
-                CircleIconButton(Icons.Outlined.Add, "New note", background = FN.strong, tint = FN.onStrong) {
-                    onCreateNote()
-                }
-            }
-        }
-
-        Column(
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 132.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-            LibraryTab.entries.forEach { tabValue ->
-                PillChip(
-                    label = tabValue.label,
-                    selected = tab == tabValue,
-                    onClick = { vm.tab.value = tabValue }
-                )
-            }
-        }
-
-        if (tab == LibraryTab.ALL || tab == LibraryTab.FAVORITES) {
-            folders.chunked(2).forEach { rowFolders ->
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    rowFolders.forEach { folder ->
-                        FolderCard(
-                            folder = folder,
-                            count = allNotes.count { it.note.folderId == folder.id },
-                            lastUpdated = allNotes
-                                .filter { it.note.folderId == folder.id }
-                                .maxOfOrNull { it.note.updatedAt } ?: 0L,
-                            modifier = Modifier.weight(1f),
-                            onClick = { navController.navigate("folder/${folder.id}") }
-                        )
-                    }
-                    if (rowFolders.size == 1) Spacer(Modifier.weight(1f))
-                }
-            }
-        }
-
-        if (tab != LibraryTab.FAVORITES) {
-            Surface(
-                shape = RoundedCornerShape(24.dp),
-                color = FN.surface,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Tags", style = FT.sectionTitle, color = FN.text)
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(2.dp),
-                            modifier = Modifier.clickable { showAllTags = true }
-                        ) {
-                            Text("View all", style = FT.chipSmall, color = FN.muted)
-                            Icon(
-                                Icons.Outlined.ChevronRight,
-                                contentDescription = null,
-                                tint = FN.muted,
-                                modifier = Modifier.size(14.dp)
-                            )
-                        }
-                    }
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(7.dp),
-                        verticalArrangement = Arrangement.spacedBy(7.dp)
-                    ) {
-                        tagsWithUsage.take(7).forEach { usage ->
-                            TagChipView(name = usage.tag.name, colorIndex = usage.tag.colorIndex)
-                        }
-                    }
-                }
-            }
-
-            Surface(
-                shape = RoundedCornerShape(24.dp),
-                color = FN.surface,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Row(
-                        Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Recent activity", style = FT.sectionTitle, color = FN.text)
-                        Text("Today", style = FT.monoTiny, color = FN.dotGray)
-                    }
-                    allNotes.take(4).forEach { entry ->
-                        ActivityRow(
-                            entry = entry,
-                            folderName = folders.firstOrNull { it.id == entry.note.folderId }?.name ?: "",
-                            folderColor = noteColor(
-                                folders.firstOrNull { it.id == entry.note.folderId }?.colorIndex ?: 0
-                            ),
-                            onClick = { navController.navigate("editor/${entry.note.id}") }
-                        )
-                    }
-                }
-            }
-        }
-
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            SectionLabel(tab.label.ifBlank { "Notes" })
-            if (visibleNotes.isEmpty()) {
-                Text(
-                    if (tab == LibraryTab.FAVORITES) "Pin notes to find them here." else "No notes yet.",
-                    style = FT.bodySmall,
-                    color = FN.muted
-                )
-            }
-            visibleNotes.forEach { entry ->
-                ListRowNote(
-                    entry = entry,
-                    dotColor = FN.accent,
-                    onOpen = { navController.navigate("editor/${entry.note.id}") },
-                    onLongPress = { deleteTarget = entry }
-                )
-            }
-        }
-        }
-    }
-
-        SnackbarHost(
-            snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 120.dp)
-        )
-    }
-
-    if (showAllTags) {
-        ModalBottomSheet(
-            onDismissRequest = { showAllTags = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ) {
-            Column(
+        Column(Modifier.fillMaxSize()) {
+            Row(
                 Modifier
                     .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Library", style = FT.screenTitle, color = FN.text)
+                    Text(
+                        "${folders.size} folders • ${allNotes.size} notes",
+                        style = FT.bodySmall.copy(fontSize = 13.sp),
+                        color = FN.muted
+                    )
+                }
+                CircleIconButton(Icons.Outlined.Add, "New folder", background = FN.strong, tint = FN.onStrong) {
+                    showNewFolder = true
+                }
+            }
+
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp)
-                    .padding(bottom = 30.dp),
+                    .padding(bottom = 132.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("All tags", style = FT.sectionTitle, color = FN.text)
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(7.dp),
-                    verticalArrangement = Arrangement.spacedBy(7.dp)
-                ) {
-                    tagsWithUsage.forEach { usage ->
-                        TagChipView(
-                            name = "${usage.tag.name} ${usage.count}",
-                            colorIndex = usage.tag.colorIndex
-                        )
+                if (folders.isEmpty()) {
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 70.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text("No folders yet", style = FT.sectionTitle, color = FN.text)
+                        Text("Tap + to create your first one.", style = FT.bodySmall, color = FN.muted)
+                    }
+                }
+                folders.chunked(2).forEach { rowFolders ->
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        rowFolders.forEach { folder ->
+                            val folderNotes = allNotes.filter { it.note.folderId == folder.id }
+                            FolderCard(
+                                folder = folder,
+                                count = folderNotes.size,
+                                lastUpdated = folderNotes.maxOfOrNull { it.note.updatedAt } ?: 0L,
+                                modifier = Modifier.weight(1f),
+                                onClick = { navController.navigate("folder/${folder.id}") }
+                            )
+                        }
+                        if (rowFolders.size == 1) Spacer(Modifier.weight(1f))
                     }
                 }
             }
         }
     }
 
-    deleteTarget?.let { entry ->
-        AlertDialog(
-            onDismissRequest = { deleteTarget = null },
-            title = { Text("Remove note?", style = FT.sectionTitle, color = FN.text) },
-            text = {
-                Text(
-                    "“${entry.note.title.ifBlank { "Untitled" }}” will be deleted permanently.",
-                    style = FT.body,
-                    color = FN.textSoft
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    val target = deleteTarget
-                    deleteTarget = null
-                    if (target != null) {
-                        scope.launch {
-                            container.noteRepository.trashNote(target.note)
-                            val result = snackbarHostState.showSnackbar(
-                                message = "Note moved to trash",
-                                actionLabel = "Undo",
-                                duration = SnackbarDuration.Short
-                            )
-                            if (result == SnackbarResult.ActionPerformed) {
-                                container.noteRepository.restoreNote(target.note.id)
-                            }
-                        }
-                    }
-                }) {
-                    Text("Delete", color = FN.accent)
+    if (showNewFolder) {
+        NewFolderDialog(
+            onDismiss = { showNewFolder = false },
+            onCreate = { name, iconKey, colorIndex ->
+                showNewFolder = false
+                scope.launch {
+                    container.noteRepository.createFolder(name, iconKey, colorIndex)
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { deleteTarget = null }) { Text("Cancel", color = FN.textSoft) }
             }
         )
     }
 }
 
+private val FolderIconChoices: List<Pair<String, ImageVector>> = listOf(
+    "work" to Icons.Outlined.Work,
+    "heart" to Icons.Outlined.FavoriteBorder,
+    "bulb" to Icons.Outlined.Lightbulb,
+    "archive" to Icons.Outlined.Archive
+)
+
 @Composable
-private fun ActivityRow(
-    entry: NoteWithTags,
-    folderName: String,
-    folderColor: Color,
-    onClick: () -> Unit
+private fun NewFolderDialog(
+    onDismiss: () -> Unit,
+    onCreate: (name: String, iconKey: String, colorIndex: Int) -> Unit
 ) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp, horizontal = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        ColoredDot(folderColor, size = 10.dp)
-        Column(
-            Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            Text(
-                entry.note.title.ifBlank { "Untitled" },
-                style = FT.cardTitle.copy(fontSize = 13.sp),
-                color = FN.text,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                "Edited ${TimeFormat.relative(entry.note.updatedAt)} • $folderName",
-                style = FT.monoTiny,
-                color = FN.muted,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+    var name by remember { mutableStateOf("") }
+    var iconKey by remember { mutableStateOf("work") }
+    var colorIndex by remember { mutableStateOf(1) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("New folder", style = FT.sectionTitle, color = FN.text) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                BasicTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    textStyle = FT.body.copy(color = FN.text),
+                    cursorBrush = SolidColor(FN.accent),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(FN.surfaceAlt, RoundedCornerShape(12.dp))
+                        .padding(12.dp),
+                    decorationBox = { inner ->
+                        Box {
+                            if (name.isEmpty()) {
+                                Text("Folder name", style = FT.body, color = FN.muted)
+                            }
+                            inner()
+                        }
+                    }
+                )
+                SectionLabel("Icon", color = FN.muted)
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FolderIconChoices.forEach { (key, icon) ->
+                        val selected = iconKey == key
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (selected) FN.strong else FN.surfaceAlt,
+                            border = if (selected) {
+                                BorderStroke(2.dp, FN.accent)
+                            } else {
+                                BorderStroke(1.dp, FN.line)
+                            },
+                            modifier = Modifier.size(44.dp)
+                        ) {
+                            Box(
+                                Modifier.clickable { iconKey = key },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    icon,
+                                    contentDescription = key,
+                                    tint = if (selected) FN.onStrong else FN.textSoft,
+                                    modifier = Modifier.size(19.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+                SectionLabel("Color", color = FN.muted)
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    (1..5).forEach { index ->
+                        val selected = colorIndex == index
+                        Box(
+                            Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(noteColor(index))
+                                .border(
+                                    width = if (selected) 2.dp else 1.dp,
+                                    color = if (selected) FN.accent else FN.line,
+                                    shape = CircleShape
+                                )
+                                .clickable { colorIndex = index }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { if (name.isNotBlank()) onCreate(name, iconKey, colorIndex) }) {
+                Text("Create", color = FN.text)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel", color = FN.muted) }
         }
-        Surface(shape = CircleShape, color = FN.bg) {
-            Icon(
-                Icons.Outlined.ChevronRight,
-                contentDescription = null,
-                tint = FN.muted,
-                modifier = Modifier.padding(4.dp).size(14.dp)
-            )
-        }
-    }
+    )
 }
 
 @Composable
@@ -428,7 +301,7 @@ private fun FolderCard(
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
-            Text(folder.name, style = FT.sectionTitle.copy(fontSize = 19.sp), color = FN.text)
+            Text(folder.name, style = FT.sectionTitle.copy(fontSize = 19.sp), color = ink)
             Text(
                 if (lastUpdated > 0) "Updated ${TimeFormat.relative(lastUpdated)}" else "No activity yet",
                 style = FT.bodySmall.copy(fontSize = 11.5.sp),
@@ -467,9 +340,5 @@ private fun FolderCard(
     }
 }
 
-private fun folderIcon(iconKey: String): ImageVector = when (iconKey) {
-    "heart" -> Icons.Outlined.FavoriteBorder
-    "bulb" -> Icons.Outlined.Lightbulb
-    "archive" -> Icons.Outlined.Archive
-    else -> Icons.Outlined.Work
-}
+private fun folderIcon(iconKey: String): ImageVector =
+    FolderIconChoices.firstOrNull { it.first == iconKey }?.second ?: Icons.Outlined.Work
