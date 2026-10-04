@@ -26,8 +26,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.fieldnotes.app.ui.theme.FN
-import com.fieldnotes.app.ui.theme.tagColor
-import com.fieldnotes.app.ui.theme.tagTextColor
 import com.fieldnotes.app.ui.theme.FT
 
 /** Uppercase mono label used for section headers, e.g. "YOUR NOTES". */
@@ -75,31 +73,6 @@ fun PillChip(
                 color = if (selected) FN.onStrong.copy(alpha = 0.6f) else FN.dotGray
             )
         }
-    }
-}
-
-@Composable
-fun TagChipView(
-    name: String,
-    colorIndex: Int,
-    modifier: Modifier = Modifier,
-    selected: Boolean = false,
-    onClick: (() -> Unit)? = null
-) {
-    Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(50))
-            .background(if (selected) FN.strong else tagColor(colorIndex))
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
-            .padding(horizontal = 11.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp)
-    ) {
-        Text(
-            text = "#$name",
-            style = FT.chip,
-            color = if (selected) FN.onStrong else tagTextColor(colorIndex)
-        )
     }
 }
 

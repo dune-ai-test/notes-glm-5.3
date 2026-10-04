@@ -110,11 +110,12 @@ import com.fieldnotes.app.ui.components.MetaPill
 import com.fieldnotes.app.ui.components.RecordSheet
 import com.fieldnotes.app.ui.components.ReminderDialog
 import com.fieldnotes.app.ui.components.SectionLabel
-import com.fieldnotes.app.ui.components.TagChipView
 import com.fieldnotes.app.ui.components.Waveform
 import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
 import com.fieldnotes.app.ui.theme.noteColor
+import com.fieldnotes.app.ui.theme.tagColor
+import com.fieldnotes.app.ui.theme.tagTextColor
 import com.fieldnotes.app.util.TimeFormat
 import java.io.File
 import kotlinx.coroutines.delay
@@ -132,7 +133,6 @@ fun EditorScreen(
         factory = viewModelFactory { initializer { EditorViewModel(container.noteRepository, noteId, folderIdHint) } }
     )
     val state by vm.state.collectAsStateWithLifecycle()
-    val allTags by vm.tags.collectAsStateWithLifecycle()
     val folders by vm.folders.collectAsStateWithLifecycle()
     val playback by container.audioPlayer.state.collectAsStateWithLifecycle()
     val recState by container.audioRecorder.state.collectAsStateWithLifecycle()
@@ -217,7 +217,6 @@ fun EditorScreen(
                     createdAt = current.createdAt,
                     updatedAt = current.updatedAt
                 ),
-                tags = allTags.filter { it.id in current.tagIds }
             ),
             NoteExporter.folderName(folders, current.folderId)
         )
@@ -314,16 +313,7 @@ fun EditorScreen(
                                 onTogglePlay = { audioId, path -> container.audioPlayer.toggle(audioId, path) }
                             )
                         }
-                        TagsCard(
-                            assignedIds = state.tagIds,
-                            allTags = allTags,
-                            onToggleTag = { id ->
-                                vm.setTags(
-                                    if (id in state.tagIds) state.tagIds - id else state.tagIds + id
-                                )
-                            },
-                            onCreateTag = { name -> vm.createTag(name) { vm.selectTag(it) } }
-                        )
+                        FolderInfoCard(folderName = NoteExporter.folderName(folders, state.folderId))
                         Spacer(Modifier.height(90.dp))
                     }
 
@@ -376,7 +366,6 @@ fun EditorScreen(
         MoreSheet(
             state = state,
             folders = folders,
-            allTags = allTags,
             locked = state.locked,
             biometricAvailable = container.biometricAvailable,
             onDismiss = { showMore = false },
@@ -398,9 +387,6 @@ fun EditorScreen(
             },
             onColor = { vm.setColor(it) },
             onFolder = { vm.setFolder(it) },
-            onToggleTag = { id ->
-                vm.setTags(if (id in state.tagIds) state.tagIds - id else state.tagIds + id)
-            },
             onDelete = {
                 showMore = false
                 vm.deleteNote { navController.popBackStack() }
@@ -883,104 +869,30 @@ private fun TextField(
 }
 
 @Composable
-private fun TagsCard(
-    assignedIds: Set<Long>,
-    allTags: List<com.fieldnotes.app.data.db.TagEntity>,
-    onToggleTag: (Long) -> Unit,
-    onCreateTag: (String) -> Unit
-) {
-    var showNewTag by remember { mutableStateOf(false) }
+private fun FolderInfoCard(folderName: String) {
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = FN.surface,
         border = BorderStroke(1.dp, FN.line),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
+        Row(
             Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text("Tags", style = FT.sectionTitle, color = FN.text)
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(7.dp),
-                verticalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                allTags.forEach { tag ->
-                    TagChipView(
-                        name = tag.name,
-                        colorIndex = tag.colorIndex,
-                        selected = tag.id in assignedIds,
-                        onClick = { onToggleTag(tag.id) }
-                    )
-                }
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = Color.Transparent,
-                    border = BorderStroke(1.dp, FN.line)
-                ) {
-                    Row(
-                        Modifier
-                            .clickable { showNewTag = true }
-                            .padding(horizontal = 11.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(5.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Add,
-                            contentDescription = null,
-                            tint = FN.text,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Text("New tag", style = FT.chip, color = FN.text)
-                    }
-                }
-            }
-        }
-    }
-    if (showNewTag) {
-        NewTagDialog(
-            onDismiss = { showNewTag = false },
-            onCreate = { name ->
-                showNewTag = false
-                onCreateTag(name)
-            }
-        )
-    }
-}
-
-@Composable
-private fun NewTagDialog(onDismiss: () -> Unit, onCreate: (String) -> Unit) {
-    var name by remember { mutableStateOf("") }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("New tag", style = FT.sectionTitle, color = FN.text) },
-        text = {
-            BasicTextField(
-                value = name,
-                onValueChange = { name = it },
-                textStyle = FT.body.copy(color = FN.text),
-                cursorBrush = SolidColor(FN.accent),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(FN.surfaceAlt, RoundedCornerShape(12.dp))
-                    .padding(12.dp),
-                decorationBox = { inner ->
-                    Box {
-                        if (name.isEmpty()) Text("e.g. recipes", style = FT.body, color = FN.muted)
-                        inner()
-                    }
-                }
+            Icon(
+                imageVector = Icons.Outlined.Folder,
+                contentDescription = null,
+                tint = FN.textSoft,
+                modifier = Modifier.size(18.dp)
             )
-        },
-        confirmButton = {
-            TextButton(onClick = { if (name.isNotBlank()) onCreate(name) }) {
-                Text("Create", color = FN.text)
+            Column {
+                Text("Folder", style = FT.monoLabel, color = FN.muted)
+                Text(folderName, style = FT.chip.copy(fontSize = 13.sp), color = FN.text)
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = FN.muted) }
         }
-    )
+    }
 }
 
 @Composable
@@ -1131,7 +1043,6 @@ private fun BlockAction(icon: ImageVector, label: String, onClick: () -> Unit) {
 private fun MoreSheet(
     state: EditorViewModel.EditorState,
     folders: List<com.fieldnotes.app.data.db.FolderEntity>,
-    allTags: List<com.fieldnotes.app.data.db.TagEntity>,
     locked: Boolean,
     biometricAvailable: Boolean,
     onDismiss: () -> Unit,
@@ -1140,7 +1051,6 @@ private fun MoreSheet(
     onToggleLock: (Boolean) -> Unit,
     onColor: (Int) -> Unit,
     onFolder: (Long) -> Unit,
-    onToggleTag: (Long) -> Unit,
     onDelete: () -> Unit
 ) {
     ModalBottomSheet(
@@ -1255,26 +1165,23 @@ private fun MoreSheet(
                 verticalArrangement = Arrangement.spacedBy(7.dp)
             ) {
                 folders.forEach { folder ->
-                    TagChipView(
-                        name = folder.name,
-                        colorIndex = if (state.folderId == folder.id) 6 else folder.colorIndex,
-                        selected = state.folderId == folder.id,
-                        onClick = { onFolder(folder.id) }
-                    )
-                }
-            }
-            SectionLabel("Tags")
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(7.dp),
-                verticalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                allTags.forEach { tag ->
-                    TagChipView(
-                        name = tag.name,
-                        colorIndex = tag.colorIndex,
-                        selected = tag.id in state.tagIds,
-                        onClick = { onToggleTag(tag.id) }
-                    )
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = if (state.folderId == folder.id) FN.strong else tagColor(folder.colorIndex),
+                        border = if (state.folderId == folder.id) {
+                            BorderStroke(1.dp, FN.strong)
+                        } else {
+                            null
+                        },
+                        modifier = Modifier.clickable { onFolder(folder.id) }
+                    ) {
+                        Text(
+                            folder.name,
+                            style = FT.chip,
+                            color = if (state.folderId == folder.id) FN.onStrong else tagTextColor(folder.colorIndex),
+                            modifier = Modifier.padding(horizontal = 11.dp, vertical = 6.dp)
+                        )
+                    }
                 }
             }
             Spacer(Modifier.height(6.dp))

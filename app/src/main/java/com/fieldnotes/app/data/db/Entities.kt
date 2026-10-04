@@ -1,7 +1,6 @@
 package com.fieldnotes.app.data.db
 
 import androidx.room.Entity
-import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "folders")
@@ -9,13 +8,6 @@ data class FolderEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val iconKey: String,
-    val colorIndex: Int
-)
-
-@Entity(tableName = "tags")
-data class TagEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val name: String,
     val colorIndex: Int
 )
 
@@ -41,13 +33,6 @@ data class NoteEntity(
         const val DEFAULT_FOLDER_ID = 1L
     }
 }
-
-@Entity(
-    tableName = "note_tag_join",
-    primaryKeys = ["noteId", "tagId"],
-    indices = [Index("tagId")]
-)
-data class NoteTagCrossRef(val noteId: Long, val tagId: Long)
 
 @Entity(tableName = "memos")
 data class MemoEntity(

@@ -3,7 +3,6 @@ package com.fieldnotes.app.data.db
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
@@ -39,15 +38,6 @@ interface NoteDao {
     @Delete
     suspend fun delete(note: NoteEntity)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertNoteTags(refs: List<NoteTagCrossRef>)
-
-    @Query("DELETE FROM note_tag_join WHERE noteId = :noteId")
-    suspend fun clearNoteTags(noteId: Long)
-
-    @Query("DELETE FROM note_tag_join")
-    suspend fun clearAllNoteTags()
-
     @Query("DELETE FROM notes")
     suspend fun clearAll()
 
@@ -78,43 +68,6 @@ interface NoteDao {
     @Query("UPDATE notes SET trashed = 0, trashedAt = NULL WHERE id = :id")
     suspend fun setNotTrashed(id: Long)
 }
-
-@Dao
-interface TagDao {
-
-    @Query("SELECT * FROM tags ORDER BY name COLLATE NOCASE")
-    fun observeAll(): Flow<List<TagEntity>>
-
-    @Query(
-        "SELECT tags.id AS tagId, COUNT(noteId) AS count FROM tags " +
-            "LEFT JOIN note_tag_join ON note_tag_join.tagId = tags.id " +
-            "GROUP BY tags.id ORDER BY count DESC, tags.name COLLATE NOCASE"
-    )
-    fun observeCounts(): Flow<List<TagIdCount>>
-
-    @Query("SELECT * FROM tags WHERE id = :id")
-    suspend fun getTag(id: Long): TagEntity?
-
-    @Query("SELECT * FROM tags WHERE name = :name COLLATE NOCASE LIMIT 1")
-    suspend fun getTagByName(name: String): TagEntity?
-
-    @Insert
-    suspend fun insert(tag: TagEntity): Long
-
-    @Delete
-    suspend fun delete(tag: TagEntity)
-
-    @Query("DELETE FROM note_tag_join WHERE tagId = :tagId")
-    suspend fun clearTagRefs(tagId: Long)
-
-    @Query("DELETE FROM tags")
-    suspend fun clearAllTags()
-
-    @Query("SELECT COUNT(*) FROM tags")
-    suspend fun count(): Int
-}
-
-data class TagIdCount(val tagId: Long, val count: Int)
 
 @Dao
 interface FolderDao {

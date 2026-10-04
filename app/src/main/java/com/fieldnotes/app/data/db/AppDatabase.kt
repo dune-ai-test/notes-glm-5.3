@@ -8,18 +8,15 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 @Database(
     entities = [
         NoteEntity::class,
-        TagEntity::class,
         FolderEntity::class,
-        NoteTagCrossRef::class,
         MemoEntity::class,
         ReminderEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
-    abstract fun tagDao(): TagDao
     abstract fun folderDao(): FolderDao
     abstract fun memoDao(): MemoDao
     abstract fun reminderDao(): ReminderDao
@@ -61,6 +58,13 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE `reminders` ADD COLUMN `completed` INTEGER NOT NULL DEFAULT 0")
                 db.execSQL("ALTER TABLE `reminders` ADD COLUMN `repeat` TEXT NOT NULL DEFAULT 'none'")
                 db.execSQL("ALTER TABLE `reminders` ADD COLUMN `noteId` INTEGER")
+            }
+        }
+
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS `note_tag_join`")
+                db.execSQL("DROP TABLE IF EXISTS `tags`")
             }
         }
     }

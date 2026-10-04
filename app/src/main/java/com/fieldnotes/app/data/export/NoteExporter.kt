@@ -22,7 +22,6 @@ data class BackupData(
     val version: Int = 1,
     val exportedAt: Long,
     val folders: List<BackupFolder>,
-    val tags: List<BackupTag>,
     val notes: List<BackupNote>,
     val memos: List<BackupMemo>
 )
@@ -30,8 +29,6 @@ data class BackupData(
 @Serializable
 data class BackupFolder(val id: Long, val name: String, val iconKey: String, val colorIndex: Int)
 
-@Serializable
-data class BackupTag(val id: Long, val name: String, val colorIndex: Int)
 
 @Serializable
 data class BackupNote(
@@ -43,7 +40,6 @@ data class BackupNote(
     val pinned: Boolean,
     val createdAt: Long,
     val updatedAt: Long,
-    val tagIds: List<Long>
 )
 
 @Serializable
@@ -71,8 +67,6 @@ object NoteExporter {
     ): BackupData = BackupData(
         exportedAt = System.currentTimeMillis(),
         folders = folders.map { BackupFolder(it.id, it.name, it.iconKey, it.colorIndex) },
-        tags = notes.flatMap { it.tags }.distinctBy { it.id }
-            .map { BackupTag(it.id, it.name, it.colorIndex) },
         notes = notes.map {
             BackupNote(
                 folderId = it.note.folderId,
@@ -83,7 +77,6 @@ object NoteExporter {
                 pinned = it.note.pinned,
                 createdAt = it.note.createdAt,
                 updatedAt = it.note.updatedAt,
-                tagIds = it.tags.map { t -> t.id }
             )
         },
         memos = memos.map {
@@ -102,7 +95,7 @@ object NoteExporter {
         sb.appendLine("# ${note.note.title.ifBlank { "Untitled" }}")
         sb.appendLine()
         sb.appendLine("- Folder: $folderLabel")
-        sb.appendLine("- Tags: ${note.tags.joinToString(", ") { "#${it.name}".ifBlank { "#" } }}")
+
         sb.appendLine("- Created: ${TimeFormat.dateShort(note.note.createdAt)}")
         sb.appendLine("- Updated: ${TimeFormat.dateShort(note.note.updatedAt)}")
         sb.appendLine()

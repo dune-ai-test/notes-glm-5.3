@@ -3,7 +3,6 @@ package com.fieldnotes.app
 import com.fieldnotes.app.data.db.NoteEntity
 import com.fieldnotes.app.data.db.NoteTagCrossRef
 import com.fieldnotes.app.data.db.NoteWithTags
-import com.fieldnotes.app.data.db.TagEntity
 import com.fieldnotes.app.data.model.Block
 import com.fieldnotes.app.data.model.encodeBlocks
 import com.fieldnotes.app.data.repo.NoteSort
@@ -28,8 +27,7 @@ class NoteFilterTest {
             pinned = pinned,
             createdAt = updatedAt - 1_000,
             updatedAt = updatedAt
-        ),
-        tags = emptyList()
+        )
     )
 
     private val notes = listOf(

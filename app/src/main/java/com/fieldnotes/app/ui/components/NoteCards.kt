@@ -73,6 +73,7 @@ private val PastelSoft = Color(0xFF6B665F)
 fun HomeNoteCard(
     entry: NoteWithTags,
     dotColor: Color,
+    folderName: String,
     playbackState: AudioPlayer.State,
     onOpen: () -> Unit,
     onLongPress: (() -> Unit)?,
@@ -86,12 +87,12 @@ fun HomeNoteCard(
     }
     val blocks = remember(entry.note.blocksJson) { decodeBlocks(entry.note.blocksJson) }
     when (noteCardKind(entry.note, blocks)) {
-        NoteCardKind.HERO -> HeroCard(entry, blocks, onOpen, onLongPress)
+        NoteCardKind.HERO -> HeroCard(entry, blocks, folderName, onOpen, onLongPress)
         NoteCardKind.AUDIO -> AudioCard(entry, blocks, playbackState, onOpen, onLongPress, onTogglePlay)
         NoteCardKind.CHECKLIST -> ChecklistCard(entry, blocks, onOpen, onLongPress, onToggleChecklistItem)
         NoteCardKind.SKETCH -> SketchCard(entry, onOpen, onLongPress)
-        NoteCardKind.QUOTE -> QuoteCard(entry, blocks, onOpen, onLongPress)
-        NoteCardKind.TEXT -> TextCard(entry, blocks, dotColor, onOpen, onLongPress)
+        NoteCardKind.QUOTE -> QuoteCard(entry, blocks, folderName, onOpen, onLongPress)
+        NoteCardKind.TEXT -> TextCard(entry, blocks, folderName, dotColor, onOpen, onLongPress)
     }
 }
 
@@ -283,6 +284,7 @@ private fun CardShell(
 private fun HeroCard(
     entry: NoteWithTags,
     blocks: List<Block>,
+    folderName: String,
     onOpen: () -> Unit,
     onLongPress: (() -> Unit)?
 ) {
@@ -337,16 +339,14 @@ private fun HeroCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            entry.tags.firstOrNull()?.let { tag ->
-                Surface(shape = RoundedCornerShape(50), color = FN.onStrong) {
-                    Row(
-                        Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        ColoredDot(FN.accent, size = 6.dp)
-                        Text(tag.name, style = FT.monoChip, color = FN.inkFixed)
-                    }
+            Surface(shape = RoundedCornerShape(50), color = FN.onStrong) {
+                Row(
+                    Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    ColoredDot(FN.accent, size = 6.dp)
+                    Text(folderName, style = FT.monoChip, color = FN.inkFixed)
                 }
             }
             Text(
@@ -599,6 +599,7 @@ private fun AudioCard(
 private fun QuoteCard(
     entry: NoteWithTags,
     blocks: List<Block>,
+    folderName: String,
     onOpen: () -> Unit,
     onLongPress: (() -> Unit)?
 ) {
@@ -646,15 +647,13 @@ private fun QuoteCard(
                 )
             }
         }
-        entry.tags.firstOrNull()?.let { tag ->
-            Surface(shape = RoundedCornerShape(50), color = if (pastel) FN.onStrong else FN.surfaceAlt) {
-                Text(
-                    text = tag.name.replaceFirstChar { it.uppercase() },
-                    style = FT.chipSmall,
-                    color = ink,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                )
-            }
+        Surface(shape = RoundedCornerShape(50), color = if (pastel) FN.onStrong else FN.surfaceAlt) {
+            Text(
+                text = folderName,
+                style = FT.chipSmall,
+                color = ink,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+            )
         }
     }
 }
@@ -663,6 +662,7 @@ private fun QuoteCard(
 private fun TextCard(
     entry: NoteWithTags,
     blocks: List<Block>,
+    folderName: String,
     dotColor: Color,
     onOpen: () -> Unit,
     onLongPress: (() -> Unit)?
@@ -710,22 +710,16 @@ private fun TextCard(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        if (entry.tags.isNotEmpty()) {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                entry.tags.take(2).forEach { tag ->
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = if (pastel) FN.onStrong else FN.surfaceAlt
-                    ) {
-                        Text(
-                            text = "#${tag.name}",
-                            style = FT.monoChip,
-                            color = ink,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-                }
-            }
+        Surface(
+            shape = RoundedCornerShape(50),
+            color = if (pastel) FN.onStrong else FN.surfaceAlt
+        ) {
+            Text(
+                text = folderName,
+                style = FT.monoChip,
+                color = ink,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            )
         }
     }
 }

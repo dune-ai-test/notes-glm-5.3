@@ -50,7 +50,6 @@ import com.fieldnotes.app.di.LocalAppContainer
 import com.fieldnotes.app.ui.components.CircleIconButton
 import com.fieldnotes.app.ui.components.ListRowNote
 import com.fieldnotes.app.ui.components.SectionLabel
-import com.fieldnotes.app.ui.components.TagChipView
 import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,26 +60,17 @@ import kotlinx.coroutines.flow.stateIn
 
 class SearchViewModel(repo: NoteRepository) : ViewModel() {
 
-    val tags: StateFlow<List<com.fieldnotes.app.data.db.TagEntity>> = repo.tags
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
     val query = MutableStateFlow("")
-    val tagFilter = MutableStateFlow<Set<Long>>(emptySet())
-
     val results: StateFlow<List<NoteWithTags>> = combine(
-        repo.activeNotes, query, tagFilter
-    ) { notes, q, tagIds ->
-        filterNotes(notes, q, NoteSort.RECENT, tagIds, pinnedOnly = false)
+        repo.activeNotes, query
+    ) { notes, q ->
+        filterNotes(notes, q, NoteSort.RECENT, pinnedOnly = false)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun setQuery(value: String) {
         query.value = value
     }
 
-    fun toggleTag(tagId: Long) {
-        val current = tagFilter.value
-        tagFilter.value = if (tagId in current) current - tagId else current + tagId
-    }
 }
 
 @Composable
@@ -89,9 +79,7 @@ fun SearchScreen(navController: NavHostController) {
     val vm: SearchViewModel = viewModel(
         factory = viewModelFactory { initializer { SearchViewModel(container.noteRepository) } }
     )
-    val tags by vm.tags.collectAsStateWithLifecycle()
     val results by vm.results.collectAsStateWithLifecycle()
-    val tagFilter by vm.tagFilter.collectAsStateWithLifecycle()
     val query by vm.query.collectAsStateWithLifecycle()
     val focusRequester = remember { FocusRequester() }
 
@@ -146,7 +134,7 @@ fun SearchScreen(navController: NavHostController) {
                             Box {
                                 if (query.isEmpty()) {
                                     Text(
-                                        "Search notes, tags, sketches…",
+                                        "Search notes…",
                                         style = FT.body.copy(fontSize = 14.sp),
                                         color = FN.muted
                                     )
@@ -165,21 +153,6 @@ fun SearchScreen(navController: NavHostController) {
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            if (tags.isNotEmpty()) {
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(7.dp),
-                    verticalArrangement = Arrangement.spacedBy(7.dp)
-                ) {
-                    tags.forEach { tag ->
-                        TagChipView(
-                            name = tag.name,
-                            colorIndex = tag.colorIndex,
-                            selected = tag.id in tagFilter,
-                            onClick = { vm.toggleTag(tag.id) }
-                        )
-                    }
-                }
-            }
             SectionLabel("${results.size} results", color = FN.muted)
         }
 

@@ -5,8 +5,6 @@ import com.fieldnotes.app.data.db.AppDatabase
 import com.fieldnotes.app.data.db.FolderEntity
 import com.fieldnotes.app.data.db.MemoEntity
 import com.fieldnotes.app.data.db.NoteEntity
-import com.fieldnotes.app.data.db.NoteTagCrossRef
-import com.fieldnotes.app.data.db.TagEntity
 import com.fieldnotes.app.data.model.Block
 import com.fieldnotes.app.data.model.BlockJson
 import com.fieldnotes.app.data.model.encodeBlocks
@@ -20,13 +18,12 @@ data class ImportSummary(
     val notes: Int,
     val memos: Int,
     val newFolders: Int,
-    val newTags: Int,
     val skipped: Boolean = false
 )
 
 /**
- * Restores a Field Notes ZIP backup produced by [NoteExporter]. Folders and tags
- * are merged by name; notes and memos are always added as new entries; media
+ * Restores a Field Notes ZIP backup produced by [NoteExporter]. Folders are
+ * merged by name; notes and memos are always added as new entries; media
  * files are copied into the app's private storage with paths rewritten by file name.
  */
 object BackupImporter {
@@ -63,7 +60,7 @@ object BackupImporter {
             }
 
             val data = backup
-                ?: return@withContext ImportSummary(notes = 0, memos = 0, newFolders = 0, newTags = 0, skipped = true)
+                ?: return@withContext ImportSummary(notes = 0, memos = 0, newFolders = 0, skipped = true)
 
             // Folders (merge by name)
             val folderIdMap = mutableMapOf<Long, Long>()
@@ -83,20 +80,6 @@ object BackupImporter {
                     )
                 }
                 folderIdMap[backupFolder.id] = newId
-            }
-
-            // Tags (merge by name)
-            val tagIdMap = mutableMapOf<Long, Long>()
-            var newTags = 0
-            data.tags.forEach { backupTag ->
-                val existing = db.tagDao().getTagByName(backupTag.name)
-                val newId = if (existing != null) {
-                    existing.id
-                } else {
-                    newTags++
-                    db.tagDao().insert(TagEntity(name = backupTag.name, colorIndex = backupTag.colorIndex))
-                }
-                tagIdMap[backupTag.id] = newId
             }
 
             fun remap(path: String): String {
@@ -125,9 +108,6 @@ object BackupImporter {
                         updatedAt = backupNote.updatedAt
                     )
                 )
-                val refs = backupNote.tagIds.mapNotNull { tagIdMap[it] }
-                    .map { NoteTagCrossRef(noteId, it) }
-                if (refs.isNotEmpty()) db.noteDao().insertNoteTags(refs)
             }
 
             data.memos.forEach { backupMemo ->
@@ -145,8 +125,7 @@ object BackupImporter {
             ImportSummary(
                 notes = data.notes.size,
                 memos = data.memos.size,
-                newFolders = newFolders,
-                newTags = newTags
+                newFolders = newFolders
             )
         }
 }

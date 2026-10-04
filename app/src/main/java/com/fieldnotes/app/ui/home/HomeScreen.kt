@@ -97,7 +97,6 @@ import com.fieldnotes.app.ui.components.HomeNoteCard
 import com.fieldnotes.app.ui.components.ListRowNote
 import com.fieldnotes.app.ui.components.PillChip
 import com.fieldnotes.app.ui.components.SectionLabel
-import com.fieldnotes.app.ui.components.TagChipView
 import com.fieldnotes.app.ui.components.noteCardKind
 import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
@@ -118,11 +117,9 @@ fun HomeScreen(
     )
     val notes by vm.visibleNotes.collectAsStateWithLifecycle()
     val noteCount by vm.noteCount.collectAsStateWithLifecycle()
-    val tags by vm.tags.collectAsStateWithLifecycle()
     val folders by vm.folders.collectAsStateWithLifecycle()
     val pinnedOnly by vm.pinnedOnly.collectAsStateWithLifecycle()
     val sort by vm.sort.collectAsStateWithLifecycle()
-    val tagFilter by vm.tagFilter.collectAsStateWithLifecycle()
     val playback by container.audioPlayer.state.collectAsStateWithLifecycle()
     val settings by container.settingsRepository.settings
         .collectAsStateWithLifecycle(initialValue = AppSettings())
@@ -173,6 +170,9 @@ fun HomeScreen(
     val openNote: (Long) -> Unit = { id -> navController.navigate("editor/$id") }
     val dotColorFor: @Composable (NoteWithTags) -> Color = { entry ->
         foldersById[entry.note.folderId]?.let { noteColor(it.colorIndex) } ?: FN.accent
+    }
+    val folderNameFor: (NoteWithTags) -> String = { entry ->
+        foldersById[entry.note.folderId]?.name ?: "Unfiled"
     }
 
     // Locked notes: authenticate before opening.
@@ -338,6 +338,7 @@ fun HomeScreen(
                             HomeNoteCard(
                                 entry = entry,
                                 dotColor = dotColorFor(entry),
+                                folderName = folderNameFor(entry),
                                 playbackState = playback,
                                 onOpen = {
                                     if (!reorderMode) tryOpen(entry)
@@ -387,11 +388,8 @@ fun HomeScreen(
 
         if (showFilters) {
             FilterSheet(
-                tags = tags,
                 sort = sort,
-                tagFilter = tagFilter,
                 onSort = vm::setSort,
-                onToggleTag = vm::toggleTag,
                 onReset = vm::resetFilters,
                 onDismiss = { showFilters = false }
             )
@@ -516,7 +514,7 @@ private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit) {
                 modifier = Modifier.size(18.dp)
             )
             Text(
-                text = "Search notes, tags, sketches…",
+                text = "Search notes…",
                 style = FT.bodySmall.copy(fontSize = 13.5.sp),
                 color = FN.muted,
                 modifier = Modifier.weight(1f),
@@ -598,11 +596,8 @@ private fun SegToggleLabel(
 
 @Composable
 private fun FilterSheet(
-    tags: List<TagEntity>,
     sort: NoteSort,
-    tagFilter: Set<Long>,
     onSort: (NoteSort) -> Unit,
-    onToggleTag: (Long) -> Unit,
     onReset: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -627,20 +622,6 @@ private fun FilterSheet(
                     NoteSort.CUSTOM to "Custom"
                 ).forEach { (value, label) ->
                     PillChip(label = label, selected = sort == value, onClick = { onSort(value) })
-                }
-            }
-            SectionLabel("Tags")
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(7.dp),
-                verticalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                tags.forEach { tag ->
-                    TagChipView(
-                        name = tag.name,
-                        colorIndex = tag.colorIndex,
-                        selected = tag.id in tagFilter,
-                        onClick = { onToggleTag(tag.id) }
-                    )
                 }
             }
             Row(

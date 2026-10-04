@@ -4,7 +4,6 @@ import com.fieldnotes.app.data.db.FolderEntity
 import com.fieldnotes.app.data.db.MemoEntity
 import com.fieldnotes.app.data.db.NoteEntity
 import com.fieldnotes.app.data.db.NoteWithTags
-import com.fieldnotes.app.data.db.TagEntity
 import com.fieldnotes.app.data.export.NoteExporter
 import com.fieldnotes.app.data.model.Block
 import com.fieldnotes.app.data.model.ChecklistItem
@@ -36,15 +35,13 @@ class NoteExporterTest {
                 ),
                 createdAt = 0,
                 updatedAt = 0
-            ),
-            tags = listOf(TagEntity(id = 1, name = "travel", colorIndex = 5))
+            )
         )
 
         val markdown = NoteExporter.noteToMarkdown(entry, folderLabel = "Personal")
 
         assertTrue(markdown.contains("# The warmth of linen light"))
         assertTrue(markdown.contains("- Folder: Personal"))
-        assertTrue(markdown.contains("#travel"))
         assertTrue(markdown.contains("## Why it stays with you"))
         assertTrue(markdown.contains("- [x] Linen curtains"))
         assertTrue(markdown.contains("- [ ] Paper lanterns"))
@@ -68,8 +65,7 @@ class NoteExporterTest {
                 createdAt = 0,
                 updatedAt = 0
             ),
-            tags = emptyList()
-        )
+            )
         val out = java.io.ByteArrayOutputStream()
         NoteExporter.exportZip(
             notes = listOf(entry),
@@ -94,8 +90,7 @@ class NoteExporterTest {
                 createdAt = 0,
                 updatedAt = 0
             ),
-            tags = emptyList()
-        )
+            )
         val markdown = NoteExporter.noteToMarkdown(entry, folderLabel = "Ideas")
         assertTrue(markdown.contains("# Ideas: big/secret?"))
     }
@@ -104,8 +99,7 @@ class NoteExporterTest {
     fun `exporter is pure and deterministic`() {
         val entry = NoteWithTags(
             note = NoteEntity(id = 1, title = "A", blocksJson = "[]", createdAt = 0, updatedAt = 0),
-            tags = emptyList()
-        )
+            )
         val folders = listOf(FolderEntity(id = 1, name = "Work", iconKey = "work", colorIndex = 5))
         assertEquals(
             NoteExporter.noteToMarkdown(entry, "Work"),

@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fieldnotes.app.data.db.FolderEntity
 import com.fieldnotes.app.data.db.NoteWithTags
-import com.fieldnotes.app.data.db.TagEntity
 import com.fieldnotes.app.data.model.Block
 import com.fieldnotes.app.data.model.decodeBlocks
 import com.fieldnotes.app.data.repo.NoteRepository
@@ -22,9 +21,6 @@ class HomeViewModel(private val repo: NoteRepository) : ViewModel() {
     val noteCount: StateFlow<Int> = repo.activeNoteCount
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
-    val tags: StateFlow<List<TagEntity>> = repo.tags
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
     val folders: StateFlow<List<FolderEntity>> = repo.folders
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -40,13 +36,12 @@ class HomeViewModel(private val repo: NoteRepository) : ViewModel() {
 
     val query = MutableStateFlow("")
     val sort = MutableStateFlow(NoteSort.RECENT)
-    val tagFilter = MutableStateFlow<Set<Long>>(emptySet())
     val pinnedOnly = MutableStateFlow(false)
 
     val visibleNotes: StateFlow<List<NoteWithTags>> = combine(
-        notesWithOrder, query, sort, tagFilter, pinnedOnly
-    ) { (notes, order), queryValue, sortValue, tagIds, pinned ->
-        filterNotes(notes, queryValue, sortValue, tagIds, pinned, order)
+        notesWithOrder, query, sort, pinnedOnly
+    ) { (notes, order), queryValue, sortValue, pinned ->
+        filterNotes(notes, queryValue, sortValue, pinned, order)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** Enters manual ordering, seeding the order from the current list. */
@@ -87,14 +82,8 @@ class HomeViewModel(private val repo: NoteRepository) : ViewModel() {
         pinnedOnly.value = value
     }
 
-    fun toggleTag(tagId: Long) {
-        val current = tagFilter.value
-        tagFilter.value = if (tagId in current) current - tagId else current + tagId
-    }
-
     fun resetFilters() {
         sort.value = NoteSort.RECENT
-        tagFilter.value = emptySet()
         pinnedOnly.value = false
     }
 

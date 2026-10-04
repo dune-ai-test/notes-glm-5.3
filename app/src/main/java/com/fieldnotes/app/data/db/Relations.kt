@@ -1,21 +1,7 @@
 package com.fieldnotes.app.data.db
 
 import androidx.room.Embedded
-import androidx.room.Junction
-import androidx.room.Relation
 
 data class NoteWithTags(
-    @Embedded val note: NoteEntity,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "id",
-        associateBy = Junction(
-            value = NoteTagCrossRef::class,
-            parentColumn = "noteId",
-            entityColumn = "tagId"
-        )
-    )
-    val tags: List<TagEntity>
+    @Embedded val note: NoteEntity
 )
-
-data class TagWithCount(val tag: TagEntity, val count: Int)

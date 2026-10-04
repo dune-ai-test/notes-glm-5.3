@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.fieldnotes.app.data.db.FolderEntity
 import com.fieldnotes.app.data.db.NoteEntity
 import com.fieldnotes.app.data.db.NoteWithTags
-import com.fieldnotes.app.data.db.TagEntity
 import com.fieldnotes.app.data.model.Block
 import com.fieldnotes.app.data.model.ChecklistItem
 import com.fieldnotes.app.data.model.decodeBlocks
@@ -31,7 +30,6 @@ class EditorViewModel(
         val missing: Boolean = false,
         val title: String = "",
         val blocks: List<Block> = emptyList(),
-        val tagIds: Set<Long> = emptySet(),
         val pinned: Boolean = false,
         val locked: Boolean = false,
         val colorIndex: Int = 0,
@@ -44,9 +42,6 @@ class EditorViewModel(
 
     private val _state = MutableStateFlow(EditorState())
     val state = _state.asStateFlow()
-
-    val tags: StateFlow<List<TagEntity>> = repo.tags
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val folders: StateFlow<List<FolderEntity>> = repo.folders
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -86,7 +81,6 @@ class EditorViewModel(
                         loading = false,
                         title = loaded.note.title,
                         blocks = blocks,
-                        tagIds = loaded.tags.map { it.id }.toSet(),
                         pinned = loaded.note.pinned,
                         locked = loaded.note.locked,
                         colorIndex = loaded.note.colorIndex,
@@ -169,17 +163,6 @@ class EditorViewModel(
         }
     }
 
-    fun setTags(ids: Set<Long>) = update { it.copy(tagIds = ids) }
-
-    fun selectTag(id: Long) = update { it.copy(tagIds = it.tagIds + id) }
-
-    fun createTag(name: String, onCreated: (Long) -> Unit = {}) {
-        val trimmed = name.trim().removePrefix("#")
-        if (trimmed.isEmpty()) return
-        viewModelScope.launch {
-            onCreated(repo.createTag(trimmed, (0..5).random()))
-        }
-    }
     fun setColor(index: Int) = update { it.copy(colorIndex = index) }
     fun setPinned(value: Boolean) = update { it.copy(pinned = value) }
 
@@ -277,8 +260,7 @@ class EditorViewModel(
                 locked = s.locked,
                 folderId = s.folderId
             ),
-            s.blocks,
-            s.tagIds
+            s.blocks
         )
         dirty = false
         _state.update { it.copy(updatedAt = System.currentTimeMillis()) }
