@@ -83,7 +83,6 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavHostController
 import com.fieldnotes.app.data.db.NoteWithTags
-import com.fieldnotes.app.data.db.TagEntity
 import com.fieldnotes.app.data.media.AudioPlayer
 import com.fieldnotes.app.data.model.decodeBlocks
 import com.fieldnotes.app.data.repo.NoteRepository
