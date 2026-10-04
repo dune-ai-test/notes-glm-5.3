@@ -37,28 +37,28 @@ class NoteFilterTest {
 
     @Test
     fun `recent sort puts newest first`() {
-        val result = filterNotes(notes, "", NoteSort.RECENT, emptySet(), false)
+        val result = filterNotes(notes, "", NoteSort.RECENT, false)
         assertEquals(listOf(1L, 2L, 3L), result.map { it.note.id })
     }
 
     @Test
     fun `query matches title and body`() {
-        val byTitle = filterNotes(notes, "kyoto photo", NoteSort.RECENT, emptySet(), false)
+        val byTitle = filterNotes(notes, "kyoto photo", NoteSort.RECENT, false)
         assertEquals(listOf(1L), byTitle.map { it.note.id })
 
-        val byBody = filterNotes(notes, "basil", NoteSort.RECENT, emptySet(), false)
+        val byBody = filterNotes(notes, "basil", NoteSort.RECENT, false)
         assertEquals(listOf(2L), byBody.map { it.note.id })
     }
 
     @Test
     fun `pinned only filters`() {
-        val result = filterNotes(notes, "", NoteSort.RECENT, emptySet(), pinnedOnly = true)
+        val result = filterNotes(notes, "", NoteSort.RECENT, pinnedOnly = true)
         assertEquals(listOf(1L), result.map { it.note.id })
     }
 
     @Test
     fun `title sort is case insensitive`() {
-        val result = filterNotes(notes, "", NoteSort.TITLE, emptySet(), false)
+        val result = filterNotes(notes, "", NoteSort.TITLE, false)
         assertEquals(listOf(3L, 1L, 2L), result.map { it.note.id })
     }
 }
