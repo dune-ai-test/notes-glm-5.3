@@ -47,6 +47,7 @@ import com.fieldnotes.app.data.repo.NoteRepository
 import com.fieldnotes.app.data.repo.NoteSort
 import com.fieldnotes.app.data.repo.filterNotes
 import com.fieldnotes.app.di.LocalAppContainer
+import com.fieldnotes.app.util.plural
 import com.fieldnotes.app.ui.components.CircleIconButton
 import com.fieldnotes.app.ui.components.ListRowNote
 import com.fieldnotes.app.ui.components.SectionLabel
@@ -153,7 +154,10 @@ fun SearchScreen(navController: NavHostController) {
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            SectionLabel("${results.size} results", color = FN.muted)
+            SectionLabel(
+                "${results.size} ${plural(results.size, "result", "results")}",
+                color = FN.muted
+            )
         }
 
         LazyColumn(

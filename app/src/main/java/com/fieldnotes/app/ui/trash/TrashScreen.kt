@@ -45,6 +45,7 @@ import com.fieldnotes.app.ui.components.CircleIconButton
 import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
 import com.fieldnotes.app.util.TimeFormat
+import com.fieldnotes.app.util.plural
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -104,7 +105,7 @@ fun TrashScreen(navController: NavHostController) {
             ) {
                 Text("Trash", style = FT.sectionTitle.copy(fontSize = 20.sp), color = FN.text)
                 Text(
-                    "${trashed.size} items • deleted after $TRASH_DAYS days",
+                    "${trashed.size} ${plural(trashed.size, "item", "items")} • deleted after $TRASH_DAYS days",
                     style = FT.monoTiny,
                     color = FN.muted
                 )

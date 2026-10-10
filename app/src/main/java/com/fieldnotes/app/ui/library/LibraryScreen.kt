@@ -62,6 +62,7 @@ import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
 import com.fieldnotes.app.ui.theme.noteColor
 import com.fieldnotes.app.util.TimeFormat
+import com.fieldnotes.app.util.plural
 import kotlinx.coroutines.launch
 
 @Composable
@@ -93,7 +94,7 @@ fun LibraryScreen(navController: NavHostController) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("Library", style = FT.screenTitle, color = FN.text)
                     Text(
-                        "${folders.size} folders • ${allNotes.size} notes",
+                        "${folders.size} ${plural(folders.size, "folder", "folders")} • ${allNotes.size} ${plural(allNotes.size, "note", "notes")}",
                         style = FT.bodySmall.copy(fontSize = 13.sp),
                         color = FN.muted
                     )

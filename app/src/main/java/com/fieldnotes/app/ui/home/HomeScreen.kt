@@ -102,6 +102,7 @@ import com.fieldnotes.app.ui.theme.FT
 import com.fieldnotes.app.ui.theme.LocalHapticsEnabled
 import com.fieldnotes.app.ui.theme.noteColor
 import com.fieldnotes.app.util.TimeFormat
+import com.fieldnotes.app.util.plural
 import java.util.Calendar
 
 @Composable
@@ -473,7 +474,7 @@ private fun HeaderRow(noteCount: Int, initial: String, onAvatar: () -> Unit) {
             ) {
                 Text(today, style = FT.monoTiny, color = FN.muted)
                 ColoredDot(FN.dotGray, size = 3.dp)
-                Text("$noteCount notes", style = FT.monoTiny, color = FN.muted)
+                Text("$noteCount ${plural(noteCount, "note", "notes")}", style = FT.monoTiny, color = FN.muted)
             }
         }
         Box(Modifier.size(44.dp)) {
