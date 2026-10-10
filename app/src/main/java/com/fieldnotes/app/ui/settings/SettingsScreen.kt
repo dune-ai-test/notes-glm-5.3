@@ -84,6 +84,7 @@ import androidx.navigation.NavHostController
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.fieldnotes.app.BuildConfig
 import com.fieldnotes.app.data.repo.AppSettings
 import com.fieldnotes.app.di.LocalAppContainer
 import com.fieldnotes.app.ui.components.CircleIconButton
@@ -454,7 +455,7 @@ fun SettingsScreen(navController: NavHostController) {
                 icon = Icons.Outlined.CardGiftcard,
                 iconBg = FN.peach,
                 title = "What's new",
-                subtitle = "v1.1 • Dark mode & reminders",
+                subtitle = "v${BuildConfig.VERSION_NAME} • Latest changes",
                 onClick = { showWhatsNewDialog = true }
             ) {
                 Chevron()
@@ -512,7 +513,11 @@ fun SettingsScreen(navController: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Text("Version 1.0 • Build 1", style = FT.monoTiny, color = FN.dotGray)
+            Text(
+                "Version ${BuildConfig.VERSION_NAME} • Build ${BuildConfig.VERSION_CODE}",
+                style = FT.monoTiny,
+                color = FN.dotGray
+            )
             Text("Privacy • Terms • Acknowledgements", style = FT.monoTiny, color = FN.dotGray)
         }
         }
