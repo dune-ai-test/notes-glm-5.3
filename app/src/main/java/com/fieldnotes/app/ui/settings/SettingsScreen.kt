@@ -26,7 +26,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.Accessibility
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.AutoDelete
@@ -440,6 +439,15 @@ fun SettingsScreen(navController: NavHostController) {
                 ValueChip(text = "Import") {
                     importLauncher.launch(arrayOf("application/zip"))
                 }
+            }
+            SettingRow(
+                icon = Icons.Outlined.Delete,
+                iconBg = FN.accentSoft,
+                title = "Erase all data",
+                subtitle = "Wipe notes, memos and settings",
+                onClick = { showEraseDialog = true }
+            ) {
+                Chevron()
             }
         }
 
