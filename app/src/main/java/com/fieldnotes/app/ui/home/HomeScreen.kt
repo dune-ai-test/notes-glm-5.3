@@ -217,8 +217,16 @@ fun HomeScreen(
                             label = "Reorder",
                             selected = reorderMode,
                             onClick = {
-                                if (!reorderMode) vm.beginReorder() else vm.persistReorder()
-                                reorderMode = !reorderMode
+                                if (!reorderMode) {
+                                    // Drag-and-drop only works in the list layout;
+                                    // switching there guarantees a working reorder.
+                                    gridMode = false
+                                    vm.beginReorder()
+                                    reorderMode = true
+                                } else {
+                                    vm.persistReorder()
+                                    reorderMode = false
+                                }
                             },
                             icon = Icons.Outlined.DragHandle
                         )
@@ -267,7 +275,13 @@ fun HomeScreen(
                         SectionLabel("Your notes")
                         GridListToggle(
                             gridMode = gridMode,
-                            onGrid = { gridMode = true },
+                            onGrid = {
+                                gridMode = true
+                                if (reorderMode) {
+                                    vm.persistReorder()
+                                    reorderMode = false
+                                }
+                            },
                             onList = { gridMode = false }
                         )
                     }
