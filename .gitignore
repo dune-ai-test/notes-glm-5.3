@@ -13,3 +13,7 @@ captures/
 /logo-concepts/*
 !/logo-concepts/4-sticky-fold.svg
 !/logo-concepts/4-sticky-fold.png
+
+# local audit notes
+/finding.md
+/.audit/
