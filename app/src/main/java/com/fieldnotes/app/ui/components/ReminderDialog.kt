@@ -54,7 +54,14 @@ fun ReminderDialog(
 ) {
     var title by remember { mutableStateOf(initialTitle) }
     var date by remember { mutableStateOf(initialDate) }
-    var time by remember { mutableStateOf(LocalTime.of(9, 0)) }
+    // Default to the next sane future time: now + 1h, rounded down to 5 min.
+    var time by remember {
+        mutableStateOf(
+            java.time.LocalDateTime.now().plusHours(1)
+                .let { it.withSecond(0).withNano(0).withMinute((it.minute / 5) * 5) }
+                .toLocalTime()
+        )
+    }
     var repeat by remember { mutableStateOf(RepeatMode.NONE) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
