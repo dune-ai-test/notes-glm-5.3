@@ -689,10 +689,10 @@ private fun NoteActionSheet(
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text("Delete note?", style = FT.sectionTitle, color = FN.text) },
+            title = { Text("Move to trash?", style = FT.sectionTitle, color = FN.text) },
             text = {
                 Text(
-                    "“${entry.note.title.ifBlank { "Untitled" }}” will be removed permanently.",
+                    "“${entry.note.title.ifBlank { "Untitled" }}” will move to the trash — restore it anytime within 30 days.",
                     style = FT.body,
                     color = FN.textSoft
                 )
@@ -703,7 +703,7 @@ private fun NoteActionSheet(
                     onDelete()
                     onDismiss()
                 }) {
-                    Text("Delete", color = FN.accent)
+                    Text("Move to trash", color = FN.accent)
                 }
             },
             dismissButton = {
