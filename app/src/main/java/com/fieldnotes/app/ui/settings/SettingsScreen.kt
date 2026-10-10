@@ -191,7 +191,9 @@ fun SettingsScreen(navController: NavHostController) {
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
-                .padding(bottom = 132.dp),
+                // Extra clearance so the last rows clear the floating nav bar
+                // and FAB, including the system gesture inset.
+                .padding(bottom = 190.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
         // Profile card
