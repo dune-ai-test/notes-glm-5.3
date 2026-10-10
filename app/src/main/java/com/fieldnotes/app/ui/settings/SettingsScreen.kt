@@ -480,36 +480,6 @@ fun SettingsScreen(navController: NavHostController) {
             }
         }
 
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.clickable { toast("Local profile — nothing to log out of") }
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Outlined.Logout,
-                    contentDescription = null,
-                    tint = FN.accent,
-                    modifier = Modifier.size(17.dp)
-                )
-                Text("Log out", style = FT.button, color = FN.accent)
-            }
-            Spacer(Modifier.size(18.dp))
-            CircleIconButton(
-                icon = Icons.Outlined.Delete,
-                contentDescription = "Erase all data",
-                background = FN.accentSoft,
-                tint = FN.accent,
-                size = 38.dp
-            ) {
-                showEraseDialog = true
-            }
-        }
-
         Column(
             Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
