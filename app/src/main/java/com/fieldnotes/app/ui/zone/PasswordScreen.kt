@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.fieldnotes.app.ui.components.BiometricUnlock
 import com.fieldnotes.app.ui.components.CircleIconButton
+import com.fieldnotes.app.util.plural
 import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
 
