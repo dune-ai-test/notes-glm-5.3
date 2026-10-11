@@ -331,8 +331,17 @@ fun HomeScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text("Nothing here yet", style = FT.sectionTitle, color = FN.text)
-                        Text("Tap + to capture something.", style = FT.bodySmall, color = FN.muted)
+                        Text(
+                            if (pinnedOnly) "No pinned notes" else "Nothing here yet",
+                            style = FT.sectionTitle,
+                            color = FN.text
+                        )
+                        Text(
+                            if (pinnedOnly) "Long-press any note to pin it."
+                            else "Tap + to capture something.",
+                            style = FT.bodySmall,
+                            color = FN.muted
+                        )
                     }
                 }
             }
