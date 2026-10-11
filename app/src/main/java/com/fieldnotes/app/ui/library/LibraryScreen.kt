@@ -225,7 +225,7 @@ private fun NewFolderDialog(
                 }
                 SectionLabel("Color", color = FN.muted)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    (1..5).forEach { index ->
+                    (0..5).forEach { index ->
                         val selected = colorIndex == index
                         Box(
                             Modifier
