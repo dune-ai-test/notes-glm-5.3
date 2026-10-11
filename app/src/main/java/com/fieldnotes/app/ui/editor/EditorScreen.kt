@@ -1,4 +1,5 @@
 @file:OptIn(
+    androidx.compose.foundation.ExperimentalFoundationApi::class,
     androidx.compose.foundation.layout.ExperimentalLayoutApi::class,
     androidx.compose.material3.ExperimentalMaterial3Api::class
 )
@@ -14,6 +15,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,6 +27,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -315,7 +318,24 @@ fun EditorScreen(
                             )
                         }
                         FolderInfoCard(folderName = NoteExporter.folderName(folders, state.folderId))
-                        Spacer(Modifier.height(90.dp))
+                        // Tap-to-write area: fills the dead space below the last
+                        // block (and grows under the keyboard) so the editor always
+                        // has room to type.
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 320.dp)
+                                .combinedClickable(onClick = {
+                                    if (state.blocks.none { it is Block.Paragraph && it.text.isEmpty() }) {
+                                        vm.addBlock(Block.Paragraph())
+                                    }
+                                    pendingFocusIndex = state.blocks.indexOfLast { it is Block.Paragraph && it.text.isEmpty() }
+                                    if (pendingFocusIndex == -1) {
+                                        vm.addBlock(Block.Paragraph())
+                                        pendingFocusIndex = vm.state.value.blocks.size - 1
+                                    }
+                                }, onLongClick = { })
+                        )
                     }
 
                     val boldTarget = if (state.focusedBlock in state.blocks.indices) {
