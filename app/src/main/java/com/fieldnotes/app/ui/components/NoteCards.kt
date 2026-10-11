@@ -409,7 +409,7 @@ private fun ChecklistCard(
         Text(
             text = entry.note.title.ifBlank { "Untitled" },
             style = FT.cardTitle,
-            color = ink
+            color = ink,
             maxLines = 1,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
         )
@@ -649,7 +649,7 @@ private fun QuoteCard(
         Text(
             text = entry.note.title.ifBlank { "Untitled" },
             style = FT.cardTitle,
-            color = ink
+            color = ink,
             maxLines = 1,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
         )
@@ -711,7 +711,7 @@ private fun TextCard(
         Text(
             text = entry.note.title.ifBlank { "Untitled" },
             style = FT.cardTitle,
-            color = ink
+            color = ink,
             maxLines = 1,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
         )
