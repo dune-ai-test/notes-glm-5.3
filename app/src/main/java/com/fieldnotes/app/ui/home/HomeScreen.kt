@@ -106,10 +106,7 @@ import com.fieldnotes.app.util.plural
 import java.util.Calendar
 
 @Composable
-fun HomeScreen(
-    navController: NavHostController,
-    onOpenSettings: () -> Unit
-) {
+fun HomeScreen(navController: NavHostController) {
     val container = LocalAppContainer.current
     val context = LocalContext.current
     val vm: HomeViewModel = viewModel(
@@ -193,10 +190,7 @@ fun HomeScreen(
                     .padding(start = 16.dp, end = 16.dp, top = 18.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                    HeaderRow(
-                        noteCount = notes.size,
-                        initial = settings.userName.take(1).uppercase().ifBlank { "F" }
-                    ) { onOpenSettings() }
+                    HeaderRow(noteCount = notes.size)
                     SearchBarRow(
                         onSearch = { navController.navigate("search") },
                         onFilters = { showFilters = true }
@@ -495,7 +489,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun HeaderRow(noteCount: Int, initial: String, onAvatar: () -> Unit) {
+private fun HeaderRow(noteCount: Int) {
     val hour = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
     val today = remember { TimeFormat.headerDate() }
     Row(
@@ -513,31 +507,6 @@ private fun HeaderRow(noteCount: Int, initial: String, onAvatar: () -> Unit) {
                 ColoredDot(FN.dotGray, size = 3.dp)
                 Text("$noteCount ${plural(noteCount, "note", "notes")}", style = FT.monoTiny, color = FN.muted)
             }
-        }
-        Box(Modifier.size(44.dp)) {
-            Surface(
-                shape = CircleShape,
-                color = FN.surface,
-                border = BorderStroke(1.dp, FN.line),
-                shadowElevation = 2.dp,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Box(
-                    Modifier
-                        .clickable(onClick = onAvatar),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(initial, style = FT.cardTitle.copy(fontSize = 17.sp), color = FN.text)
-                }
-            }
-            Box(
-                Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = (-2).dp, y = 2.dp)
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(FN.accent)
-            )
         }
     }
 }

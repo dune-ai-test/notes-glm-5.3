@@ -80,10 +80,7 @@ fun AppRoot(container: AppContainer) {
                 ) { page ->
                     when (TopLevelTab.entries[page]) {
                         TopLevelTab.HOME ->
-                            HomeScreen(
-                                navController = navController,
-                                onOpenSettings = { switchTab(TopLevelTab.SETTINGS.ordinal) }
-                            )
+                            HomeScreen(navController = navController)
                         TopLevelTab.ZONE ->
                             ZoneScreen()
                         TopLevelTab.REMINDER ->
