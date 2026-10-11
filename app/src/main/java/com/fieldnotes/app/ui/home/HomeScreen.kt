@@ -194,7 +194,7 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                     HeaderRow(
-                        noteCount = noteCount,
+                        noteCount = notes.size,
                         initial = settings.userName.take(1).uppercase().ifBlank { "F" }
                     ) { onOpenSettings() }
                     SearchBarRow(
