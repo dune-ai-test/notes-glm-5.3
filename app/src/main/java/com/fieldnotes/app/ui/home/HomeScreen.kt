@@ -553,7 +553,7 @@ private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit) {
                         tint = FN.textSoft,
                         modifier = Modifier.size(13.dp)
                     )
-                    Text("Filters", style = FT.chipSmall, color = FN.textSoft)
+                    Text("Sort", style = FT.chipSmall, color = FN.textSoft)
                 }
             }
         }
@@ -626,7 +626,7 @@ private fun FilterSheet(
                 .padding(bottom = 30.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text("Filters", style = FT.sectionTitle, color = FN.text)
+            Text("Sort", style = FT.sectionTitle, color = FN.text)
             SectionLabel("Sort by")
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 listOf(
