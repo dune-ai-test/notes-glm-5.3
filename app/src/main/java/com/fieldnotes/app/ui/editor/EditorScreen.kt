@@ -410,7 +410,14 @@ fun EditorScreen(
             onFolder = { vm.setFolder(it) },
             onDelete = {
                 showMore = false
-                vm.deleteNote { navController.popBackStack() }
+                vm.deleteNote {
+                    Toast.makeText(
+                        context,
+                        "Moved to trash — restorable for 30 days",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    navController.popBackStack()
+                }
             }
         )
     }
