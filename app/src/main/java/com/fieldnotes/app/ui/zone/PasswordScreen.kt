@@ -1,23 +1,27 @@
-@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
-
 package com.fieldnotes.app.ui.zone
 
+import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.LockOpen
 import androidx.compose.material.icons.outlined.Visibility
@@ -29,105 +33,107 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import android.widget.Toast
+import androidx.navigation.NavHostController
 import com.fieldnotes.app.ui.components.BiometricUnlock
+import com.fieldnotes.app.ui.components.CircleIconButton
 import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
 
-private data class VaultEntry(
-    val title: String,
-    val username: String,
-    val password: String
-)
-
-/**
- * Password vault — UI preview only. Entries live in memory for this session
- * and are cleared when the app exits; persistence and encryption come later.
- */
 @Composable
-fun PasswordToolCard(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
+fun PasswordScreen(navController: NavHostController) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var unlocked by remember { mutableStateOf(false) }
     var showUnlock by remember { mutableStateOf(false) }
     var showAdd by remember { mutableStateOf(false) }
-    val entries = remember {
-        mutableStateListOf(
-            VaultEntry("Gmail", "me@gmail.com", "hb#2026!x"),
-            VaultEntry("Home Wi-Fi", "TP-Link_5G", "butterfly-88"),
-            VaultEntry("Bank portal", "maya.c", "S3cure!pass")
-        )
-    }
+    val entries = ZoneData.vault
     val revealed = remember { mutableStateMapOf<Int, Boolean>() }
 
-    Surface(
-        shape = RoundedCornerShape(28.dp),
-        color = FN.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, FN.line),
-        modifier = modifier.fillMaxWidth()
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(FN.bg)
+            .statusBarsPadding()
     ) {
-        Column(
-            Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        imageVector = if (unlocked) Icons.Outlined.LockOpen else Icons.Outlined.Lock,
-                        contentDescription = null,
-                        tint = if (unlocked) FN.sage else FN.accent,
-                        modifier = Modifier.size(15.dp)
-                    )
-                    Text("PASSWORDS", style = FT.monoBadge, color = FN.text)
-                }
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = if (unlocked) FN.sage.copy(alpha = 0.25f) else FN.accentSoft
-                ) {
-                    Text(
-                        if (unlocked) "UNLOCKED" else "LOCKED",
-                        style = FT.monoBadge,
-                        color = if (unlocked) FN.text else FN.accent,
-                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp)
-                    )
-                }
+            CircleIconButton(Icons.AutoMirrored.Outlined.ArrowBack, "Back") {
+                navController.popBackStack()
             }
-
-            if (!unlocked) {
+            Column(
+                Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text("Passwords", style = FT.sectionTitle.copy(fontSize = 20.sp), color = FN.text)
                 Text(
-                    "Keep logins behind your fingerprint. Demo — entries are not saved yet.",
-                    style = FT.bodySmall.copy(fontSize = 11.5.sp, lineHeight = 16.sp),
+                    "${plural(entries.size, "entry", "entries")} • demo, not saved yet",
+                    style = FT.monoTiny,
                     color = FN.muted
+                )
+            }
+            CircleIconButton(
+                icon = if (unlocked) Icons.Outlined.Lock else Icons.Outlined.LockOpen,
+                contentDescription = if (unlocked) "Lock vault" else "Unlock vault",
+                background = if (unlocked) FN.accentSoft else FN.strong,
+                tint = if (unlocked) FN.accent else FN.surface
+            ) {
+                unlocked = !unlocked
+            }
+        }
+
+        if (!unlocked) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Surface(shape = CircleShape, color = FN.inkCard, modifier = Modifier.size(84.dp)) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Outlined.Lock,
+                            contentDescription = null,
+                            tint = FN.onStrong,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
+                Text(
+                    "Vault locked",
+                    style = FT.sectionTitle,
+                    color = FN.text,
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+                Text(
+                    "Demo — entries are kept in memory only.",
+                    style = FT.bodySmall,
+                    color = FN.muted,
+                    modifier = Modifier.padding(top = 6.dp)
                 )
                 Surface(
                     shape = RoundedCornerShape(50),
                     color = FN.strong,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    modifier = Modifier.padding(top = 24.dp)
                 ) {
                     Text(
-                        "Unlock vault",
+                        "Unlock with biometrics",
                         style = FT.button,
                         color = FN.onStrong,
                         modifier = Modifier
@@ -135,78 +141,103 @@ fun PasswordToolCard(modifier: Modifier = Modifier) {
                             .padding(horizontal = 22.dp, vertical = 10.dp)
                     )
                 }
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    entries.forEachIndexed { index, entry ->
-                        val revealedThis = revealed[index] == true
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(FN.surfaceAlt)
-                                .combinedClickable(
-                                    onClick = { revealed[index] = !revealedThis },
-                                    onLongClick = {
-                                        entries.removeAt(index)
-                                        Toast.makeText(context, "Entry removed (demo)", Toast.LENGTH_SHORT).show()
-                                    }
+            }
+        } else {
+            LazyColumn(
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 132.dp, top = 6.dp)
+            ) {
+                item {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = FN.strong
+                        ) {
+                            Row(
+                                Modifier
+                                    .clickable { showAdd = true }
+                                    .padding(horizontal = 14.dp, vertical = 9.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    Icons.Outlined.Add,
+                                    contentDescription = null,
+                                    tint = FN.onStrong,
+                                    modifier = Modifier.size(15.dp)
                                 )
-                                .padding(horizontal = 12.dp, vertical = 9.dp),
+                                Text("Add entry", style = FT.button, color = FN.onStrong)
+                            }
+                        }
+                    }
+                }
+                if (entries.isEmpty()) {
+                    item {
+                        Text(
+                            "Nothing in the vault yet — add your first entry.",
+                            style = FT.bodySmall,
+                            color = FN.muted
+                        )
+                    }
+                }
+                items(entries.size) { index ->
+                    val entry = entries[index]
+                    val revealedThis = revealed[index] == true
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = FN.surface,
+                        border = BorderStroke(1.dp, FN.line),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Column(Modifier.weight(1f)) {
+                            Column(
+                                Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
                                 Text(
                                     entry.title,
                                     style = FT.cardTitleSmall.copy(fontSize = 12.5.sp),
                                     color = FN.text
                                 )
+                                Text(entry.username, style = FT.monoTiny, color = FN.muted)
                                 Text(
-                                    entry.username,
-                                    style = FT.monoTiny,
-                                    color = FN.muted
+                                    if (revealedThis) entry.password else "••••••••",
+                                    style = FT.monoChip,
+                                    color = FN.textSoft
                                 )
                             }
-                            Text(
-                                if (revealedThis) entry.password else "••••••••",
-                                style = FT.monoChip,
-                                color = FN.textSoft
-                            )
                             Icon(
                                 imageVector = if (revealedThis) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                                 contentDescription = "Reveal",
                                 tint = FN.dotGray,
-                                modifier = Modifier.size(15.dp)
+                                modifier = Modifier
+                                    .size(17.dp)
+                                    .clickable { revealed[index] = !revealedThis }
+                            )
+                            Icon(
+                                imageVector = Icons.Outlined.Delete,
+                                contentDescription = "Remove",
+                                tint = FN.accent,
+                                modifier = Modifier
+                                    .size(17.dp)
+                                    .clickable {
+                                        entries.removeAt(index)
+                                        Toast.makeText(context, "Entry removed (demo)", Toast.LENGTH_SHORT).show()
+                                    }
                             )
                         }
                     }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.clickable { showAdd = true }
-                    ) {
-                        Surface(
-                            shape = CircleShape,
-                            color = FN.strong,
-                            modifier = Modifier.size(22.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    Icons.Outlined.Add,
-                                    contentDescription = "Add entry",
-                                    tint = FN.onStrong,
-                                    modifier = Modifier.size(13.dp)
-                                )
-                            }
-                        }
-                        Text("Add entry", style = FT.chipSmall, color = FN.text)
-                    }
                 }
-                Text(
-                    "Demo — entries live in memory and clear on exit. Lock again by leaving the app.",
-                    style = FT.monoTiny,
-                    color = FN.muted
-                )
             }
         }
     }
