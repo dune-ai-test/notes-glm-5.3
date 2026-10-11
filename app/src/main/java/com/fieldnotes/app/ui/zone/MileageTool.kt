@@ -173,7 +173,7 @@ fun MileageToolCard(modifier: Modifier = Modifier) {
 
 @Composable
 private fun StatChip(value: String, label: String) {
-    Column(horizontalArrangement = Arrangement.spacedBy(1.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
         Text(value, style = FT.cardTitleSmall.copy(fontSize = 13.sp), color = FN.onStrong)
         Text(label, style = FT.monoTiny, color = FN.onStrong.copy(alpha = 0.5f))
     }
