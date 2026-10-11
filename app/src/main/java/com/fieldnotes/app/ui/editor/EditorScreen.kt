@@ -150,6 +150,7 @@ fun EditorScreen(
     var showAddBlock by remember { mutableStateOf(false) }
     var showRecord by remember { mutableStateOf(false) }
     var showReminder by remember { mutableStateOf(false) }
+    var showFolderPicker by remember { mutableStateOf(false) }
     var pendingFocusIndex by remember { mutableStateOf(-1) }
     val focusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
 
@@ -318,7 +319,10 @@ fun EditorScreen(
                                 onTogglePlay = { audioId, path -> container.audioPlayer.toggle(audioId, path) }
                             )
                         }
-                        FolderInfoCard(folderName = NoteExporter.folderName(folders, state.folderId))
+                        FolderInfoCard(
+                            folderName = NoteExporter.folderName(folders, state.folderId),
+                            onClick = { showFolderPicker = true }
+                        )
                         // Tap-to-write area: fills the dead space below the last
                         // block (and grows under the keyboard) so the editor always
                         // has room to type.
@@ -419,6 +423,52 @@ fun EditorScreen(
                     ).show()
                     navController.popBackStack()
                 }
+            }
+        )
+    }
+
+    if (showFolderPicker) {
+        AlertDialog(
+            onDismissRequest = { showFolderPicker = false },
+            title = { Text("Change folder", style = FT.sectionTitle, color = FN.text) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    folders.forEach { folder ->
+                        val selected = state.folderId == folder.id
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (selected) FN.strong else FN.surfaceAlt,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    showFolderPicker = false
+                                    vm.setFolder(folder.id)
+                                }
+                        ) {
+                            Row(
+                                Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Folder,
+                                    contentDescription = null,
+                                    tint = if (selected) FN.onStrong else FN.textSoft,
+                                    modifier = Modifier.size(17.dp)
+                                )
+                                Text(
+                                    folder.name,
+                                    style = FT.chip.copy(fontSize = 13.sp),
+                                    color = if (selected) FN.onStrong else FN.text
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showFolderPicker = false }) { Text("Cancel", color = FN.muted) }
             }
         )
     }
@@ -898,7 +948,7 @@ private fun TextField(
 }
 
 @Composable
-private fun FolderInfoCard(folderName: String) {
+private fun FolderInfoCard(folderName: String, onClick: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = FN.surface,
@@ -906,7 +956,10 @@ private fun FolderInfoCard(folderName: String) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            Modifier.padding(16.dp),
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -916,10 +969,16 @@ private fun FolderInfoCard(folderName: String) {
                 tint = FN.textSoft,
                 modifier = Modifier.size(18.dp)
             )
-            Column {
+            Column(Modifier.weight(1f)) {
                 Text("Folder", style = FT.monoLabel, color = FN.muted)
                 Text(folderName, style = FT.chip.copy(fontSize = 13.sp), color = FN.text)
             }
+            Icon(
+                imageVector = Icons.Outlined.ChevronRight,
+                contentDescription = "Change folder",
+                tint = FN.dotGray,
+                modifier = Modifier.size(16.dp)
+            )
         }
     }
 }
