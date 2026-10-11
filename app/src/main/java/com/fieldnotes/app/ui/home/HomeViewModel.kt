@@ -95,6 +95,10 @@ class HomeViewModel(private val repo: NoteRepository) : ViewModel() {
         viewModelScope.launch { repo.trashNote(entry.note) }
     }
 
+    fun setColor(entry: NoteWithTags, colorIndex: Int) {
+        viewModelScope.launch { repo.updateNote(entry.note.copy(colorIndex = colorIndex)) }
+    }
+
     fun undoDelete(noteId: Long) {
         viewModelScope.launch { repo.restoreNote(noteId) }
     }

@@ -35,8 +35,10 @@ import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DragHandle
 import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -66,6 +68,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -170,6 +173,19 @@ fun HomeScreen(navController: NavHostController) {
     }
     val folderNameFor: (NoteWithTags) -> String = { entry ->
         foldersById[entry.note.folderId]?.name ?: "Unfiled"
+    }
+
+    fun shareNote(entry: NoteWithTags) {
+        val md = com.fieldnotes.app.data.export.NoteExporter.noteToMarkdown(
+            entry,
+            foldersById[entry.note.folderId]?.name ?: "Unfiled"
+        )
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, entry.note.title.ifBlank { "Field note" })
+            putExtra(Intent.EXTRA_TEXT, md)
+        }
+        context.startActivity(Intent.createChooser(intent, "Share note"))
     }
 
     // Locked notes: authenticate before opening.
