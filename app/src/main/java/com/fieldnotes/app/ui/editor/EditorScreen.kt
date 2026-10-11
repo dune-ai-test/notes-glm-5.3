@@ -261,7 +261,7 @@ fun EditorScreen(
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         SectionLabel(
-                            text = "${NoteExporter.folderName(folders, state.folderId)} · edited ${TimeFormat.relative(state.updatedAt)}",
+                            text = NoteExporter.folderName(folders, state.folderId),
                             modifier = Modifier.padding(top = 6.dp)
                         )
                         BasicTextField(
