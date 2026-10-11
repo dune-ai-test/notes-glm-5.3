@@ -276,7 +276,7 @@ fun SettingsScreen(navController: NavHostController) {
         Section("Preferences") {
             SettingRow(
                 icon = Icons.Outlined.Palette,
-                iconBg = FN.lilac,
+                iconBg = FN.sky,
                 title = "Appearance",
                 subtitle = when (settings.appearance) {
                     "dark" -> "Dark"
@@ -298,7 +298,7 @@ fun SettingsScreen(navController: NavHostController) {
             }
             SettingRow(
                 icon = Icons.Outlined.Vibration,
-                iconBg = FN.sage,
+                iconBg = FN.sky,
                 title = "Haptics",
                 subtitle = "Subtle feedback on capture"
             ) {
@@ -323,7 +323,7 @@ fun SettingsScreen(navController: NavHostController) {
         Section("Notifications") {
             SettingRow(
                 icon = Icons.Outlined.Notifications,
-                iconBg = FN.lilac,
+                iconBg = FN.sage,
                 title = "Push notifications",
                 subtitle = "Reminders & mentions"
             ) {
@@ -337,7 +337,7 @@ fun SettingsScreen(navController: NavHostController) {
             }
             SettingRow(
                 icon = Icons.Outlined.VolumeUp,
-                iconBg = FN.butter,
+                iconBg = FN.sage,
                 title = "Sounds",
                 subtitle = "Playback ticks & success chimes"
             ) {
@@ -348,7 +348,7 @@ fun SettingsScreen(navController: NavHostController) {
         Section("Privacy & Data") {
             SettingRow(
                 icon = Icons.Outlined.Fingerprint,
-                iconBg = FN.lilac,
+                iconBg = FN.peach,
                 title = "Biometric lock",
                 subtitle = "Require unlock on open"
             ) {
@@ -362,7 +362,7 @@ fun SettingsScreen(navController: NavHostController) {
             }
             SettingRow(
                 icon = Icons.Outlined.LockClock,
-                iconBg = FN.sky,
+                iconBg = FN.peach,
                 title = "Auto-lock",
                 subtitle = when (settings.autoLockMinutes) {
                     0 -> "Immediately on background"
@@ -376,7 +376,7 @@ fun SettingsScreen(navController: NavHostController) {
             }
             SettingRow(
                 icon = Icons.Outlined.Backup,
-                iconBg = FN.sage,
+                iconBg = FN.peach,
                 title = "Scheduled backup",
                 subtitle = "Weekly ZIP • keeps last 4 • device only"
             ) {
@@ -384,7 +384,7 @@ fun SettingsScreen(navController: NavHostController) {
             }
             SettingRow(
                 icon = Icons.Outlined.Save,
-                iconBg = FN.butter,
+                iconBg = FN.peach,
                 title = "Back up now",
                 subtitle = if (backupRunning) "Writing backup…" else if (backupFileName.isBlank()) "Write this week's ZIP now" else "Last: $backupFileName"
             ) {
@@ -416,7 +416,7 @@ fun SettingsScreen(navController: NavHostController) {
             }
             SettingRow(
                 icon = Icons.Outlined.DeleteSweep,
-                iconBg = FN.sky,
+                iconBg = FN.peach,
                 title = "Clear cache",
                 subtitle = "${formatBytes(cacheSize)} • Previews & temp files"
             ) {
@@ -424,7 +424,7 @@ fun SettingsScreen(navController: NavHostController) {
             }
             SettingRow(
                 icon = Icons.Outlined.UploadFile,
-                iconBg = FN.sage,
+                iconBg = FN.peach,
                 title = "Export all notes",
                 subtitle = "ZIP • Markdown + media"
             ) {
@@ -432,7 +432,7 @@ fun SettingsScreen(navController: NavHostController) {
             }
             SettingRow(
                 icon = Icons.Outlined.Download,
-                iconBg = FN.sky,
+                iconBg = FN.peach,
                 title = "Import backup",
                 subtitle = "Restore from a Field Notes ZIP"
             ) {
@@ -454,7 +454,7 @@ fun SettingsScreen(navController: NavHostController) {
         Section("More") {
             SettingRow(
                 icon = Icons.Outlined.HelpOutline,
-                iconBg = FN.sky,
+                iconBg = FN.lilac,
                 title = "Help & guides",
                 subtitle = "Tips, shortcuts, how it works",
                 onClick = { showHelpDialog = true }
@@ -463,7 +463,7 @@ fun SettingsScreen(navController: NavHostController) {
             }
             SettingRow(
                 icon = Icons.Outlined.CardGiftcard,
-                iconBg = FN.peach,
+                iconBg = FN.lilac,
                 title = "What's new",
                 subtitle = "v${BuildConfig.VERSION_NAME} • Latest changes",
                 onClick = { showWhatsNewDialog = true }
@@ -472,7 +472,7 @@ fun SettingsScreen(navController: NavHostController) {
             }
             SettingRow(
                 icon = Icons.Outlined.StarBorder,
-                iconBg = FN.butter,
+                iconBg = FN.lilac,
                 title = "Rate the app",
                 subtitle = "Loving the capture flow?",
                 onClick = {
