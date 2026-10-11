@@ -320,10 +320,10 @@ fun HomeScreen(navController: NavHostController) {
                 item(key = "empty", span = StaggeredGridItemSpan.FullLine) {
                     Column(
                         Modifier
-                            .fillMaxWidth()
-                            .padding(top = 70.dp),
+                            .fillParentMaxHeight()
+                            .fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                        verticalArrangement = Arrangement.Center
                     ) {
                         Text(
                             if (pinnedOnly) "No pinned notes" else "Nothing here yet",

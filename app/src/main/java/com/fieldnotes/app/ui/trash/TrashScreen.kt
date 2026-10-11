@@ -122,7 +122,7 @@ fun TrashScreen(navController: NavHostController) {
             Column(
                 Modifier
                     .fillMaxWidth()
-                    .padding(top = 80.dp),
+                    .padding(top = 60.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {

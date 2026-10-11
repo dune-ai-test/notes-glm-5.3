@@ -253,10 +253,10 @@ private fun UpcomingTab(
     if (pending.isEmpty() && completed.isEmpty()) {
         Column(
             Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 60.dp),
+                .fillMaxSize()
+                .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.Center
         ) {
             Icon(
                 Icons.Outlined.Event,
