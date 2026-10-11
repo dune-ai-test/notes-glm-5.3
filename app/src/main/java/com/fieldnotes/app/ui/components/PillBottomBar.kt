@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Home
@@ -34,7 +34,7 @@ enum class TopLevelTab(val route: String, val label: String, val icon: ImageVect
     HOME("home", "Home", Icons.Outlined.Home),
     ZONE("zone", "Zone", Icons.Outlined.Explore),
     REMINDER("quick", "Reminder", Icons.Outlined.Event),
-    LIBRARY("library", "Library", Icons.Outlined.BarChart),
+    LIBRARY("library", "Library", Icons.Outlined.Folder),
     SETTINGS("settings", "Settings", Icons.Outlined.Settings)
 }
 
