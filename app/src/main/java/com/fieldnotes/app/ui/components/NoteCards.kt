@@ -195,11 +195,7 @@ fun ListRowNote(
                 verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 Text(
-                    text = if (highlight.isBlank()) {
-                        entry.note.title.ifBlank { "Untitled" }
-                    } else {
-                        annotatedMatches(entry.note.title.ifBlank { "Untitled" }, highlight)
-                    },
+                    text = annotatedMatches(entry.note.title.ifBlank { "Untitled" }, highlight),
                     style = FT.cardTitle,
                     color = FN.text,
                     maxLines = 1,
@@ -778,6 +774,7 @@ private fun List<Block>.plainTextSafe(): String = try {
 
 
 /** Title text with every case-insensitive occurrence of [query] accented. */
+@Composable
 fun annotatedMatches(text: String, query: String): androidx.compose.ui.text.AnnotatedString {
     val builder = androidx.compose.ui.text.AnnotatedString.Builder(text)
     if (query.isNotBlank()) {
