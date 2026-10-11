@@ -554,7 +554,6 @@ private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit) {
 }
 
 @Composable
-@Composable
 private fun ReorderChip(active: Boolean, onToggle: () -> Unit) {
     // A mode toggle, deliberately styled as an outlined action rather
     // than like the filter chips.
@@ -585,6 +584,7 @@ private fun ReorderChip(active: Boolean, onToggle: () -> Unit) {
     }
 }
 
+@Composable
 private fun GridListToggle(gridMode: Boolean, onGrid: () -> Unit, onList: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(50),

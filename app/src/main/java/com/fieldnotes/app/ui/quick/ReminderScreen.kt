@@ -26,6 +26,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -50,7 +52,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
+
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -79,6 +81,7 @@ import java.time.LocalTime
 import java.time.YearMonth
 import java.time.ZoneId
 import java.time.format.TextStyle as JavaTextStyle
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 private val ReminderTabs = listOf("Upcoming", "Calendar")
@@ -96,7 +99,10 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
     val completed by vm.completed.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    var tab by rememberSaveable { mutableStateOf(0) }
+    val pagerState = androidx.compose.foundation.pager.rememberPagerState(initialPage = 0) {
+        ReminderTabs.size
+    }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     var showAdd by remember { mutableStateOf(false) }
     var pendingDate by remember { mutableStateOf(LocalDate.now()) }
     var deleteTarget by remember { mutableStateOf<ReminderEntity?>(null) }
@@ -155,13 +161,17 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             ReminderTabs.forEachIndexed { index, label ->
-                val selected = tab == index
+                val selected = pagerState.currentPage == index
                 Box(
                     Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(50))
                         .background(if (selected) FN.strong else Color.Transparent)
-                        .clickable { tab = index }
+                        .clickable {
+                            scope.launch {
+                                pagerState.animateScrollToPage(index)
+                            }
+                        }
                         .padding(vertical = 9.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -170,12 +180,13 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
             }
         }
 
-        Box(
-            Modifier
+        androidx.compose.foundation.pager.HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-        ) {
-            if (tab == 0) {
+        ) { page ->
+            if (page == 0) {
                 UpcomingTab(
                     pending = pending,
                     completed = completed,

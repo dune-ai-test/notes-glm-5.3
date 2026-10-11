@@ -5,7 +5,6 @@ import com.fieldnotes.app.data.db.AppDatabase
 import com.fieldnotes.app.data.db.FolderEntity
 import com.fieldnotes.app.data.db.MemoEntity
 import com.fieldnotes.app.data.db.NoteEntity
-import com.fieldnotes.app.data.db.TagEntity
 import com.fieldnotes.app.data.model.Block
 import com.fieldnotes.app.data.model.BlockJson
 import com.fieldnotes.app.data.model.decodeBlocks
