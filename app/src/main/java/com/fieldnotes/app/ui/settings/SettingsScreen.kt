@@ -224,7 +224,7 @@ fun SettingsScreen(navController: NavHostController) {
                                 modifier = Modifier.size(12.dp)
                             )
                             Text(
-                                "All notes on this device • $noteCount notes",
+                                "Everything on this device",
                                 style = FT.monoTiny,
                                 color = FN.muted,
                                 maxLines = 1,
