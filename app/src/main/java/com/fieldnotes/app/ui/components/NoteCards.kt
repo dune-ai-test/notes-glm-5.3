@@ -405,6 +405,8 @@ private fun ChecklistCard(
             text = entry.note.title.ifBlank { "Untitled" },
             style = FT.cardTitle,
             color = ink
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
         )
         checklist.items.take(4).forEachIndexed { itemIndex, item ->
             Row(
@@ -481,6 +483,8 @@ private fun SketchCard(
             text = entry.note.title.ifBlank { "Untitled" },
             style = FT.cardTitle,
             color = FN.inkFixed
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
         )
         Surface(
             shape = RoundedCornerShape(12.dp),
@@ -641,6 +645,8 @@ private fun QuoteCard(
             text = entry.note.title.ifBlank { "Untitled" },
             style = FT.cardTitle,
             color = ink
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
         )
         if (highlight != null && highlight.text.isNotBlank()) {
             Surface(
@@ -701,6 +707,8 @@ private fun TextCard(
             text = entry.note.title.ifBlank { "Untitled" },
             style = FT.cardTitle,
             color = ink
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
         )
         if (image != null && image.path.isNotBlank()) {
             AsyncImage(
