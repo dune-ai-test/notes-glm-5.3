@@ -397,10 +397,12 @@ private fun ChecklistCard(
                 modifier = Modifier.size(16.dp)
             )
             Text(
-                text = TimeFormat.smartDate(entry.note.updatedAt),
+                text = "$folderName · ${TimeFormat.smartDate(entry.note.updatedAt)}",
                 style = FT.monoTiny,
                 color = soft
             )
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
         }
         Text(
             text = entry.note.title.ifBlank { "Untitled" },
@@ -475,9 +477,11 @@ private fun SketchCard(
                 }
             }
             Text(
-                text = TimeFormat.smartDate(entry.note.updatedAt),
+                text = "$folderName · ${TimeFormat.smartDate(entry.note.updatedAt)}",
                 style = FT.monoTiny,
-                color = FN.inkFixed.copy(alpha = 0.5f)
+                color = FN.inkFixed.copy(alpha = 0.5f),
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
         }
         Text(
@@ -603,7 +607,7 @@ private fun AudioCard(
                 }
             }
             Text(
-                text = TimeFormat.smartDate(entry.note.updatedAt),
+                    text = "$folderName · ${TimeFormat.smartDate(entry.note.updatedAt)}",
                 style = FT.monoTiny,
                 color = FN.muted,
                 maxLines = 1
