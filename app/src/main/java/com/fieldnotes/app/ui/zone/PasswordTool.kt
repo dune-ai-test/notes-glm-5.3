@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+
 package com.fieldnotes.app.ui.zone
 
 import androidx.compose.foundation.background
