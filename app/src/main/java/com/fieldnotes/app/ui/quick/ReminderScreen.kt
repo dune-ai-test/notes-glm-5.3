@@ -142,28 +142,6 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
                 SectionLabel("Don't forget")
                 Text("Reminders.", style = FT.heroTitle, color = FN.text)
             }
-            Surface(
-                shape = CircleShape,
-                color = FN.strong,
-                border = androidx.compose.foundation.BorderStroke(1.dp, FN.line),
-                modifier = Modifier.size(44.dp)
-            ) {
-                Box(
-                    Modifier.clickable {
-                        requestNotifications()
-                        pendingDate = LocalDate.now()
-                        showAdd = true
-                    },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Outlined.Add,
-                        contentDescription = "New reminder",
-                        tint = FN.onStrong,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
         }
 
         Row(
@@ -231,6 +209,7 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
             onDismiss = { showAdd = false },
             onCreate = { title, dueAt, repeat ->
                 showAdd = false
+                requestNotifications()
                 vm.add(title, dueAt, repeat)
             }
         )

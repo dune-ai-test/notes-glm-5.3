@@ -27,6 +27,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.CreateNewFolder
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
@@ -99,7 +100,7 @@ fun LibraryScreen(navController: NavHostController) {
                         color = FN.muted
                     )
                 }
-                CircleIconButton(Icons.Outlined.Add, "New folder", background = FN.strong, tint = FN.onStrong) {
+                CircleIconButton(Icons.Outlined.CreateNewFolder, "New folder", background = FN.strong, tint = FN.onStrong) {
                     showNewFolder = true
                 }
             }
