@@ -150,7 +150,8 @@ fun ListRowNote(
     onOpen: () -> Unit,
     onLongPress: () -> Unit,
     modifier: Modifier = Modifier,
-    folderName: String? = null
+    folderName: String? = null,
+    highlight: String = ""
 ) {
     val blocks = remember(entry.note.blocksJson) { decodeBlocks(entry.note.blocksJson) }
     val pastel = isPastelColor(entry.note.colorIndex)
@@ -194,7 +195,11 @@ fun ListRowNote(
                 verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 Text(
-                    text = entry.note.title.ifBlank { "Untitled" },
+                    text = if (highlight.isBlank()) {
+                        entry.note.title.ifBlank { "Untitled" }
+                    } else {
+                        annotatedMatches(entry.note.title.ifBlank { "Untitled" }, highlight)
+                    },
                     style = FT.cardTitle,
                     color = FN.text,
                     maxLines = 1,
@@ -769,4 +774,29 @@ private fun List<Block>.plainTextSafe(): String = try {
     plainText()
 } catch (_: Exception) {
     ""
+}
+
+
+/** Title text with every case-insensitive occurrence of [query] accented. */
+fun annotatedMatches(text: String, query: String): androidx.compose.ui.text.AnnotatedString {
+    val builder = androidx.compose.ui.text.AnnotatedString.Builder(text)
+    if (query.isNotBlank()) {
+        val lower = text.lowercase()
+        val q = query.trim().lowercase()
+        var from = 0
+        while (true) {
+            val hit = lower.indexOf(q, from)
+            if (hit == -1) break
+            builder.addStyle(
+                androidx.compose.ui.text.SpanStyle(
+                    color = FN.accent,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                ),
+                hit,
+                hit + q.length
+            )
+            from = hit + q.length
+        }
+    }
+    return builder.toAnnotatedString()
 }

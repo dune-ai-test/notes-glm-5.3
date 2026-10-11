@@ -189,7 +189,8 @@ fun SearchScreen(navController: NavHostController) {
                     entry = entry,
                     dotColor = FN.accent,
                     onOpen = { navController.navigate("editor/${entry.note.id}") },
-                    onLongPress = { }
+                    onLongPress = { },
+                    highlight = query
                 )
             }
         }
