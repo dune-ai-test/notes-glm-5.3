@@ -487,7 +487,7 @@ private fun SketchCard(
         Text(
             text = entry.note.title.ifBlank { "Untitled" },
             style = FT.cardTitle,
-            color = FN.inkFixed
+            color = FN.inkFixed,
             maxLines = 1,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
         )
