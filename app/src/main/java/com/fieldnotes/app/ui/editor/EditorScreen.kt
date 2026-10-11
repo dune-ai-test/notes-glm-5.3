@@ -942,13 +942,12 @@ private fun EditorToolbar(
         shadowElevation = 8.dp,
         modifier = Modifier
             .fillMaxWidth()
+            .navigationBarsPadding()
             .padding(horizontal = 16.dp)
-            .padding(bottom = 12.dp)
+            .padding(bottom = 6.dp)
     ) {
         Row(
-            Modifier
-                .navigationBarsPadding()
-                .padding(horizontal = 10.dp, vertical = 8.dp),
+            Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
