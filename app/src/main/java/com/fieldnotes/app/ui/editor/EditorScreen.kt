@@ -354,6 +354,10 @@ fun EditorScreen(
                         boldApplicable = state.blocks.getOrNull(boldTarget) is Block.Paragraph,
                         onBold = { vm.toggleEmphasis() },
                         onChecklist = { vm.turnIntoChecklist() },
+                        onAddText = {
+                            vm.addBlock(Block.Paragraph())
+                            pendingFocusIndex = vm.state.value.blocks.size - 1
+                        },
                         onImage = {
                             pickImage.launch(
                                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
@@ -988,6 +992,7 @@ private fun EditorToolbar(
     emphasized: Boolean,
     boldApplicable: Boolean,
     onBold: () -> Unit,
+    onAddText: () -> Unit,
     onChecklist: () -> Unit,
     onImage: () -> Unit,
     onAddBlock: () -> Unit,
@@ -1011,6 +1016,7 @@ private fun EditorToolbar(
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             EditorTool(Icons.Outlined.FormatBold, active = emphasized, enabled = boldApplicable, "Bold", onBold)
+            EditorTool(Icons.Outlined.TextFields, active = false, "Text", onAddText)
             EditorTool(
                 Icons.AutoMirrored.Outlined.FormatListBulleted,
                 active = false,
