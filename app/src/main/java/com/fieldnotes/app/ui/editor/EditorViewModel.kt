@@ -68,7 +68,7 @@ class EditorViewModel(
             )
             // Fresh drafts land in Unfiled (resolved async; hint wins if given).
             if (folderIdHint <= 0) {
-                launch {
+                viewModelScope.launch {
                     val unfiledId = repo.unfiledFolderId()
                     _state.update { it.copy(folderId = unfiledId) }
                 }

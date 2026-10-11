@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillParentMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -337,8 +336,8 @@ fun HomeScreen(navController: NavHostController) {
                 item(key = "empty", span = StaggeredGridItemSpan.FullLine) {
                     Column(
                         Modifier
-                            .fillParentMaxHeight()
-                            .fillMaxWidth(),
+                            .fillMaxWidth()
+                            .height(480.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
