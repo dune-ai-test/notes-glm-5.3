@@ -180,9 +180,6 @@ fun SettingsScreen(navController: NavHostController) {
                     color = FN.muted
                 )
             }
-            CircleIconButton(Icons.Outlined.Search, "Search") {
-                toast("Search lives on the Home tab")
-            }
         }
 
         Column(
