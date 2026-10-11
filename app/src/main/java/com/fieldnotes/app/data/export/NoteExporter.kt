@@ -176,6 +176,19 @@ object NoteExporter {
                 zip.write(encodeBlocks(decodeBlocks(note.note.blocksJson)).toByteArray())
                 zip.closeEntry()
             }
+
+            // Standalone voice memos: their audio files must travel too,
+            // or imported memos point at paths that no longer exist.
+            memos.forEach { memo ->
+                if (memo.path.isNotBlank()) {
+                    val file = File(memo.path)
+                    if (file.exists()) {
+                        zip.putNextEntry(ZipEntry("memos/${file.name}"))
+                        file.inputStream().use { it.copyTo(zip) }
+                        zip.closeEntry()
+                    }
+                }
+            }
         }
     }
 }

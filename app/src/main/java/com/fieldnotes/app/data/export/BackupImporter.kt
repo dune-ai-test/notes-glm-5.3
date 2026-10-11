@@ -72,6 +72,19 @@ object BackupImporter {
                                 }
                             }
                         }
+                        name.startsWith("memos/") -> {
+                            val memoName = name.removePrefix("memos/")
+                            if (memoName.isNotBlank()) {
+                                val target = File(
+                                    File(context.filesDir, "recordings"),
+                                    "${System.currentTimeMillis()}_$memoName"
+                                )
+                                runCatching {
+                                    target.outputStream().use { zip.copyTo(it) }
+                                    copiedMedia[memoName] = target.absolutePath
+                                }
+                            }
+                        }
                         name.startsWith("notes/") && name.endsWith(".md") -> {
                             runCatching {
                                 mdFiles[name.removeSuffix(".md")] = zip.readBytes().decodeToString()
