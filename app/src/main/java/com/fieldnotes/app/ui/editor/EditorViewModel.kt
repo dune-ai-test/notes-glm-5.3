@@ -66,6 +66,12 @@ class EditorViewModel(
                 createdAt = now,
                 updatedAt = now
             )
+            // Fresh drafts land in Unfiled (resolved async; hint wins if given).
+            if (folderIdHint <= 0) {
+                launch {
+                    _state.update { it.copy(folderId = repo.unfiledFolderId()) }
+                }
+            }
         } else {
             viewModelScope.launch {
                 val loaded: NoteWithTags? = repo.getNote(noteId)

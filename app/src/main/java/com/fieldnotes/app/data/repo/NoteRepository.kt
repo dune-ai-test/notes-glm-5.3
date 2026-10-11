@@ -76,15 +76,16 @@ class NoteRepository(private val db: AppDatabase) {
 
     suspend fun createNote(
         title: String = "",
-        folderId: Long = NoteEntity.DEFAULT_FOLDER_ID,
+        folderId: Long = -1,
         colorIndex: Int = 0,
         kind: Int = NoteEntity.KIND_TEXT
     ): Long {
         val now = System.currentTimeMillis()
+        val resolvedFolder = if (folderId > 0) folderId else unfiledFolderId()
         return db.noteDao().insert(
             NoteEntity(
                 title = title,
-                folderId = folderId,
+                folderId = resolvedFolder,
                 colorIndex = colorIndex,
                 kind = kind,
                 createdAt = now,
@@ -167,17 +168,26 @@ class NoteRepository(private val db: AppDatabase) {
     }
 
     /**
-     * Seeds the permanent starter folders.
-     * Runs only when the table is empty (first launch or after a wipe).
+     * Seeds the permanent starter folders. New notes land in Unfiled until
+     * the user moves them. Runs when the table is empty, and tops up Unfiled
+     * for installs that predate it.
      */
     suspend fun seedDefaultsIfEmpty() {
         if (db.folderDao().count() == 0) {
             listOf(
+                FolderEntity(name = "Unfiled", iconKey = "inbox", colorIndex = 0),
                 FolderEntity(name = "Work", iconKey = "work", colorIndex = 5),
                 FolderEntity(name = "Personal", iconKey = "heart", colorIndex = 1),
                 FolderEntity(name = "Ideas", iconKey = "bulb", colorIndex = 3),
                 FolderEntity(name = "Archive", iconKey = "archive", colorIndex = 0)
             ).forEach { db.folderDao().insert(it) }
+        } else if (db.folderDao().getFolderByName("Unfiled") == null) {
+            db.folderDao().insert(
+                FolderEntity(name = "Unfiled", iconKey = "inbox", colorIndex = 0)
+            )
         }
     }
+
+    suspend fun unfiledFolderId(): Long =
+        db.folderDao().getFolderByName("Unfiled")?.id ?: NoteEntity.DEFAULT_FOLDER_ID
 }
