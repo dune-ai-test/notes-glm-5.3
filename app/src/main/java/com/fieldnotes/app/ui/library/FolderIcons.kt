@@ -5,7 +5,10 @@ import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.AccountBalance
 import androidx.compose.material.icons.outlined.DirectionsCar
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Chat
+import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.FitnessCenter
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material.icons.outlined.Flight
 import androidx.compose.material.icons.outlined.Lightbulb
@@ -40,7 +43,10 @@ val FolderIconChoices: List<Pair<String, ImageVector>> = listOf(
     "games" to Icons.Outlined.SportsEsports,
     "money" to Icons.Outlined.AccountBalance,
     "star" to Icons.Outlined.StarBorder,
-    "inbox" to Icons.Outlined.Inbox
+    "inbox" to Icons.Outlined.Inbox,
+    "home" to Icons.Outlined.Home,
+    "code" to Icons.Outlined.Code,
+    "chat" to Icons.Outlined.Chat
 )
 
 fun folderIcon(iconKey: String): ImageVector =
