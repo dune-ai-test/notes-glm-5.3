@@ -32,7 +32,7 @@ data class ImportSummary(
  * Two formats are supported:
  *  - **Structured** (v1.1.7+): `backup.json` describing folders, notes, memos.
  *  - **Legacy** (older exports): only `notes/NN-title.md` + `notes/NN-title.json`
- *    (a bare JSON array of blocks) per note, plus `media/*`. Titles come from
+ *    (a bare JSON array of blocks) per note, plus media files. Titles come from
  *    the Markdown heading; everything lands in Unfiled.
  *
  * Media files are copied into the app's private storage and their paths are
