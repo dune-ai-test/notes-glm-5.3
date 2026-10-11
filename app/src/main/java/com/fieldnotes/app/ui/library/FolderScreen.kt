@@ -116,6 +116,7 @@ fun FolderScreen(folderId: Long, navController: NavHostController) {
                     entry = entry,
                     dotColor = FN.accent,
                     onOpen = { navController.navigate("editor/${entry.note.id}") },
+                    folderName = folder?.name,
                     onLongPress = { }
                 )
             }

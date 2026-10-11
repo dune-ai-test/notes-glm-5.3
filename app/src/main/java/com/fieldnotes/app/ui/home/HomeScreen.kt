@@ -423,6 +423,7 @@ fun HomeScreen(
                             entry = entry,
                             dotColor = dotColorFor(entry),
                             onOpen = { tryOpen(entry) },
+                            folderName = folderNameFor(entry),
                             onLongPress = {
                                 if (hapticsEnabled) {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)

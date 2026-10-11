@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
@@ -148,7 +149,8 @@ fun ListRowNote(
     dotColor: Color,
     onOpen: () -> Unit,
     onLongPress: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    folderName: String? = null
 ) {
     val blocks = remember(entry.note.blocksJson) { decodeBlocks(entry.note.blocksJson) }
     val pastel = isPastelColor(entry.note.colorIndex)
@@ -171,7 +173,13 @@ fun ListRowNote(
                 Modifier
                     .size(44.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(if (pastel) noteColor(entry.note.colorIndex) else FN.surfaceAlt),
+                    .background(
+                        if (pastel) {
+                            noteColor(entry.note.colorIndex)
+                        } else {
+                            dotColor.copy(alpha = 0.30f).compositeOver(FN.surfaceAlt)
+                        }
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -202,7 +210,11 @@ fun ListRowNote(
                     )
                 } else {
                     Text(
-                        text = previewText(blocks),
+                        text = if (folderName != null) {
+                            "$folderName · ${previewText(blocks)}"
+                        } else {
+                            previewText(blocks)
+                        },
                         style = FT.bodySmall.copy(fontSize = 11.5.sp, lineHeight = 16.sp),
                         color = FN.muted,
                         maxLines = 2,
