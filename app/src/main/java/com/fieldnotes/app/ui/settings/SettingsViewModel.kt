@@ -134,6 +134,8 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 when {
                     summary == null -> "Couldn't read that file"
                     summary.skipped -> "Not a Field Notes backup"
+                    summary.notes == 0 -> "The backup doesn't contain any notes"
+                    summary.legacy -> "Imported ${summary.notes} notes (legacy format)"
                     else -> "Imported ${summary.notes} notes • ${summary.memos} memos"
                 }
             )
