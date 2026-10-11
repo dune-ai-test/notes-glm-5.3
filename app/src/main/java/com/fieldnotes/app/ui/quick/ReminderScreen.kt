@@ -265,7 +265,7 @@ private fun UpcomingTab(
                 modifier = Modifier.size(30.dp)
             )
             Text("No reminders yet", style = FT.sectionTitle, color = FN.text)
-            Text("Swipe right to complete · long-press for more.", style = FT.bodySmall, color = FN.muted)
+            Text("Tap + to add a reminder.", style = FT.bodySmall, color = FN.muted)
         }
         return
     }
