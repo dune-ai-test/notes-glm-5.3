@@ -50,9 +50,11 @@ val LightFN = FNPalette(
     surfaceAlt = Color(0xFFFFF8F0),
     text = Color(0xFF1A1A1A),
     textSoft = Color(0xFF3D3D3D),
-    muted = Color(0xFF9A9691),
+    // ≥4.5:1 on the warm-paper background.
+    muted = Color(0xFF6E6A63),
     line = Color(0xFFE8E0D6),
-    dotGray = Color(0xFFC5C0B8),
+    // ≥4.5:1 on the warm-paper background (WCAG 2.1 AA for small text).
+    dotGray = Color(0xFF6B665F),
     strong = Color(0xFF1A1A1A),
     onStrong = Color(0xFFFFF8F0),
     accent = AccentLight,
@@ -76,7 +78,8 @@ val DarkFN = FNPalette(
     textSoft = Color(0xFFC6BEAF),
     muted = Color(0xFF8A837A),
     line = Color(0xFF38332C),
-    dotGray = Color(0xFF57514A),
+    // ≥4.5:1 on the dark background.
+    dotGray = Color(0xFFA39C90),
     strong = Color(0xFF3A342E),
     onStrong = Color(0xFFF3EBE2),
     accent = AccentDark,
