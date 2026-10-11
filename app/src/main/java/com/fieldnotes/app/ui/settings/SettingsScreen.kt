@@ -311,12 +311,10 @@ fun SettingsScreen(navController: NavHostController) {
                 icon = Icons.Outlined.GraphicEq,
                 iconBg = FN.butter,
                 title = "Audio quality",
-                subtitle = if (settings.audioQuality == "high") "High • 256 kbps" else "Standard • 128 kbps"
+                subtitle = if (settings.audioQuality == "high") "High • 256 kbps" else "Standard • 128 kbps",
+                onClick = { showQualityDialog = true }
             ) {
-                ValueChip(
-                    text = if (settings.audioQuality == "high") "High" else "Standard",
-                    onClick = { showQualityDialog = true }
-                )
+                Chevron()
             }
         }
 
