@@ -155,7 +155,8 @@ fun SearchScreen(navController: NavHostController) {
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             SectionLabel(
-                "${results.size} ${plural(results.size, "result", "results")}",
+                if (query.isBlank()) "All notes"
+                else "${results.size} ${plural(results.size, "result", "results")}",
                 color = FN.muted
             )
         }
