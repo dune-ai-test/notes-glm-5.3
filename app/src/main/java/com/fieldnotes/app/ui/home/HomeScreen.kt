@@ -214,23 +214,6 @@ fun HomeScreen(
                             onClick = { vm.setPinnedOnly(true) },
                             icon = Icons.Outlined.PushPin
                         )
-                        PillChip(
-                            label = "Reorder",
-                            selected = reorderMode,
-                            onClick = {
-                                if (!reorderMode) {
-                                    // Drag-and-drop only works in the list layout;
-                                    // switching there guarantees a working reorder.
-                                    gridMode = false
-                                    vm.beginReorder()
-                                    reorderMode = true
-                                } else {
-                                    vm.persistReorder()
-                                    reorderMode = false
-                                }
-                            },
-                            icon = Icons.Outlined.DragHandle
-                        )
                     }
                     if (reorderMode) {
                         Surface(
@@ -274,17 +257,61 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         SectionLabel("Your notes")
-                        GridListToggle(
-                            gridMode = gridMode,
-                            onGrid = {
-                                gridMode = true
-                                if (reorderMode) {
-                                    vm.persistReorder()
-                                    reorderMode = false
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(7.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // A mode toggle, deliberately styled as an outlined
+                            // action rather than like the filter chips above.
+                            Surface(
+                                shape = RoundedCornerShape(50),
+                                color = if (reorderMode) FN.accent else FN.surface,
+                                border = BorderStroke(
+                                    1.dp,
+                                    if (reorderMode) FN.accent else FN.line
+                                )
+                            ) {
+                                Row(
+                                    Modifier
+                                        .clickable {
+                                            if (!reorderMode) {
+                                                gridMode = false
+                                                vm.beginReorder()
+                                                reorderMode = true
+                                            } else {
+                                                vm.persistReorder()
+                                                reorderMode = false
+                                            }
+                                        }
+                                        .padding(horizontal = 12.dp, vertical = 7.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.DragHandle,
+                                        contentDescription = null,
+                                        tint = if (reorderMode) FN.onStrong else FN.textSoft,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Text(
+                                        "Reorder",
+                                        style = FT.chip,
+                                        color = if (reorderMode) FN.onStrong else FN.textSoft
+                                    )
                                 }
-                            },
-                            onList = { gridMode = false }
-                        )
+                            }
+                            GridListToggle(
+                                gridMode = gridMode,
+                                onGrid = {
+                                    gridMode = true
+                                    if (reorderMode) {
+                                        vm.persistReorder()
+                                        reorderMode = false
+                                    }
+                                },
+                                onList = { gridMode = false }
+                            )
+                        }
                     }
             }
 
