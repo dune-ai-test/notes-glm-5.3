@@ -120,6 +120,7 @@ import com.fieldnotes.app.ui.theme.FT
 import com.fieldnotes.app.ui.theme.noteColor
 import com.fieldnotes.app.ui.theme.tagColor
 import com.fieldnotes.app.ui.theme.tagTextColor
+import com.fieldnotes.app.ui.theme.swatchName
 import com.fieldnotes.app.util.TimeFormat
 import java.io.File
 import kotlinx.coroutines.delay
@@ -1168,7 +1169,7 @@ private fun MoreSheet(
                     )
                 )
             }
-            SectionLabel("Card color")
+            SectionLabel("Card color — ${swatchName(state.colorIndex)}")
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 (0..5).map { noteColor(it) }
                     .forEachIndexed { index, color ->

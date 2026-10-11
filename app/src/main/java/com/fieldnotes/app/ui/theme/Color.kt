@@ -119,6 +119,12 @@ object FN {
     val inkFixed @Composable get() = LocalFN.current.inkFixed
 }
 
+// Human-readable names for the shared swatch palette (index 0 is the theme
+// surface colour).
+val SwatchNames = listOf("Paper", "Peach", "Butter", "Sage", "Lilac", "Sky")
+
+fun swatchName(index: Int): String = SwatchNames[index.coerceIn(0, SwatchNames.lastIndex)]
+
 /** Note card backgrounds: index 0 follows the theme, 1–5 are fixed pastels. */
 @Composable
 fun noteColor(index: Int): Color =

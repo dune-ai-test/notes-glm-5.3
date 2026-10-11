@@ -62,6 +62,7 @@ import com.fieldnotes.app.ui.components.SectionLabel
 import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
 import com.fieldnotes.app.ui.theme.noteColor
+import com.fieldnotes.app.ui.theme.swatchName
 import com.fieldnotes.app.util.TimeFormat
 import com.fieldnotes.app.util.plural
 import kotlinx.coroutines.launch
@@ -223,7 +224,7 @@ private fun NewFolderDialog(
                         }
                     }
                 }
-                SectionLabel("Color", color = FN.muted)
+                SectionLabel("Color — ${swatchName(colorIndex)}", color = FN.muted)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     (0..5).forEach { index ->
                         val selected = colorIndex == index
