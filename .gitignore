@@ -17,3 +17,8 @@ captures/
 # local audit notes
 /finding.md
 /.audit/
+
+# scratch patch scripts
+/patch_*.py
+/fix_*.py
+/check*.py
