@@ -384,7 +384,7 @@ fun SettingsScreen(navController: NavHostController) {
                 icon = Icons.Outlined.Save,
                 iconBg = FN.peach,
                 title = "Back up now",
-                subtitle = if (backupRunning) "Writing backup…" else if (backupFileName.isBlank()) "Write this week's ZIP now" else "Last: $backupFileName"
+                subtitle = if (backupRunning) "Writing backup…" else if (backupFileName.isBlank()) "Save a ZIP to this device" else "Last: $backupFileName"
             ) {
                 ValueChip(
                     text = if (backupRunning) "…" else "Run",
@@ -496,7 +496,7 @@ fun SettingsScreen(navController: NavHostController) {
                 style = FT.monoTiny,
                 color = FN.dotGray
             )
-            Text("Privacy • Terms • Acknowledgements", style = FT.monoTiny, color = FN.dotGray)
+            Text("Privacy • Terms of Service • Acknowledgements", style = FT.monoTiny, color = FN.dotGray)
         }
         }
     }

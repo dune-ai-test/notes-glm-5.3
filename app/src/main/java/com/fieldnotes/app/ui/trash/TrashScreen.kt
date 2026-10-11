@@ -105,7 +105,7 @@ fun TrashScreen(navController: NavHostController) {
             ) {
                 Text("Trash", style = FT.sectionTitle.copy(fontSize = 20.sp), color = FN.text)
                 Text(
-                    "${trashed.size} ${plural(trashed.size, "item", "items")} • deleted after $TRASH_DAYS days",
+                    "${trashed.size} ${plural(trashed.size, "item", "items")} • auto-deleted after $TRASH_DAYS days",
                     style = FT.monoTiny,
                     color = FN.muted
                 )

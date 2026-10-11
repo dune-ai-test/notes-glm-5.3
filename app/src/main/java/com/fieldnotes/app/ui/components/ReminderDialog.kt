@@ -120,7 +120,7 @@ fun ReminderDialog(
                 ) {
                     Text("Time", style = FT.chip, color = FN.muted)
                     Text(
-                        time.format(java.time.format.DateTimeFormatter.ofPattern("h:mm a")),
+                        time.format(java.time.format.DateTimeFormatter.ofPattern("h:mm a", java.util.Locale.ENGLISH)),
                         style = FT.bodySmall,
                         color = FN.text
                     )

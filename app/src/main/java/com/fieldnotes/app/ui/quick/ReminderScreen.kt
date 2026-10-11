@@ -140,7 +140,7 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 SectionLabel("Don't forget")
-                Text("Reminders.", style = FT.heroTitle, color = FN.text)
+                Text("Reminders", style = FT.heroTitle, color = FN.text)
             }
         }
 
@@ -743,4 +743,4 @@ private fun millisToTime(ms: Long): LocalTime =
 
 private fun formatWhen(date: LocalDate, time: LocalTime): String =
     "${date.month.getDisplayName(JavaTextStyle.SHORT, Locale.getDefault())} ${date.dayOfMonth} · " +
-        time.format(java.time.format.DateTimeFormatter.ofPattern("h:mm a"))
+        time.format(java.time.format.DateTimeFormatter.ofPattern("h:mm a", java.util.Locale.ENGLISH))
