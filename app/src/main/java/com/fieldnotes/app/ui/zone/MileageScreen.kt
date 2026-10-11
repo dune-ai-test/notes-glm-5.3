@@ -161,14 +161,14 @@ fun MileageScreen(navController: NavHostController) {
 
 @Composable
 private fun SummaryStat(value: String, label: String) {
-    Column(horizontalArrangement = Arrangement.spacedBy(1.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
         Text(value, style = FT.cardTitleSmall.copy(fontSize = 14.sp), color = FN.onStrong)
         Text(label, style = FT.monoTiny, color = FN.onStrong.copy(alpha = 0.5f))
     }
 }
 
 @Composable
-private fun MileageRow(entry: com.fieldnotes.app.data.zone.MileageEntry) {
+private fun MileageRow(entry: MileageEntry) {
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = FN.surface,
