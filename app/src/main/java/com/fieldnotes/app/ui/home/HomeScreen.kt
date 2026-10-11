@@ -228,7 +228,7 @@ fun HomeScreen(navController: NavHostController) {
                                     modifier = Modifier.size(15.dp)
                                 )
                                 Text(
-                                    "Drag cards to rearrange.",
+                                    "Drag rows to rearrange.",
                                     style = FT.bodySmall,
                                     color = FN.textSoft,
                                     modifier = Modifier.weight(1f)
