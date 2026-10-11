@@ -211,19 +211,51 @@ fun HomeScreen(navController: NavHostController) {
                         onSearch = { navController.navigate("search") },
                         onFilters = { showFilters = true }
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                        PillChip(
-                            label = "All",
-                            selected = !pinnedOnly,
-                            onClick = { vm.setPinnedOnly(false) },
-                            count = noteCount
-                        )
-                        PillChip(
-                            label = "Pinned",
-                            selected = pinnedOnly,
-                            onClick = { vm.setPinnedOnly(true) },
-                            icon = Icons.Outlined.PushPin
-                        )
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                            PillChip(
+                                label = "All",
+                                selected = !pinnedOnly,
+                                onClick = { vm.setPinnedOnly(false) },
+                                count = noteCount
+                            )
+                            PillChip(
+                                label = "Pinned",
+                                selected = pinnedOnly,
+                                onClick = { vm.setPinnedOnly(true) },
+                                icon = Icons.Outlined.PushPin
+                            )
+                        }
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(7.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ReorderChip(reorderMode, onToggle = {
+                                if (!reorderMode) {
+                                    gridMode = false
+                                    vm.beginReorder()
+                                    reorderMode = true
+                                } else {
+                                    vm.persistReorder()
+                                    reorderMode = false
+                                }
+                            })
+                            GridListToggle(
+                                gridMode = gridMode,
+                                onGrid = {
+                                    gridMode = true
+                                    if (reorderMode) {
+                                        vm.persistReorder()
+                                        reorderMode = false
+                                    }
+                                },
+                                onList = { gridMode = false }
+                            )
+                        }
                     }
                     if (reorderMode) {
                         Surface(
@@ -261,68 +293,7 @@ fun HomeScreen(navController: NavHostController) {
                             }
                         }
                     }
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        SectionLabel("Your notes")
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(7.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // A mode toggle, deliberately styled as an outlined
-                            // action rather than like the filter chips above.
-                            Surface(
-                                shape = RoundedCornerShape(50),
-                                color = if (reorderMode) FN.accent else FN.surface,
-                                border = BorderStroke(
-                                    1.dp,
-                                    if (reorderMode) FN.accent else FN.line
-                                )
-                            ) {
-                                Row(
-                                    Modifier
-                                        .clickable {
-                                            if (!reorderMode) {
-                                                gridMode = false
-                                                vm.beginReorder()
-                                                reorderMode = true
-                                            } else {
-                                                vm.persistReorder()
-                                                reorderMode = false
-                                            }
-                                        }
-                                        .padding(horizontal = 12.dp, vertical = 7.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.DragHandle,
-                                        contentDescription = null,
-                                        tint = if (reorderMode) FN.onStrong else FN.textSoft,
-                                        modifier = Modifier.size(13.dp)
-                                    )
-                                    Text(
-                                        "Reorder",
-                                        style = FT.chip,
-                                        color = if (reorderMode) FN.onStrong else FN.textSoft
-                                    )
-                                }
-                            }
-                            GridListToggle(
-                                gridMode = gridMode,
-                                onGrid = {
-                                    gridMode = true
-                                    if (reorderMode) {
-                                        vm.persistReorder()
-                                        reorderMode = false
-                                    }
-                                },
-                                onList = { gridMode = false }
-                            )
-                        }
-                    }
+                    SectionLabel("Your notes")
             }
 
             LazyVerticalStaggeredGrid(
@@ -583,6 +554,37 @@ private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit) {
 }
 
 @Composable
+@Composable
+private fun ReorderChip(active: Boolean, onToggle: () -> Unit) {
+    // A mode toggle, deliberately styled as an outlined action rather
+    // than like the filter chips.
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = if (active) FN.accent else FN.surface,
+        border = BorderStroke(1.dp, if (active) FN.accent else FN.line)
+    ) {
+        Row(
+            Modifier
+                .clickable(onClick = onToggle)
+                .padding(horizontal = 12.dp, vertical = 7.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.DragHandle,
+                contentDescription = null,
+                tint = if (active) FN.onStrong else FN.textSoft,
+                modifier = Modifier.size(13.dp)
+            )
+            Text(
+                "Reorder",
+                style = FT.chip,
+                color = if (active) FN.onStrong else FN.textSoft
+            )
+        }
+    }
+}
+
 private fun GridListToggle(gridMode: Boolean, onGrid: () -> Unit, onList: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(50),
