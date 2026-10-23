@@ -24,10 +24,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
-import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -209,7 +208,8 @@ fun HomeScreen(navController: NavHostController) {
                     HeaderRow(noteCount = notes.size)
                     SearchBarRow(
                         onSearch = { navController.navigate("search") },
-                        onFilters = { showFilters = true }
+                        onFilters = { showFilters = true },
+                        sort = sort
                     )
                     Row(
                         Modifier.fillMaxWidth(),
@@ -296,15 +296,15 @@ fun HomeScreen(navController: NavHostController) {
                     SectionLabel("Your notes")
             }
 
-            LazyVerticalStaggeredGrid(
-                columns = StaggeredGridCells.Fixed(2),
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
                 modifier = Modifier.fillMaxSize(),
-                verticalItemSpacing = 14.dp,
+                verticalArrangement = Arrangement.spacedBy(14.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 132.dp)
             ) {
             if (notes.isEmpty()) {
-                item(key = "empty", span = StaggeredGridItemSpan.FullLine) {
+                item(key = "empty", span = GridItemSpan(maxLineSpan)) {
                     Column(
                         Modifier
                             .fillMaxWidth()
@@ -370,6 +370,7 @@ fun HomeScreen(navController: NavHostController) {
                                 entry = entry,
                                 dotColor = dotColorFor(entry),
                                 folderName = folderNameFor(entry),
+                                modifier = if (wide) Modifier else Modifier.fillMaxSize(),
                                 playbackState = playback,
                                 onOpen = {
                                     if (!reorderMode) tryOpen(entry)
@@ -392,14 +393,16 @@ fun HomeScreen(navController: NavHostController) {
                         }
                     }
                     if (wide) {
-                        item(key = "home-${entry.note.id}", span = StaggeredGridItemSpan.FullLine) { card() }
+                        item(key = "home-${entry.note.id}", span = GridItemSpan(maxLineSpan)) { card() }
                     } else {
-                        item(key = "home-${entry.note.id}") { card() }
+                        item(key = "home-${entry.note.id}") {
+                            Box(Modifier.fillParentMaxHeight()) { card() }
+                        }
                     }
                 }
             } else {
                 notes.forEach { entry ->
-                    item(key = "list-${entry.note.id}", span = StaggeredGridItemSpan.FullLine) {
+                    item(key = "list-${entry.note.id}", span = GridItemSpan(maxLineSpan)) {
                         ListRowNote(
                             entry = entry,
                             dotColor = dotColorFor(entry),
@@ -499,7 +502,7 @@ private fun HeaderRow(noteCount: Int) {
 }
 
 @Composable
-private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit) {
+private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit, sort: NoteSort) {
     Surface(
         shape = RoundedCornerShape(50),
         color = FN.surface,
@@ -531,7 +534,10 @@ private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit) {
             Surface(
                 shape = RoundedCornerShape(50),
                 color = FN.bg,
-                border = BorderStroke(1.dp, FN.line)
+                border = BorderStroke(
+                    1.dp,
+                    if (sort == NoteSort.RECENT) FN.line else FN.accent
+                )
             ) {
                 Row(
                     Modifier
@@ -546,7 +552,20 @@ private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit) {
                         tint = FN.textSoft,
                         modifier = Modifier.size(13.dp)
                     )
-                    Text("Sort", style = FT.chipSmall, color = FN.textSoft)
+                    Text(
+                        if (sort == NoteSort.RECENT) {
+                            "Sort"
+                        } else {
+                            "Sort · " + when (sort) {
+                                NoteSort.OLDEST -> "Oldest"
+                                NoteSort.TITLE -> "A–Z"
+                                NoteSort.CUSTOM -> "Custom"
+                                else -> "Recent"
+                            }
+                        },
+                        style = FT.chipSmall,
+                        color = if (sort == NoteSort.RECENT) FN.textSoft else FN.accent
+                    )
                 }
             }
         }

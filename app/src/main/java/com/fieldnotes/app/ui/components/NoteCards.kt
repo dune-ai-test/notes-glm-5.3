@@ -83,17 +83,17 @@ fun HomeNoteCard(
     modifier: Modifier = Modifier
 ) {
     if (entry.note.locked) {
-        LockedCard(entry, onOpen, onLongPress)
+        LockedCard(entry, modifier, onOpen, onLongPress)
         return
     }
     val blocks = remember(entry.note.blocksJson) { decodeBlocks(entry.note.blocksJson) }
     when (noteCardKind(entry.note, blocks)) {
-        NoteCardKind.HERO -> HeroCard(entry, blocks, folderName, onOpen, onLongPress)
-        NoteCardKind.AUDIO -> AudioCard(entry, blocks, playbackState, onOpen, onLongPress, onTogglePlay)
-        NoteCardKind.CHECKLIST -> ChecklistCard(entry, blocks, onOpen, onLongPress, onToggleChecklistItem)
-        NoteCardKind.SKETCH -> SketchCard(entry, onOpen, onLongPress)
-        NoteCardKind.QUOTE -> QuoteCard(entry, blocks, folderName, onOpen, onLongPress)
-        NoteCardKind.TEXT -> TextCard(entry, blocks, folderName, dotColor, onOpen, onLongPress)
+        NoteCardKind.HERO -> HeroCard(entry, blocks, folderName, modifier, onOpen, onLongPress)
+        NoteCardKind.AUDIO -> AudioCard(entry, blocks, folderName, modifier, playbackState, onOpen, onLongPress, onTogglePlay)
+        NoteCardKind.CHECKLIST -> ChecklistCard(entry, blocks, folderName, modifier, onOpen, onLongPress, onToggleChecklistItem)
+        NoteCardKind.SKETCH -> SketchCard(entry, folderName, modifier, onOpen, onLongPress)
+        NoteCardKind.QUOTE -> QuoteCard(entry, blocks, folderName, modifier, onOpen, onLongPress)
+        NoteCardKind.TEXT -> TextCard(entry, blocks, folderName, modifier, dotColor, onOpen, onLongPress)
     }
 }
 
@@ -101,12 +101,13 @@ fun HomeNoteCard(
 private fun LockedCard(
     entry: NoteWithTags,
     onOpen: () -> Unit,
+    modifier: Modifier = Modifier,
     onLongPress: (() -> Unit)?
 ) {
     val pastel = isPastelColor(entry.note.colorIndex)
     val ink = if (pastel) FN.inkFixed else FN.text
     val soft = if (pastel) PastelSoft else FN.muted
-    CardShell(noteColor(entry.note.colorIndex), onOpen, onLongPress) {
+    CardShell(noteColor(entry.note.colorIndex), onOpen, onLongPress, modifier = modifier) {
         Row(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -183,11 +184,19 @@ fun ListRowNote(
                     ),
                 contentAlignment = Alignment.Center
             ) {
+                if (kind == NoteCardKind.TEXT) {
+                    Text(
+                        text = titleInitials(entry.note.title),
+                        style = FT.statNumber.copy(fontSize = 16.sp),
+                        color = if (pastel) FN.inkFixed else FN.textSoft
+                    )
+                } else {
                 Icon(
                     imageVector = previewIcon(kind),
                     contentDescription = null,
                     tint = if (pastel) FN.inkFixed else FN.textSoft,
                     modifier = Modifier.size(19.dp)
+                }
                 )
             }
             Column(
@@ -297,12 +306,13 @@ private fun CardShell(
 private fun HeroCard(
     entry: NoteWithTags,
     blocks: List<Block>,
+    modifier: Modifier = Modifier,
     folderName: String,
     onOpen: () -> Unit,
     onLongPress: (() -> Unit)?
 ) {
     val snippet = blocks.filterIsInstance<Block.Paragraph>().firstOrNull()?.text ?: ""
-    CardShell(FN.peach, onOpen, onLongPress, cornerRadius = 28) {
+    CardShell(FN.peach, onOpen, onLongPress, modifier = modifier, cornerRadius = 28) {
         Row(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -374,6 +384,8 @@ private fun HeroCard(
 @Composable
 private fun ChecklistCard(
     entry: NoteWithTags,
+    folderName: String,
+    modifier: Modifier = Modifier,
     blocks: List<Block>,
     onOpen: () -> Unit,
     onLongPress: (() -> Unit)?,
@@ -384,7 +396,7 @@ private fun ChecklistCard(
     val bulletsOnly = isPastelColor(entry.note.colorIndex)
     val ink = if (bulletsOnly) FN.inkFixed else FN.text
     val soft = if (bulletsOnly) PastelSoft else FN.muted
-    CardShell(noteColor(entry.note.colorIndex), onOpen, onLongPress) {
+    CardShell(noteColor(entry.note.colorIndex), onOpen, onLongPress, modifier = modifier) {
         Row(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -452,10 +464,12 @@ private fun ChecklistCard(
 @Composable
 private fun SketchCard(
     entry: NoteWithTags,
+    folderName: String,
+    modifier: Modifier = Modifier,
     onOpen: () -> Unit,
     onLongPress: (() -> Unit)?
 ) {
-    CardShell(FN.butter, onOpen, onLongPress) {
+    CardShell(FN.butter, onOpen, onLongPress, modifier = modifier) {
         Row(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -530,6 +544,8 @@ private fun SketchCard(
 private fun AudioCard(
     entry: NoteWithTags,
     blocks: List<Block>,
+    folderName: String,
+    modifier: Modifier = Modifier,
     playbackState: AudioPlayer.State,
     onOpen: () -> Unit,
     onLongPress: (() -> Unit)?,
@@ -538,7 +554,7 @@ private fun AudioCard(
     val audio = blocks.filterIsInstance<Block.Audio>().firstOrNull() ?: return
     val audioId = "note-${entry.note.id}"
     val active = playbackState.activeId == audioId
-    CardShell(FN.surface, onOpen, onLongPress) {
+    CardShell(FN.surface, onOpen, onLongPress, modifier = modifier) {
         Row(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -620,6 +636,7 @@ private fun AudioCard(
 private fun QuoteCard(
     entry: NoteWithTags,
     blocks: List<Block>,
+    modifier: Modifier = Modifier,
     folderName: String,
     onOpen: () -> Unit,
     onLongPress: (() -> Unit)?
@@ -628,7 +645,7 @@ private fun QuoteCard(
     val pastel = isPastelColor(entry.note.colorIndex)
     val ink = if (pastel) FN.inkFixed else FN.text
     val soft = if (pastel) PastelSoft else FN.muted
-    CardShell(noteColor(entry.note.colorIndex), onOpen, onLongPress) {
+    CardShell(noteColor(entry.note.colorIndex), onOpen, onLongPress, modifier = modifier) {
         Row(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -669,6 +686,14 @@ private fun QuoteCard(
                     overflow = TextOverflow.Ellipsis
                 )
             }
+                Text(
+                    text = folderName,
+                    style = FT.monoTiny,
+                    color = FN.muted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(start = 2.dp)
+                ),
         }
         Surface(shape = RoundedCornerShape(50), color = if (pastel) FN.onStrong else FN.surfaceAlt) {
             Text(
@@ -685,6 +710,7 @@ private fun QuoteCard(
 private fun TextCard(
     entry: NoteWithTags,
     blocks: List<Block>,
+    modifier: Modifier = Modifier,
     folderName: String,
     dotColor: Color,
     onOpen: () -> Unit,
@@ -695,7 +721,7 @@ private fun TextCard(
     val pastel = isPastelColor(entry.note.colorIndex)
     val ink = if (pastel) FN.inkFixed else FN.text
     val soft = if (pastel) PastelSoft else FN.muted
-    CardShell(noteColor(entry.note.colorIndex), onOpen, onLongPress) {
+    CardShell(noteColor(entry.note.colorIndex), onOpen, onLongPress, modifier = modifier) {
         Row(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -801,3 +827,13 @@ fun annotatedMatches(text: String, query: String): androidx.compose.ui.text.Anno
     }
     return builder.toAnnotatedString()
 }
+
+
+/** Up to two leading initials from the title, for content-derived monograms. */
+fun titleInitials(title: String): String =
+    title.trim().split(Regex("\\s+"))
+        .filter { it.isNotBlank() }
+        .take(2)
+        .map { it.first().uppercaseChar().toString() }
+        .joinToString("")
+        .ifBlank { "+" }
