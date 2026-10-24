@@ -520,9 +520,6 @@ private fun ReminderRow(
     }
 }
 
-@Composable
-    }
-}
 
 @Composable
 private fun CalendarTab(
