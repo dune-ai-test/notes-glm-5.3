@@ -31,9 +31,6 @@ import com.fieldnotes.app.ui.library.LibraryScreen
 import com.fieldnotes.app.ui.quick.ReminderScreen
 import com.fieldnotes.app.ui.search.SearchScreen
 import com.fieldnotes.app.ui.settings.SettingsScreen
-import com.fieldnotes.app.ui.zone.MileageScreen
-import com.fieldnotes.app.ui.zone.PasswordScreen
-import com.fieldnotes.app.ui.zone.ZoneScreen
 import com.fieldnotes.app.ui.trash.TrashScreen
 import com.fieldnotes.app.ui.theme.FN
 import kotlinx.coroutines.launch
@@ -83,8 +80,6 @@ fun AppRoot(container: AppContainer) {
                     when (TopLevelTab.entries[page]) {
                         TopLevelTab.HOME ->
                             HomeScreen(navController = navController)
-                        TopLevelTab.ZONE ->
-                            ZoneScreen(navController = navController)
                         TopLevelTab.REMINDER ->
                             ReminderScreen(
                                 navController = navController,
@@ -101,12 +96,6 @@ fun AppRoot(container: AppContainer) {
             }
             composable("trash") {
                 TrashScreen(navController = navController)
-            }
-            composable("zone/mileage") {
-                MileageScreen(navController = navController)
-            }
-            composable("zone/passwords") {
-                PasswordScreen(navController = navController)
             }
             composable(
                 route = "folder/{folderId}",

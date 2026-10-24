@@ -16,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Event
-import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
@@ -32,7 +31,6 @@ import com.fieldnotes.app.ui.theme.FN
 
 enum class TopLevelTab(val route: String, val label: String, val icon: ImageVector) {
     HOME("home", "Home", Icons.Outlined.Home),
-    ZONE("zone", "Zone", Icons.Outlined.Explore),
     REMINDER("quick", "Reminder", Icons.Outlined.Event),
     LIBRARY("library", "Library", Icons.Outlined.Folder),
     SETTINGS("settings", "Settings", Icons.Outlined.Settings)
