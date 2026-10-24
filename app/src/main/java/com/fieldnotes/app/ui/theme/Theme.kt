@@ -26,7 +26,12 @@ private fun lightColors(p: FNPalette) = lightColorScheme(
     onSurfaceVariant = p.textSoft,
     outline = p.line,
     error = p.accent,
-    onError = p.onStrong
+    onError = p.onStrong,
+    surfaceContainerLowest = p.bg,
+    surfaceContainerLow = p.surfaceAlt,
+    surfaceContainer = p.surfaceAlt,
+    surfaceContainerHigh = p.surface,
+    surfaceContainerHighest = p.surface
 )
 
 private fun darkColors(p: FNPalette) = darkColorScheme(
@@ -43,7 +48,12 @@ private fun darkColors(p: FNPalette) = darkColorScheme(
     onSurfaceVariant = p.textSoft,
     outline = p.line,
     error = p.accent,
-    onError = p.onStrong
+    onError = p.onStrong,
+    surfaceContainerLowest = p.bg,
+    surfaceContainerLow = p.surfaceAlt,
+    surfaceContainer = p.surfaceAlt,
+    surfaceContainerHigh = p.surface,
+    surfaceContainerHighest = p.surface
 )
 
 private val AppTypography = Typography(

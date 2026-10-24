@@ -94,7 +94,7 @@ fun LibraryScreen(navController: NavHostController) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Library", style = FT.screenTitle, color = FN.text)
+                    Text("Notes", style = FT.screenTitle, color = FN.text)
                     Text(
                         "${folders.size} ${plural(folders.size, "folder", "folders")} • ${allNotes.size} ${plural(allNotes.size, "note", "notes")}",
                         style = FT.bodySmall.copy(fontSize = 13.sp),

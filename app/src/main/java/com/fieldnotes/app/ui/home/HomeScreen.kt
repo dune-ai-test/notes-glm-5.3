@@ -109,7 +109,6 @@ import com.fieldnotes.app.ui.theme.LocalHapticsEnabled
 import com.fieldnotes.app.ui.theme.noteColor
 import com.fieldnotes.app.util.TimeFormat
 import com.fieldnotes.app.util.plural
-import java.util.Calendar
 
 @Composable
 fun HomeScreen(navController: NavHostController) {
@@ -368,7 +367,6 @@ item(key = "empty", span = StaggeredGridItemSpan.FullLine) {
 
 @Composable
 private fun HeaderRow(noteCount: Int) {
-    val hour = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
     val today = remember { TimeFormat.headerDate() }
     Row(
         Modifier.fillMaxWidth(),
@@ -376,7 +374,7 @@ private fun HeaderRow(noteCount: Int) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(TimeFormat.greeting(hour), style = FT.greeting, color = FN.text)
+            Text("Field Notes", style = FT.greeting, color = FN.text)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)

@@ -30,8 +30,8 @@ import androidx.compose.ui.unit.dp
 import com.fieldnotes.app.ui.theme.FN
 
 enum class TopLevelTab(val route: String, val label: String, val icon: ImageVector) {
-    LIBRARY("library", "Library", Icons.Outlined.Folder),
-    HOME("home", "Home", Icons.Outlined.Home),
+    LIBRARY("library", "Notes", Icons.Outlined.Home),
+    HOME("home", "Home", Icons.Outlined.Folder),
     REMINDER("quick", "Reminder", Icons.Outlined.Event),
     SETTINGS("settings", "Settings", Icons.Outlined.Settings)
 }
