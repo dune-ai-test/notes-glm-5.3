@@ -14,9 +14,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -215,10 +215,10 @@ fun FolderScreen(folderId: Long, navController: NavHostController) {
             }
         }
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+        LazyVerticalStaggeredGrid(
+            columns = StaggeredGridCells.Fixed(2),
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalItemSpacing = 14.dp,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(
                 start = 16.dp,
@@ -227,7 +227,7 @@ fun FolderScreen(folderId: Long, navController: NavHostController) {
             )
         ) {
             if (visibleNotes.isEmpty()) {
-                item(key = "empty", span = { GridItemSpan(maxLineSpan) }) {
+                item(key = "empty", span = StaggeredGridItemSpan.FullLine) {
                     Column(
                         Modifier
                             .fillMaxWidth()
@@ -251,24 +251,21 @@ fun FolderScreen(folderId: Long, navController: NavHostController) {
             visibleNotes.forEach { entry ->
                 if (gridMode) {
                     item(key = "folder-card-${entry.note.id}") {
-                        Box(Modifier.height(220.dp)) {
-                            HomeNoteCard(
-                                entry = entry,
-                                dotColor = dotColor,
-                                folderName = folderName,
-                                modifier = Modifier.fillMaxSize(),
-                                playbackState = playback,
-                                onOpen = { navController.navigate("editor/${entry.note.id}") },
-                                onLongPress = null,
-                                onToggleChecklistItem = { blockIndex, itemIndex ->
-                                    vm.toggleChecklistItem(entry, blockIndex, itemIndex)
-                                },
-                                onTogglePlay = { id, path -> container.audioPlayer.toggle(id, path) }
-                            )
-                        }
+                        HomeNoteCard(
+                            entry = entry,
+                            dotColor = dotColor,
+                            folderName = folderName,
+                            playbackState = playback,
+                            onOpen = { navController.navigate("editor/${entry.note.id}") },
+                            onLongPress = null,
+                            onToggleChecklistItem = { blockIndex, itemIndex ->
+                                vm.toggleChecklistItem(entry, blockIndex, itemIndex)
+                            },
+                            onTogglePlay = { id, path -> container.audioPlayer.toggle(id, path) }
+                        )
                     }
                 } else {
-                    item(key = "folder-list-${entry.note.id}", span = { GridItemSpan(maxLineSpan) }) {
+                    item(key = "folder-list-${entry.note.id}", span = StaggeredGridItemSpan.FullLine) {
                         ListRowNote(
                             entry = entry,
                             dotColor = dotColor,
