@@ -398,8 +398,6 @@ item(key = "home-${entry.note.id}", span = { GridItemSpan(maxLineSpan) }) { card
                         item(key = "home-${entry.note.id}") {
                             Box(Modifier.height(220.dp)) { card() }
                         }
-                            Box(Modifier.fillParentMaxHeight()) { card() }
-                        }
                     }
                 }
             } else {
