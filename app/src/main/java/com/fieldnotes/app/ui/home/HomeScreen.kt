@@ -128,43 +128,9 @@ fun HomeScreen(navController: NavHostController) {
     var actionNote by remember { mutableStateOf<NoteWithTags?>(null) }
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    var reorderMode by rememberSaveable { mutableStateOf(false) }
-
-    // Drag-to-reorder state (reorder mode only).
-    val cardBounds = remember { mutableStateMapOf<Long, Rect>() }
-    var dragId by remember { mutableStateOf<Long?>(null) }
-    var dragOffset by remember { mutableStateOf(Offset.Zero) }
-
     val haptic = LocalHapticFeedback.current
     val hapticsEnabled = LocalHapticsEnabled.current
     val foldersById = remember(folders) { folders.associateBy { it.id } }
-
-    fun onDragGrab(id: Long) {
-        dragId = id
-        dragOffset = Offset.Zero
-        vm.beginReorder()
-        if (hapticsEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-    }
-
-    fun onDragMove(id: Long, amount: Offset) {
-        dragOffset += amount
-        val from = cardBounds[id] ?: return
-        val center = from.center + dragOffset
-        val target = cardBounds.entries
-            .firstOrNull { (key, rect) -> key != id && rect.contains(center) }
-            ?.key ?: return
-        val onto = cardBounds[target] ?: return
-        vm.moveCard(id, target)
-        // Compensate so the dragged card stays under the finger after the
-        // list re-flows (it inherits the target's old slot).
-        dragOffset += from.center - onto.center
-    }
-
-    fun onDragEnd() {
-        dragId = null
-        dragOffset = Offset.Zero
-        vm.persistReorder()
-    }
 
     val openNote: (Long) -> Unit = { id -> navController.navigate("editor/$id") }
     val dotColorFor: @Composable (NoteWithTags) -> Color = { entry ->
@@ -234,63 +200,11 @@ fun HomeScreen(navController: NavHostController) {
                             horizontalArrangement = Arrangement.spacedBy(7.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            ReorderChip(reorderMode, onToggle = {
-                                if (!reorderMode) {
-                                    gridMode = false
-                                    vm.beginReorder()
-                                    reorderMode = true
-                                } else {
-                                    vm.persistReorder()
-                                    reorderMode = false
-                                }
-                            })
                             GridListToggle(
                                 gridMode = gridMode,
-                                onGrid = {
-                                    gridMode = true
-                                    if (reorderMode) {
-                                        vm.persistReorder()
-                                        reorderMode = false
-                                    }
-                                },
+                                onGrid = { gridMode = true },
                                 onList = { gridMode = false }
                             )
-                        }
-                    }
-                    if (reorderMode) {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = FN.surfaceAlt,
-                            border = BorderStroke(1.dp, FN.line),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    Icons.Outlined.DragHandle,
-                                    contentDescription = null,
-                                    tint = FN.textSoft,
-                                    modifier = Modifier.size(15.dp)
-                                )
-                                Text(
-                                    "Drag rows to rearrange.",
-                                    style = FT.bodySmall,
-                                    color = FN.textSoft,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Text(
-                                    "Done",
-                                    style = FT.button,
-                                    color = FN.accent,
-                                    modifier = Modifier.clickable {
-                                        vm.persistReorder()
-                                        reorderMode = false
-                                    }
-                                )
-                            }
                         }
                     }
                     SectionLabel("Your notes")
@@ -332,58 +246,20 @@ item(key = "empty", span = { GridItemSpan(maxLineSpan) }) {
                     val blocks = decodeBlocks(entry.note.blocksJson)
                     val kind = noteCardKind(entry.note, blocks)
                     val wide = kind == com.fieldnotes.app.ui.components.NoteCardKind.HERO
-                    val isDragging = dragId == entry.note.id
                     val card: @Composable () -> Unit = {
-                        Box(
-                            Modifier
-                                .zIndex(if (isDragging) 2f else 0f)
-                                .graphicsLayer {
-                                    if (isDragging) {
-                                        translationX = dragOffset.x
-                                        translationY = dragOffset.y
-                                        scaleX = 1.04f
-                                        scaleY = 1.04f
-                                        shape = RoundedCornerShape(20.dp)
-                                        shadowElevation = 24f
-                                    }
-                                }
-                                .onGloballyPositioned { cardBounds[entry.note.id] = it.boundsInRoot() }
-                                .then(
-                                    if (reorderMode) {
-                                        Modifier.pointerInput(entry.note.id) {
-                                            detectDragGestures(
-                                                onDragStart = { onDragGrab(entry.note.id) },
-                                                onDrag = { change, amount ->
-                                                    change.consume()
-                                                    onDragMove(entry.note.id, amount)
-                                                },
-                                                onDragEnd = { onDragEnd() },
-                                                onDragCancel = { onDragEnd() }
-                                            )
-                                        }
-                                    } else {
-                                        Modifier
-                                    }
-                                )
-                        ) {
+                        Box {
                             HomeNoteCard(
                                 entry = entry,
                                 dotColor = dotColorFor(entry),
                                 folderName = folderNameFor(entry),
                                 modifier = if (wide) Modifier else Modifier.fillMaxSize(),
                                 playbackState = playback,
-                                onOpen = {
-                                    if (!reorderMode) tryOpen(entry)
-                                },
-                                onLongPress = if (reorderMode) {
-                                    null
-                                } else {
-                                    {
-                                        if (hapticsEnabled) {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        }
-                                        actionNote = entry
+                                onOpen = { tryOpen(entry) },
+                                onLongPress = {
+                                    if (hapticsEnabled) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                     }
+                                    actionNote = entry
                                 },
                                 onToggleChecklistItem = { blockIndex, itemIndex ->
                                     vm.toggleChecklistItem(entry, blockIndex, itemIndex)
@@ -559,7 +435,6 @@ private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit, sort: Note
                             "Sort · " + when (sort) {
                                 NoteSort.OLDEST -> "Oldest"
                                 NoteSort.TITLE -> "A–Z"
-                                NoteSort.CUSTOM -> "Custom"
                                 else -> "Recent"
                             }
                         },
@@ -568,37 +443,6 @@ private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit, sort: Note
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun ReorderChip(active: Boolean, onToggle: () -> Unit) {
-    // A mode toggle, deliberately styled as an outlined action rather
-    // than like the filter chips.
-    Surface(
-        shape = RoundedCornerShape(50),
-        color = if (active) FN.accent else FN.surface,
-        border = BorderStroke(1.dp, if (active) FN.accent else FN.line)
-    ) {
-        Row(
-            Modifier
-                .clickable(onClick = onToggle)
-                .padding(horizontal = 12.dp, vertical = 7.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.DragHandle,
-                contentDescription = null,
-                tint = if (active) FN.onStrong else FN.textSoft,
-                modifier = Modifier.size(13.dp)
-            )
-            Text(
-                "Reorder",
-                style = FT.chip,
-                color = if (active) FN.onStrong else FN.textSoft
-            )
         }
     }
 }
@@ -676,7 +520,6 @@ private fun FilterSheet(
                     NoteSort.RECENT to "Recent",
                     NoteSort.OLDEST to "Oldest",
                     NoteSort.TITLE to "A–Z",
-                    NoteSort.CUSTOM to "Custom"
                 ).forEach { (value, label) ->
                     PillChip(label = label, selected = sort == value, onClick = { onSort(value) })
                 }

@@ -27,65 +27,15 @@ class HomeViewModel(private val repo: NoteRepository) : ViewModel() {
     private val allNotesRaw: StateFlow<List<NoteWithTags>> = repo.activeNotes
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    /** Non-null while the user is in / has used manual ordering this session. */
-    private val customOrder = MutableStateFlow<List<Long>?>(null)
-
-    private val notesWithOrder = combine(repo.activeNotes, customOrder) { notes, order ->
-        notes to order
-    }
-
     val query = MutableStateFlow("")
     val sort = MutableStateFlow(NoteSort.RECENT)
     val pinnedOnly = MutableStateFlow(false)
 
     val visibleNotes: StateFlow<List<NoteWithTags>> = combine(
-        notesWithOrder, query, sort, pinnedOnly
-    ) { (notes, order), queryValue, sortValue, pinned ->
-        filterNotes(notes, queryValue, sortValue, pinned, order)
+        notes, query, sort, pinnedOnly
+    ) { list, queryValue, sortValue, pinned ->
+        filterNotes(list, queryValue, sortValue, pinned)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    /** Enters manual ordering, seeding the order from the current list. */
-    fun beginReorder() {
-        if (sort.value != NoteSort.CUSTOM || customOrder.value == null) {
-            sort.value = NoteSort.CUSTOM
-            customOrder.value = allNotesRaw.value.map { it.note.id }
-        }
-    }
-
-    /** Moves [dragId] to the position [ontoId] held in the manual order. */
-    fun moveCard(dragId: Long, ontoId: Long) {
-        val order = customOrder.value ?: return
-        val from = order.indexOf(dragId)
-        val to = order.indexOf(ontoId)
-        if (from == -1 || to == -1 || from == to) return
-        val updated = order.toMutableList()
-        updated.removeAt(from)
-        updated.add(to, dragId)
-        customOrder.value = updated
-    }
-
-    /** Writes the manual order back to the database. */
-    fun persistReorder() {
-        val order = customOrder.value ?: return
-        viewModelScope.launch { repo.saveCustomOrder(order) }
-    }
-
-    fun setQuery(value: String) {
-        query.value = value
-    }
-
-    fun setSort(value: NoteSort) {
-        sort.value = value
-    }
-
-    fun setPinnedOnly(value: Boolean) {
-        pinnedOnly.value = value
-    }
-
-    fun resetFilters() {
-        sort.value = NoteSort.RECENT
-        pinnedOnly.value = false
-    }
 
     fun togglePin(entry: NoteWithTags) {
         viewModelScope.launch { repo.updateNote(entry.note.copy(pinned = !entry.note.pinned)) }

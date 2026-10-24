@@ -4,14 +4,13 @@ import com.fieldnotes.app.data.db.NoteWithTags
 import com.fieldnotes.app.data.model.decodeBlocks
 import com.fieldnotes.app.data.model.plainText
 
-enum class NoteSort { RECENT, OLDEST, TITLE, CUSTOM }
+enum class NoteSort { RECENT, OLDEST, TITLE }
 
 fun filterNotes(
     notes: List<NoteWithTags>,
     query: String,
     sort: NoteSort,
-    pinnedOnly: Boolean,
-    customOrder: List<Long>? = null
+    pinnedOnly: Boolean
 ): List<NoteWithTags> {
     val q = query.trim().lowercase()
     val filtered = notes.filter { note ->
@@ -26,18 +25,5 @@ fun filterNotes(
         NoteSort.RECENT -> filtered.sortedByDescending { it.note.updatedAt }
         NoteSort.OLDEST -> filtered.sortedBy { it.note.updatedAt }
         NoteSort.TITLE -> filtered.sortedBy { it.note.title.lowercase() }
-        NoteSort.CUSTOM -> {
-            if (customOrder.isNullOrEmpty()) {
-                filtered
-            } else {
-                val position = customOrder.withIndex().associate { (index, id) -> id to index }
-                filtered.sortedWith(
-                    compareBy(
-                        { position[it.note.id] ?: Int.MAX_VALUE },
-                        { -it.note.updatedAt }
-                    )
-                )
-            }
-        }
     }
 }

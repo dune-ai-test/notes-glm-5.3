@@ -68,7 +68,6 @@ private fun sortLabel(sort: NoteSort): String = when (sort) {
     NoteSort.RECENT -> "Recent"
     NoteSort.OLDEST -> "Oldest"
     NoteSort.TITLE -> "A–Z"
-    NoteSort.CUSTOM -> "Custom"
 }
 
 @Composable
