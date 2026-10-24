@@ -87,6 +87,39 @@ Two ways to publish the debug APK as a GitHub **pre-release** (under Releases):
   git tag v1.1 && git push origin v1.1
   ```
 
+### Signed release APK
+
+**Release APK** is a manually triggered workflow (`.github/workflows/release.yml`) that builds a
+`assembleRelease` APK and attaches it to a GitHub Release. When the signing secrets below are set
+the APK is **signed with the release key**; without them it falls back to debug signing so the run
+always produces an installable APK.
+
+**One-time setup — create a keystore and add four repository secrets:**
+
+```bash
+# generate a keystore once, keep it private and backed up
+keytool -genkeypair -v -keystore field-notes.jks -alias field-notes   -keyalg RSA -keysize 2048 -validity 10000
+
+# base64-encode it for the secret
+base64 -w0 field-notes.jks > field-notes.jks.b64    # macOS: base64 -i field-notes.jks -o field-notes.jks.b64
+```
+
+Add under **Settings → Secrets and variables → Actions → Repository secrets**:
+
+| Secret | Value |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | Contents of `field-notes.jks.b64` |
+| `ANDROID_KEYSTORE_PASSWORD` | The keystore password you set in keytool |
+| `ANDROID_KEY_ALIAS` | `field-notes` (the `-alias` above) |
+| `ANDROID_KEY_PASSWORD` | The key password (often the same as the keystore password) |
+
+> Keep `field-notes.jks` safe — losing it means future updates can never be installed over an app
+> installed with that signature.
+
+**Run it:** **Actions → Release APK → Run workflow** → enter a tag (e.g. `v1.4.1-release`) → **Run**.
+When it finishes the APK is on the **Releases** page as `Field Notes <tag> (release)`. Release
+assets do not count against Actions artifact storage.
+
 ## Your data
 
 All data lives on-device. **Android Settings → Apps → Field Notes → Clear data**

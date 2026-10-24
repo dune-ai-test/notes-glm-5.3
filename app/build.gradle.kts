@@ -18,10 +18,30 @@ android {
         versionName = "1.4.1"
     }
 
+    signingConfigs {
+        create("release") {
+            // Populated only when the Release APK workflow provides the
+            // ANDROID_KEYSTORE_* secrets; otherwise left empty and unused.
+            val ksFile = System.getenv("KEYSTORE_FILE")
+            if (!ksFile.isNullOrBlank()) {
+                storeFile = file(ksFile)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // Debug-signed when no keystore env is present (CI tag builds,
+            // manual runs without secrets) so the build never fails.
+            signingConfig = if (System.getenv("KEYSTORE_FILE").isNullOrBlank()) {
+                signingConfigs.getByName("debug")
+            } else {
+                signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {
