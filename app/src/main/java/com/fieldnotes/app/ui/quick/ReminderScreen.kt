@@ -586,6 +586,7 @@ private fun CalendarTab(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
+            .padding(top = 18.dp)
             .padding(bottom = 130.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
