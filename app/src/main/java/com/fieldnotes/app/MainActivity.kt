@@ -52,8 +52,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fieldnotes.app.data.repo.AppSettings
 import com.fieldnotes.app.data.reminder.ReminderContract
 import com.fieldnotes.app.di.AppContainer
+import kotlinx.coroutines.launch
 import com.fieldnotes.app.di.LocalAppContainer
 import com.fieldnotes.app.navigation.AppRoot
+import com.fieldnotes.app.ui.onboarding.OnboardingScreen
 import com.fieldnotes.app.ui.theme.DarkFN
 import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.LightFN
@@ -71,8 +73,9 @@ class MainActivity : FragmentActivity() {
         val container = (application as FieldNotesApp).container
         consumeOpenNoteIntent(container, intent)
         setContent {
-            val settings by container.settingsRepository.settings
-                .collectAsStateWithLifecycle(initialValue = AppSettings())
+            val settingsState by container.settingsRepository.settings
+                .collectAsStateWithLifecycle(initialValue = null)
+            val settings = settingsState ?: return@setContent
             CompositionLocalProvider(
                 LocalAppContainer provides container,
                 LocalHapticsEnabled provides settings.haptics,
@@ -97,11 +100,21 @@ class MainActivity : FragmentActivity() {
                     }
                 }
                 FieldNotesTheme(dark = dark) {
-                    LockGate(
-                        enabled = settings.biometricLock && container.biometricAvailable,
-                        timeoutMinutes = settings.autoLockMinutes
-                    ) {
-                        AppRoot(container)
+                    if (!settings.onboarded) {
+                        OnboardingScreen(
+                            onFinish = {
+                                container.appScope.launch {
+                                    container.settingsRepository.setOnboarded(true)
+                                }
+                            }
+                        )
+                    } else {
+                        LockGate(
+                            enabled = settings.biometricLock && container.biometricAvailable,
+                            timeoutMinutes = settings.autoLockMinutes
+                        ) {
+                            AppRoot(container)
+                        }
                     }
                 }
             }

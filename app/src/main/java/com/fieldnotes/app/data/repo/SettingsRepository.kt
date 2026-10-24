@@ -28,7 +28,8 @@ data class AppSettings(
     val audioQuality: String = "high",
     val appearance: String = "light",
     val streakCount: Int = 0,
-    val lastActiveEpochDay: Long? = null
+    val lastActiveEpochDay: Long? = null,
+    val onboarded: Boolean = false
 )
 
 class SettingsRepository(private val context: Context) {
@@ -49,6 +50,7 @@ class SettingsRepository(private val context: Context) {
         val appearance = stringPreferencesKey("appearance")
         val streakCount = intPreferencesKey("streak_count")
         val lastActiveEpochDay = longPreferencesKey("last_active_epoch_day")
+        val onboarded = booleanPreferencesKey("onboarded")
     }
 
     /** Last five distinct search queries, newest first. */
@@ -72,8 +74,15 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
+    suspend fun setOnboarded(value: Boolean) {
+        context.settingsDataStore.edit { p ->
+            p[Keys.onboarded] = value
+        }
+    }
+
     val settings: Flow<AppSettings> = context.settingsDataStore.data.map { p ->
         AppSettings(
+            onboarded = p[Keys.onboarded] ?: false,
             userName = p[Keys.userName] ?: "You",
             haptics = p[Keys.haptics] ?: true,
             reduceMotion = p[Keys.reduceMotion] ?: false,
