@@ -6,6 +6,7 @@ import androidx.work.WorkerParameters
 import com.fieldnotes.app.FieldNotesApp
 import com.fieldnotes.app.data.export.NoteExporter
 import com.fieldnotes.app.data.repo.NoteRepository
+import com.fieldnotes.app.data.repo.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -27,7 +28,7 @@ object AutoBackup {
      * auto-backups, keeping the newest [AutoBackup.KEEP_COUNT]. Returns the
      * written file, or null on failure.
      */
-    suspend fun run(context: Context, repo: NoteRepository): File? = withContext(Dispatchers.IO) {
+    suspend fun run(context: Context, repo: NoteRepository, settings: SettingsRepository): File? = withContext(Dispatchers.IO) {
         try {
             val notes = repo.allNotes.first()
             val folders = repo.folders.first()
@@ -36,6 +37,7 @@ object AutoBackup {
             val file = File(dir, "$FILE_PREFIX${LocalDate.now()}.zip")
             file.outputStream().use { out -> NoteExporter.exportZip(notes, folders, memos, out) }
             prune(dir)
+            settings.recordBackup(file.name)
             file
         } catch (_: Exception) {
             null
@@ -60,7 +62,7 @@ class AutoBackupWorker(
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val container = (applicationContext as? FieldNotesApp)?.container
             ?: return@withContext Result.failure()
-        val file = AutoBackup.run(applicationContext, container.noteRepository)
+        val file = AutoBackup.run(applicationContext, container.noteRepository, container.settingsRepository)
         if (file != null && file.exists()) Result.success() else Result.retry()
     }
 }

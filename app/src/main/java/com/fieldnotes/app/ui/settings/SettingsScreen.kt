@@ -67,7 +67,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,8 +90,6 @@ import com.fieldnotes.app.ui.components.SectionLabel
 import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
 import com.fieldnotes.app.util.TimeFormat
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(navController: NavHostController) {
@@ -103,7 +100,6 @@ fun SettingsScreen(navController: NavHostController) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val noteCount by vm.noteCount.collectAsStateWithLifecycle()
     val memoCount by vm.memoCount.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
     var showNameDialog by remember { mutableStateOf(false) }
@@ -115,7 +111,6 @@ fun SettingsScreen(navController: NavHostController) {
     var showWhatsNewDialog by remember { mutableStateOf(false) }
     var showAutoLockDialog by remember { mutableStateOf(false) }
     var backupRunning by remember { mutableStateOf(false) }
-    var backupFileName by remember { mutableStateOf("") }
     var syncing by remember { mutableStateOf(false) }
 
     val cacheSize by produceState(initialValue = 0L) {
@@ -235,19 +230,26 @@ fun SettingsScreen(navController: NavHostController) {
                 }
                 Surface(shape = RoundedCornerShape(50), color = FN.inkCardTile) {
                     Text(
-                        if (syncing) "Checking…" else "Sync",
+                        when {
+                            backupRunning -> "Backing up…"
+                            settings.lastBackupAt != null ->
+                                "Backed up · ${TimeFormat.relative(settings.lastBackupAt!!)}"
+                            else -> "Local sync — no backup yet"
+                        },
                         style = FT.button,
                         color = FN.onStrong,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                if (!syncing) {
-                                    syncing = true
-                                    scope.launch {
-                                        delay(600)
-                                        syncing = false
-                                        container.playChime()
-                                        toast("$noteCount notes • $memoCount memos stored on this device")
+                                if (!backupRunning) {
+                                    backupRunning = true
+                                    vm.runAutoBackupNow { ok ->
+                                        backupRunning = false
+                                        if (ok) container.playChime()
+                                        toast(
+                                            if (ok) "Backup saved • $noteCount notes • $memoCount memos"
+                                            else "Backup failed"
+                                        )
                                     }
                                 }
                             }
@@ -381,19 +383,21 @@ fun SettingsScreen(navController: NavHostController) {
                 icon = Icons.Outlined.Save,
                 iconBg = FN.peach,
                 title = "Back up now",
-                subtitle = if (backupRunning) "Writing backup…" else if (backupFileName.isBlank()) "Save a ZIP to this device" else "Last: $backupFileName"
+                subtitle = when {
+                    backupRunning -> "Writing backup…"
+                    settings.lastBackupAt != null ->
+                        "Last: ${TimeFormat.relative(settings.lastBackupAt!!)} • keeps last 4"
+                    else -> "Save a ZIP to this device"
+                }
             ) {
                 ValueChip(
                     text = if (backupRunning) "…" else "Run",
                     onClick = {
                         if (!backupRunning) {
                             backupRunning = true
-                            vm.runAutoBackupNow { ok, name ->
+                            vm.runAutoBackupNow { ok ->
                                 backupRunning = false
-                                if (ok) {
-                                    backupFileName = name
-                                    container.playChime()
-                                }
+                                if (ok) container.playChime()
                                 toast(if (ok) "Backup saved to the device" else "Backup failed")
                             }
                         }

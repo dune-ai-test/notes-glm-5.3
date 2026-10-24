@@ -61,10 +61,12 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     /** Runs the same weekly auto-backup immediately (device-local ZIP, keeps last 4). */
-    fun runAutoBackupNow(onDone: (Boolean, String) -> Unit) {
+    fun runAutoBackupNow(onDone: (Boolean) -> Unit) {
         viewModelScope.launch {
-            val file = com.fieldnotes.app.data.backup.AutoBackup.run(container.context, noteRepo)
-            onDone(file != null, file?.name ?: "")
+            val file = com.fieldnotes.app.data.backup.AutoBackup.run(
+                container.context, noteRepo, settingsRepo
+            )
+            onDone(file != null)
         }
     }
     fun setDefaultCapture(value: String) = viewModelScope.launch { settingsRepo.setDefaultCapture(value) }
