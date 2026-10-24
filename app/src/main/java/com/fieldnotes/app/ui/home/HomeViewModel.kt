@@ -32,10 +32,28 @@ class HomeViewModel(private val repo: NoteRepository) : ViewModel() {
     val pinnedOnly = MutableStateFlow(false)
 
     val visibleNotes: StateFlow<List<NoteWithTags>> = combine(
-        notes, query, sort, pinnedOnly
+        allNotesRaw, query, sort, pinnedOnly
     ) { list, queryValue, sortValue, pinned ->
         filterNotes(list, queryValue, sortValue, pinned)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun setQuery(value: String) {
+        query.value = value
+    }
+
+    fun setSort(value: NoteSort) {
+        sort.value = value
+    }
+
+    fun setPinnedOnly(value: Boolean) {
+        pinnedOnly.value = value
+    }
+
+    fun resetFilters() {
+        query.value = ""
+        sort.value = NoteSort.RECENT
+        pinnedOnly.value = false
+    }
 
     fun togglePin(entry: NoteWithTags) {
         viewModelScope.launch { repo.updateNote(entry.note.copy(pinned = !entry.note.pinned)) }
