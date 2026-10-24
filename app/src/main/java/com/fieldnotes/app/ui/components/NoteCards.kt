@@ -38,6 +38,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -100,8 +103,8 @@ fun HomeNoteCard(
 @Composable
 private fun LockedCard(
     entry: NoteWithTags,
-    onOpen: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpen: () -> Unit,
     onLongPress: (() -> Unit)?
 ) {
     val pastel = isPastelColor(entry.note.colorIndex)
@@ -191,20 +194,24 @@ fun ListRowNote(
                         color = if (pastel) FN.inkFixed else FN.textSoft
                     )
                 } else {
-                Icon(
-                    imageVector = previewIcon(kind),
-                    contentDescription = null,
-                    tint = if (pastel) FN.inkFixed else FN.textSoft,
-                    modifier = Modifier.size(19.dp)
+                    Icon(
+                        imageVector = previewIcon(kind),
+                        contentDescription = null,
+                        tint = if (pastel) FN.inkFixed else FN.textSoft,
+                        modifier = Modifier.size(19.dp)
+                    )
                 }
-                )
             }
             Column(
                 Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 Text(
-                    text = annotatedMatches(entry.note.title.ifBlank { "Untitled" }, highlight),
+                    text = if (highlight.isBlank()) {
+                        entry.note.title.ifBlank { "Untitled" }
+                    } else {
+                        annotatedMatches(entry.note.title.ifBlank { "Untitled" }, highlight)
+                    },
                     style = FT.cardTitle,
                     color = FN.text,
                     maxLines = 1,
@@ -276,6 +283,37 @@ private fun previewText(blocks: List<Block>): String {
     return blocks.filterIsInstance<Block.Paragraph>().firstOrNull()?.text ?: ""
 }
 
+/** Up to two leading initials from the title, for content-derived monograms. */
+fun titleInitials(title: String): String =
+    title.trim().split(Regex("\\s+"))
+        .filter { it.isNotBlank() }
+        .take(2)
+        .map { it.first().uppercaseChar().toString() }
+        .joinToString("")
+        .ifBlank { "+" }
+
+/** Title text with every case-insensitive occurrence of [query] accented. */
+@Composable
+fun annotatedMatches(text: String, query: String): AnnotatedString {
+    val builder = AnnotatedString.Builder(text)
+    if (query.isNotBlank()) {
+        val lower = text.lowercase()
+        val q = query.trim().lowercase()
+        var from = 0
+        while (true) {
+            val hit = lower.indexOf(q, from)
+            if (hit == -1) break
+            builder.addStyle(
+                SpanStyle(color = FN.accent, fontWeight = FontWeight.Bold),
+                hit,
+                hit + q.length
+            )
+            from = hit + q.length
+        }
+    }
+    return builder.toAnnotatedString()
+}
+
 @Composable
 private fun CardShell(
     background: Color,
@@ -306,8 +344,8 @@ private fun CardShell(
 private fun HeroCard(
     entry: NoteWithTags,
     blocks: List<Block>,
-    modifier: Modifier = Modifier,
     folderName: String,
+    modifier: Modifier = Modifier,
     onOpen: () -> Unit,
     onLongPress: (() -> Unit)?
 ) {
@@ -384,9 +422,9 @@ private fun HeroCard(
 @Composable
 private fun ChecklistCard(
     entry: NoteWithTags,
+    blocks: List<Block>,
     folderName: String,
     modifier: Modifier = Modifier,
-    blocks: List<Block>,
     onOpen: () -> Unit,
     onLongPress: (() -> Unit)?,
     onToggleChecklistItem: (Int, Int) -> Unit
@@ -411,17 +449,17 @@ private fun ChecklistCard(
             Text(
                 text = "$folderName · ${TimeFormat.smartDate(entry.note.updatedAt)}",
                 style = FT.monoTiny,
-                color = soft
-            )
+                color = soft,
                 maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis
+            )
         }
         Text(
             text = entry.note.title.ifBlank { "Untitled" },
             style = FT.cardTitle,
             color = ink,
             maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis
         )
         checklist.items.take(4).forEachIndexed { itemIndex, item ->
             Row(
@@ -467,7 +505,7 @@ private fun SketchCard(
     folderName: String,
     modifier: Modifier = Modifier,
     onOpen: () -> Unit,
-    onLongPress: (() -> Unit)?
+    onLongPress: () -> Unit
 ) {
     CardShell(FN.butter, onOpen, onLongPress, modifier = modifier) {
         Row(
@@ -495,7 +533,7 @@ private fun SketchCard(
                 style = FT.monoTiny,
                 color = FN.inkFixed.copy(alpha = 0.5f),
                 maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis
             )
         }
         Text(
@@ -503,7 +541,7 @@ private fun SketchCard(
             style = FT.cardTitle,
             color = FN.inkFixed,
             maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis
         )
         Surface(
             shape = RoundedCornerShape(12.dp),
@@ -623,7 +661,14 @@ private fun AudioCard(
                 }
             }
             Text(
-                    text = "$folderName · ${TimeFormat.smartDate(entry.note.updatedAt)}",
+                text = folderName,
+                style = FT.monoTiny,
+                color = FN.muted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = TimeFormat.smartDate(entry.note.updatedAt),
                 style = FT.monoTiny,
                 color = FN.muted,
                 maxLines = 1
@@ -636,8 +681,8 @@ private fun AudioCard(
 private fun QuoteCard(
     entry: NoteWithTags,
     blocks: List<Block>,
-    modifier: Modifier = Modifier,
     folderName: String,
+    modifier: Modifier = Modifier,
     onOpen: () -> Unit,
     onLongPress: (() -> Unit)?
 ) {
@@ -658,9 +703,11 @@ private fun QuoteCard(
                 modifier = Modifier.size(16.dp)
             )
             Text(
-                text = TimeFormat.smartDate(entry.note.updatedAt),
+                text = "$folderName · ${TimeFormat.smartDate(entry.note.updatedAt)}",
                 style = FT.monoTiny,
-                color = soft
+                color = soft,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
         Text(
@@ -668,7 +715,7 @@ private fun QuoteCard(
             style = FT.cardTitle,
             color = ink,
             maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis
         )
         if (highlight != null && highlight.text.isNotBlank()) {
             Surface(
@@ -686,14 +733,6 @@ private fun QuoteCard(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-                Text(
-                    text = folderName,
-                    style = FT.monoTiny,
-                    color = FN.muted,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(start = 2.dp)
-                ),
         }
         Surface(shape = RoundedCornerShape(50), color = if (pastel) FN.onStrong else FN.surfaceAlt) {
             Text(
@@ -710,8 +749,8 @@ private fun QuoteCard(
 private fun TextCard(
     entry: NoteWithTags,
     blocks: List<Block>,
-    modifier: Modifier = Modifier,
     folderName: String,
+    modifier: Modifier = Modifier,
     dotColor: Color,
     onOpen: () -> Unit,
     onLongPress: (() -> Unit)?
@@ -729,9 +768,11 @@ private fun TextCard(
         ) {
             ColoredDot(dotColor, size = 9.dp)
             Text(
-                text = TimeFormat.smartDate(entry.note.updatedAt),
+                text = "$folderName · ${TimeFormat.smartDate(entry.note.updatedAt)}",
                 style = FT.monoTiny,
-                color = soft
+                color = soft,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
         Text(
@@ -739,7 +780,7 @@ private fun TextCard(
             style = FT.cardTitle,
             color = ink,
             maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis
         )
         if (image != null && image.path.isNotBlank()) {
             AsyncImage(
@@ -761,10 +802,7 @@ private fun TextCard(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        Surface(
-            shape = RoundedCornerShape(50),
-            color = if (pastel) FN.onStrong else FN.surfaceAlt
-        ) {
+        Surface(shape = RoundedCornerShape(50), color = if (pastel) FN.onStrong else FN.surfaceAlt) {
             Text(
                 text = folderName,
                 style = FT.monoChip,
@@ -794,46 +832,10 @@ private fun MiniProgressBar(progress: Float, track: Color, fill: Color) {
 }
 
 private fun readMinutes(blocks: List<Block>): Int =
-    (wordCount(blocks.plainTextSafe()) / 200).coerceAtLeast(1)
+    (blocks.plainTextSafe().wordCount() / 200).coerceAtLeast(1)
 
 private fun List<Block>.plainTextSafe(): String = try {
     plainText()
 } catch (_: Exception) {
     ""
 }
-
-
-/** Title text with every case-insensitive occurrence of [query] accented. */
-@Composable
-fun annotatedMatches(text: String, query: String): androidx.compose.ui.text.AnnotatedString {
-    val builder = androidx.compose.ui.text.AnnotatedString.Builder(text)
-    if (query.isNotBlank()) {
-        val lower = text.lowercase()
-        val q = query.trim().lowercase()
-        var from = 0
-        while (true) {
-            val hit = lower.indexOf(q, from)
-            if (hit == -1) break
-            builder.addStyle(
-                androidx.compose.ui.text.SpanStyle(
-                    color = FN.accent,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                ),
-                hit,
-                hit + q.length
-            )
-            from = hit + q.length
-        }
-    }
-    return builder.toAnnotatedString()
-}
-
-
-/** Up to two leading initials from the title, for content-derived monograms. */
-fun titleInitials(title: String): String =
-    title.trim().split(Regex("\\s+"))
-        .filter { it.isNotBlank() }
-        .take(2)
-        .map { it.first().uppercaseChar().toString() }
-        .joinToString("")
-        .ifBlank { "+" }
