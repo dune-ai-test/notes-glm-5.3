@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Field Notes</string>
+    <string name="widget_new_note">New note</string>
 </resources>
