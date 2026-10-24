@@ -46,7 +46,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavHostController
-import com.fieldnotes.app.data.repo.NoteFilter.NoteSort
+import com.fieldnotes.app.data.repo.NoteSort
 import com.fieldnotes.app.di.LocalAppContainer
 import com.fieldnotes.app.ui.components.CircleIconButton
 import com.fieldnotes.app.ui.components.HomeNoteCard

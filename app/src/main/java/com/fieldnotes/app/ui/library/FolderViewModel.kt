@@ -6,7 +6,7 @@ import com.fieldnotes.app.data.db.FolderEntity
 import com.fieldnotes.app.data.db.NoteWithTags
 import com.fieldnotes.app.data.model.Block
 import com.fieldnotes.app.data.model.decodeBlocks
-import com.fieldnotes.app.data.repo.NoteFilter.NoteSort
+import com.fieldnotes.app.data.repo.NoteSort
 import com.fieldnotes.app.data.repo.NoteRepository
 import com.fieldnotes.app.data.repo.filterNotes
 import kotlinx.coroutines.flow.MutableStateFlow
