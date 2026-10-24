@@ -1,5 +1,10 @@
 package com.fieldnotes.app.navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -90,7 +95,20 @@ fun AppRoot(container: AppContainer) {
             .fillMaxSize()
             .background(FN.bg)
     ) {
-        NavHost(navController = navController, startDestination = "tabs") {
+        NavHost(
+            navController = navController,
+            startDestination = "tabs",
+            // Fast slide+fade instead of the slow default cross-fade: opening a
+            // folder slides in from the right, back slides it out again.
+            enterTransition = {
+                slideInHorizontally(tween(240)) { it / 4 } + fadeIn(tween(240))
+            },
+            exitTransition = { fadeOut(tween(180)) },
+            popEnterTransition = { fadeIn(tween(240)) },
+            popExitTransition = {
+                slideOutHorizontally(tween(240)) { it / 4 } + fadeOut(tween(180))
+            }
+        ) {
             composable("tabs") {
                 HorizontalPager(
                     state = pagerState,
