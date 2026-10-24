@@ -2,7 +2,9 @@
 
 package com.fieldnotes.app.ui.library
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,15 +15,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -36,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.KeyboardType
@@ -45,6 +52,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.fieldnotes.app.data.db.FolderEntity
 import androidx.navigation.NavHostController
 import com.fieldnotes.app.data.repo.NoteSort
 import com.fieldnotes.app.di.LocalAppContainer
@@ -56,6 +64,7 @@ import com.fieldnotes.app.ui.components.SectionLabel
 import com.fieldnotes.app.ui.theme.FN
 import com.fieldnotes.app.ui.theme.FT
 import com.fieldnotes.app.ui.theme.noteColor
+import com.fieldnotes.app.ui.theme.swatchName
 import com.fieldnotes.app.util.plural
 
 private val SortOptions = listOf(
@@ -89,10 +98,12 @@ fun FolderScreen(folderId: Long, navController: NavHostController) {
 
     var gridMode by remember { mutableStateOf(true) }
     var showSort by remember { mutableStateOf(false) }
+    var showEdit by remember { mutableStateOf(false) }
 
     val dotColor = noteColor(folder?.colorIndex ?: 0)
     val folderName = folder?.name ?: "Folder"
 
+    Box(Modifier.fillMaxSize()) {
     Column(
         Modifier
             .fillMaxSize()
@@ -124,8 +135,8 @@ fun FolderScreen(folderId: Long, navController: NavHostController) {
                     color = FN.muted
                 )
             }
-            CircleIconButton(Icons.Outlined.Add, "New note", background = FN.strong, tint = FN.surface) {
-                navController.navigate("editor/-1?folderId=$folderId")
+            CircleIconButton(Icons.Outlined.Edit, "Edit folder") {
+                showEdit = true
             }
         }
 
@@ -278,6 +289,34 @@ fun FolderScreen(folderId: Long, navController: NavHostController) {
         }
     }
 
+    CircleIconButton(
+        Icons.Outlined.Add,
+        "New note",
+        size = 56.dp,
+        background = FN.strong,
+        tint = FN.surface,
+        modifier = Modifier
+            .align(Alignment.BottomEnd)
+            .navigationBarsPadding()
+            .padding(end = 16.dp, bottom = 24.dp)
+    ) {
+        navController.navigate("editor/-1?folderId=$folderId")
+    }
+    }
+
+    if (showEdit) {
+        folder?.let { current ->
+            EditFolderDialog(
+                folder = current,
+                onDismiss = { showEdit = false },
+                onSave = { name, iconKey, colorIndex ->
+                    showEdit = false
+                    vm.updateFolder(current.copy(name = name, iconKey = iconKey, colorIndex = colorIndex))
+                }
+            )
+        }
+    }
+
     if (showSort) {
         AlertDialog(
             onDismissRequest = { showSort = false },
@@ -314,4 +353,99 @@ fun FolderScreen(folderId: Long, navController: NavHostController) {
             }
         )
     }
+}
+
+@Composable
+private fun EditFolderDialog(
+    folder: FolderEntity,
+    onDismiss: () -> Unit,
+    onSave: (name: String, iconKey: String, colorIndex: Int) -> Unit
+) {
+    var name by remember { mutableStateOf(folder.name) }
+    var iconKey by remember { mutableStateOf(folder.iconKey) }
+    var colorIndex by remember { mutableStateOf(folder.colorIndex) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit folder", style = FT.sectionTitle, color = FN.text) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                BasicTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    textStyle = FT.body.copy(color = FN.text),
+                    cursorBrush = SolidColor(FN.accent),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(FN.surfaceAlt, RoundedCornerShape(12.dp))
+                        .padding(12.dp),
+                    decorationBox = { inner ->
+                        Box {
+                            if (name.isEmpty()) {
+                                Text("Folder name", style = FT.body, color = FN.muted)
+                            }
+                            inner()
+                        }
+                    }
+                )
+                SectionLabel("Icon", color = FN.muted)
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FolderIconChoices.forEach { (key, icon) ->
+                        val selected = iconKey == key
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (selected) FN.strong else FN.surfaceAlt,
+                            border = if (selected) {
+                                BorderStroke(2.dp, FN.accent)
+                            } else {
+                                BorderStroke(1.dp, FN.line)
+                            },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Box(
+                                Modifier.clickable { iconKey = key },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    icon,
+                                    contentDescription = key,
+                                    tint = if (selected) FN.onStrong else FN.textSoft,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+                SectionLabel("Color — ${swatchName(colorIndex)}", color = FN.muted)
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    (0..5).forEach { index ->
+                        val selected = colorIndex == index
+                        Box(
+                            Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(noteColor(index))
+                                .border(
+                                    width = if (selected) 2.dp else 1.dp,
+                                    color = if (selected) FN.accent else FN.line,
+                                    shape = CircleShape
+                                )
+                                .clickable { colorIndex = index }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { if (name.isNotBlank()) onSave(name, iconKey, colorIndex) }) {
+                Text("Save", color = FN.text)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel", color = FN.muted) }
+        }
+    )
 }

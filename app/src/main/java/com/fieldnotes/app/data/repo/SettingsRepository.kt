@@ -31,7 +31,8 @@ data class AppSettings(
     val lastActiveEpochDay: Long? = null,
     val onboarded: Boolean = false,
     val lastBackupAt: Long? = null,
-    val lastBackupFile: String? = null
+    val lastBackupFile: String? = null,
+    val hideNavBar: Boolean = false
 )
 
 class SettingsRepository(private val context: Context) {
@@ -55,6 +56,7 @@ class SettingsRepository(private val context: Context) {
         val onboarded = booleanPreferencesKey("onboarded")
         val lastBackupAt = longPreferencesKey("last_backup_at")
         val lastBackupFile = stringPreferencesKey("last_backup_file")
+        val hideNavBar = booleanPreferencesKey("hide_nav_bar")
     }
 
     /** Last five distinct search queries, newest first. */
@@ -78,6 +80,10 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
+    suspend fun setHideNavBar(value: Boolean) {
+        context.settingsDataStore.edit { p -> p[Keys.hideNavBar] = value }
+    }
+
     /** Records when a backup ZIP was last written (and its file name). */
     suspend fun recordBackup(file: String) {
         context.settingsDataStore.edit { p ->
@@ -97,6 +103,7 @@ class SettingsRepository(private val context: Context) {
             onboarded = p[Keys.onboarded] ?: false,
             lastBackupAt = p[Keys.lastBackupAt],
             lastBackupFile = p[Keys.lastBackupFile],
+            hideNavBar = p[Keys.hideNavBar] ?: false,
             userName = p[Keys.userName] ?: "You",
             haptics = p[Keys.haptics] ?: true,
             reduceMotion = p[Keys.reduceMotion] ?: false,

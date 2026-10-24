@@ -84,6 +84,9 @@ interface FolderDao {
     @Insert
     suspend fun insert(folder: FolderEntity): Long
 
+    @Update
+    suspend fun update(folder: FolderEntity)
+
     @Query("DELETE FROM folders")
     suspend fun clearAllFolders()
 

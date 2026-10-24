@@ -30,9 +30,9 @@ import androidx.compose.ui.unit.dp
 import com.fieldnotes.app.ui.theme.FN
 
 enum class TopLevelTab(val route: String, val label: String, val icon: ImageVector) {
+    LIBRARY("library", "Library", Icons.Outlined.Folder),
     HOME("home", "Home", Icons.Outlined.Home),
     REMINDER("quick", "Reminder", Icons.Outlined.Event),
-    LIBRARY("library", "Library", Icons.Outlined.Folder),
     SETTINGS("settings", "Settings", Icons.Outlined.Settings)
 }
 
@@ -43,14 +43,20 @@ fun PillBottomBar(
     selectedTab: Int,
     onSelect: (Int) -> Unit,
     onFab: () -> Unit,
+    hideTabs: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = if (hideTabs) Arrangement.End else Arrangement.Start
     ) {
+        if (hideTabs) {
+            FabButton(onFab)
+            return@Row
+        }
         Surface(
             shape = CircleShape,
             color = FN.strong,
@@ -86,24 +92,29 @@ fun PillBottomBar(
             }
         }
         Spacer(Modifier.width(10.dp))
-        Surface(
-            shape = CircleShape,
-            color = FN.strong,
-            border = BorderStroke(1.dp, FN.line),
-            shadowElevation = 10.dp,
-            modifier = Modifier.size(56.dp)
+        FabButton(onFab)
+    }
+}
+
+@Composable
+private fun FabButton(onFab: () -> Unit) {
+    Surface(
+        shape = CircleShape,
+        color = FN.strong,
+        border = BorderStroke(1.dp, FN.line),
+        shadowElevation = 10.dp,
+        modifier = Modifier.size(56.dp)
+    ) {
+        Box(
+            Modifier.clickable(onClick = onFab),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                Modifier.clickable(onClick = onFab),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Add,
-                    contentDescription = "New note",
-                    tint = FN.onStrong,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+            Icon(
+                imageVector = Icons.Outlined.Add,
+                contentDescription = "New note",
+                tint = FN.onStrong,
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 }

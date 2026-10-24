@@ -39,6 +39,10 @@ class FolderViewModel(
         filterNotes(list, q, s, p)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    fun updateFolder(folder: FolderEntity) {
+        viewModelScope.launch { repo.updateFolder(folder) }
+    }
+
     fun setQuery(value: String) {
         query.value = value
     }

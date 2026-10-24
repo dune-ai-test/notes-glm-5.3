@@ -60,6 +60,10 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch { settingsRepo.setAutoBackup(value) }
     }
 
+    fun setHideNavBar(value: Boolean) {
+        viewModelScope.launch { settingsRepo.setHideNavBar(value) }
+    }
+
     /** Runs the same weekly auto-backup immediately (device-local ZIP, keeps last 4). */
     fun runAutoBackupNow(onDone: (Boolean) -> Unit) {
         viewModelScope.launch {

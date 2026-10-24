@@ -137,7 +137,7 @@ class MainActivity : FragmentActivity() {
             container.pendingNewNote.value = true
         }
         if (intent?.getBooleanExtra(ReminderContract.EXTRA_NEW_REMINDER, false) == true) {
-            container.pendingOpenTab.value = 1 // Reminders tab
+            container.pendingOpenTab.value = com.fieldnotes.app.ui.components.TopLevelTab.REMINDER.ordinal
         }
     }
 }

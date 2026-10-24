@@ -26,6 +26,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fieldnotes.app.data.repo.AppSettings
 import com.fieldnotes.app.di.AppContainer
 import com.fieldnotes.app.ui.components.PillBottomBar
 import com.fieldnotes.app.ui.components.TopLevelTab
@@ -45,10 +47,12 @@ fun AppRoot(container: AppContainer) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
-    val pagerState = rememberPagerState(initialPage = TopLevelTab.HOME.ordinal) {
+    val pagerState = rememberPagerState(initialPage = TopLevelTab.LIBRARY.ordinal) {
         TopLevelTab.entries.size
     }
     val scope = rememberCoroutineScope()
+    val settings by container.settingsRepository.settings
+        .collectAsStateWithLifecycle(initialValue = AppSettings())
 
     // Opens the editor with an unsaved draft (noteId <= 0). The database row is
     // only created when the user actually types something.
@@ -167,6 +171,7 @@ fun AppRoot(container: AppContainer) {
                 selectedTab = pagerState.targetPage,
                 onSelect = switchTab,
                 onFab = createAndOpenNote,
+                hideTabs = settings.hideNavBar,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .navigationBarsPadding()

@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Accessibility
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.AutoDelete
+import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -273,6 +274,14 @@ fun SettingsScreen(navController: NavHostController) {
         }
 
         Section("Preferences") {
+            SettingRow(
+                icon = Icons.Outlined.ViewAgenda,
+                iconBg = FN.sage,
+                title = "Hide tab bar",
+                subtitle = "Swipe between sections — the + button stays"
+            ) {
+                Toggle(settings.hideNavBar) { vm.setHideNavBar(it) }
+            }
             SettingRow(
                 icon = Icons.Outlined.Palette,
                 iconBg = FN.sky,

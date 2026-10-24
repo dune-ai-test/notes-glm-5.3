@@ -73,6 +73,8 @@ class NoteRepository(private val db: AppDatabase) {
         db.folderDao().insert(
             FolderEntity(name = name.trim(), iconKey = iconKey, colorIndex = colorIndex)
         )
+    suspend fun updateFolder(folder: FolderEntity) = db.folderDao().update(folder)
+
 
     suspend fun createNote(
         title: String = "",
