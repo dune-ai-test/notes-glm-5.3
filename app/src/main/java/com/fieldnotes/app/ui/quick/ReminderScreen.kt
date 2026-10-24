@@ -295,8 +295,6 @@ private fun UpcomingTab(
                 onDelete = { onDelete(reminder) }
             )
         }
-            }
-        }
     }
 }
 
