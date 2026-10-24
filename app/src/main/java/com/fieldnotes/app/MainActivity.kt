@@ -51,6 +51,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fieldnotes.app.data.repo.AppSettings
 import com.fieldnotes.app.data.reminder.ReminderContract
+import com.fieldnotes.app.data.reminder.ReminderScheduler
 import com.fieldnotes.app.di.AppContainer
 import kotlinx.coroutines.launch
 import com.fieldnotes.app.di.LocalAppContainer
@@ -72,6 +73,7 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         val container = (application as FieldNotesApp).container
         consumeOpenNoteIntent(container, intent)
+        ReminderScheduler.postCaptureNotification(this)
         setContent {
             val settingsState by container.settingsRepository.settings
                 .collectAsStateWithLifecycle(initialValue = null)
@@ -131,6 +133,12 @@ class MainActivity : FragmentActivity() {
     private fun consumeOpenNoteIntent(container: AppContainer, intent: Intent?) {
         val noteId = intent?.getLongExtra(ReminderContract.EXTRA_OPEN_NOTE, -1L) ?: -1L
         if (noteId > 0) container.pendingOpenNoteId.value = noteId
+        if (intent?.getBooleanExtra(ReminderContract.EXTRA_NEW_NOTE, false) == true) {
+            container.pendingNewNote.value = true
+        }
+        if (intent?.getBooleanExtra(ReminderContract.EXTRA_NEW_REMINDER, false) == true) {
+            container.pendingOpenTab.value = 1 // Reminders tab
+        }
     }
 }
 

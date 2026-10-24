@@ -65,6 +65,26 @@ fun AppRoot(container: AppContainer) {
         }
     }
 
+    // Widget + notification quick capture: open a fresh draft once.
+    LaunchedEffect(Unit) {
+        container.pendingNewNote.collect { new ->
+            if (new) {
+                navController.navigate("editor/-1")
+                container.pendingNewNote.value = false
+            }
+        }
+    }
+
+    // Quick-capture notification: jump to the Reminders tab once.
+    LaunchedEffect(Unit) {
+        container.pendingOpenTab.collect { tab ->
+            if (tab != null) {
+                pagerState.animateScrollToPage(tab)
+                container.pendingOpenTab.value = null
+            }
+        }
+    }
+
     Box(
         Modifier
             .fillMaxSize()

@@ -21,9 +21,13 @@ import java.util.Calendar
 object ReminderContract {
     const val EXTRA_ID = "reminder_id"
     const val EXTRA_OPEN_NOTE = "open_note_id"
+    const val EXTRA_NEW_NOTE = "new_note"
+    const val EXTRA_NEW_REMINDER = "new_reminder"
     const val ACTION_COMPLETE = "com.fieldnotes.app.action.COMPLETE_REMINDER"
     const val ACTION_SNOOZE_1H = "com.fieldnotes.app.action.SNOOZE_REMINDER"
     const val CHANNEL_ID = "reminders"
+    const val CAPTURE_CHANNEL_ID = "quick_capture"
+    const val CAPTURE_NOTIFICATION_ID = 2001
 }
 
 object ReminderScheduler {
@@ -122,6 +126,53 @@ object ReminderScheduler {
 
         runCatching {
             NotificationManagerCompat.from(context).notify(reminder.id.toInt(), notification)
+        }
+    }
+
+    /** Silent, ongoing notification with one-tap capture actions. */
+    fun ensureCaptureChannel(context: Context) {
+        val channel = NotificationChannel(
+            ReminderContract.CAPTURE_CHANNEL_ID,
+            "Quick capture",
+            NotificationManager.IMPORTANCE_LOW
+        ).apply { description = "One-tap capture from anywhere" }
+        context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+    }
+
+    fun postCaptureNotification(context: Context) {
+        ensureCaptureChannel(context)
+        if (!hasNotificationPermission(context)) return
+        val openApp = PendingIntent.getActivity(
+            context,
+            10,
+            Intent(context, MainActivity::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val newNote = PendingIntent.getActivity(
+            context,
+            11,
+            Intent(context, MainActivity::class.java).putExtra(ReminderContract.EXTRA_NEW_NOTE, true),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val newReminder = PendingIntent.getActivity(
+            context,
+            12,
+            Intent(context, MainActivity::class.java).putExtra(ReminderContract.EXTRA_NEW_REMINDER, true),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val notification = NotificationCompat.Builder(context, ReminderContract.CAPTURE_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("Quick capture")
+            .setContentText("Capture a note or reminder in one tap")
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setContentIntent(openApp)
+            .addAction(0, "New note", newNote)
+            .addAction(0, "New reminder", newReminder)
+            .setCategory(NotificationCompat.CATEGORY_TODO)
+            .build()
+        runCatching {
+            NotificationManagerCompat.from(context).notify(CAPTURE_NOTIFICATION_ID, notification)
         }
     }
 

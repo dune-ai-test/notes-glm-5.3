@@ -27,6 +27,10 @@ class AppContainer(private val appContext: Context) {
     /** Note the user tapped into from a reminder notification; consumed by AppRoot. */
     val pendingOpenNoteId = kotlinx.coroutines.flow.MutableStateFlow<Long?>(null)
 
+    /** One-shot signals from the widget and quick-capture notification. */
+    val pendingNewNote = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val pendingOpenTab = kotlinx.coroutines.flow.MutableStateFlow<Int?>(null)
+
     val database: AppDatabase = Room.databaseBuilder(
         context,
         AppDatabase::class.java,
