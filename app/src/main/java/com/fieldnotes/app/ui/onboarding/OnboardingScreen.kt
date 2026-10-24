@@ -46,7 +46,7 @@ private data class OnboardingPage(
     val body: String
 )
 
-private val Pages = listOf(
+private fun pages(): List<OnboardingPage> = listOf(
     OnboardingPage(
         icon = Icons.Outlined.Edit,
         accent = FN.butter,
@@ -70,7 +70,8 @@ private val Pages = listOf(
 /** Three-page first-launch intro. Shown once; [onFinish] marks it seen. */
 @Composable
 fun OnboardingScreen(onFinish: () -> Unit) {
-    val pagerState = rememberPagerState(initialPage = 0) { Pages.size }
+    val pages = pages()
+    val pagerState = rememberPagerState(initialPage = 0) { pages.size }
     val scope = rememberCoroutineScope()
 
     Column(
@@ -99,7 +100,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
             state = pagerState,
             modifier = Modifier.weight(1f)
         ) { page ->
-            val item = Pages[page]
+            val item = pages[page]
             Column(
                 Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -144,7 +145,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Pages.indices.forEach { index ->
+            pages.indices.forEach { index ->
                 val selected = pagerState.currentPage == index
                 Box(
                     Modifier
@@ -162,7 +163,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
-                    if (pagerState.currentPage < Pages.lastIndex) {
+                    if (pagerState.currentPage < pages.lastIndex) {
                         scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
                     } else {
                         onFinish()
@@ -170,7 +171,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                 }
         ) {
             Text(
-                if (pagerState.currentPage < Pages.lastIndex) "Next" else "Get started",
+                if (pagerState.currentPage < pages.lastIndex) "Next" else "Get started",
                 style = FT.button,
                 color = FN.onStrong,
                 textAlign = TextAlign.Center,

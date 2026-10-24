@@ -52,7 +52,7 @@ class HomeViewModel(private val repo: NoteRepository) : ViewModel() {
     val visibleNotes: StateFlow<List<NoteWithTags>> = combine(
         filters, dateRange, allNotesRaw
     ) { f, range, list ->
-        filterNotes(list, f.query, f.sort, f.pinned, f.folders, f.colours, range)
+        filterNotes(list, f.query, f.sort, f.pinnedOnly, f.folders, f.colours, range)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val activeFilterCount: StateFlow<Int> = combine(

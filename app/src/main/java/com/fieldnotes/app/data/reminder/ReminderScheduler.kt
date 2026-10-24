@@ -169,10 +169,10 @@ object ReminderScheduler {
             .setContentIntent(openApp)
             .addAction(0, "New note", newNote)
             .addAction(0, "New reminder", newReminder)
-            .setCategory(NotificationCompat.CATEGORY_TODO)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .build()
         runCatching {
-            NotificationManagerCompat.from(context).notify(CAPTURE_NOTIFICATION_ID, notification)
+            NotificationManagerCompat.from(context).notify(ReminderContract.CAPTURE_NOTIFICATION_ID, notification)
         }
     }
 

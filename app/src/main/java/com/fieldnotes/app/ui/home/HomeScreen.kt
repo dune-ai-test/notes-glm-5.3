@@ -86,11 +86,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavHostController
+import com.fieldnotes.app.data.db.FolderEntity
 import com.fieldnotes.app.data.db.NoteWithTags
 import com.fieldnotes.app.data.media.AudioPlayer
 import com.fieldnotes.app.data.model.decodeBlocks
 import com.fieldnotes.app.data.repo.NoteRepository
 import com.fieldnotes.app.data.repo.AppSettings
+import com.fieldnotes.app.data.repo.DateRange
 import com.fieldnotes.app.data.repo.NoteSort
 import kotlinx.coroutines.launch
 import com.fieldnotes.app.di.LocalAppContainer
@@ -121,6 +123,10 @@ fun HomeScreen(navController: NavHostController) {
     val folders by vm.folders.collectAsStateWithLifecycle()
     val pinnedOnly by vm.pinnedOnly.collectAsStateWithLifecycle()
     val sort by vm.sort.collectAsStateWithLifecycle()
+    val activeFilterCount by vm.activeFilterCount.collectAsStateWithLifecycle()
+    val folderFilter by vm.folderFilter.collectAsStateWithLifecycle()
+    val colourFilter by vm.colourFilter.collectAsStateWithLifecycle()
+    val dateRange by vm.dateRange.collectAsStateWithLifecycle()
     val playback by container.audioPlayer.state.collectAsStateWithLifecycle()
     val settings by container.settingsRepository.settings
         .collectAsStateWithLifecycle(initialValue = AppSettings())
