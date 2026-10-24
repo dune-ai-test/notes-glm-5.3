@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.fieldnotes.app.util.Streak
 import kotlinx.coroutines.flow.Flow
@@ -43,10 +44,32 @@ class SettingsRepository(private val context: Context) {
         val autoLockMinutes = intPreferencesKey("auto_lock_minutes")
         val autoBackup = booleanPreferencesKey("auto_backup")
         val defaultCapture = stringPreferencesKey("default_capture")
+        val recentSearches = stringPreferencesKey("recent_searches")
         val audioQuality = stringPreferencesKey("audio_quality")
         val appearance = stringPreferencesKey("appearance")
         val streakCount = intPreferencesKey("streak_count")
         val lastActiveEpochDay = longPreferencesKey("last_active_epoch_day")
+    }
+
+    /** Last five distinct search queries, newest first. */
+    val recentSearches: Flow<List<String>> = context.settingsDataStore.data.map { p ->
+        (p[Keys.recentSearches] ?: "").split("\n").filter { it.isNotBlank() }
+    }
+
+    suspend fun addRecentSearch(query: String) {
+        val q = query.trim()
+        if (q.length < 2) return
+        context.settingsDataStore.edit { p ->
+            val old = (p[Keys.recentSearches] ?: "").split("\n").filter { it.isNotBlank() }
+            val updated = (listOf(q) + old.filter { it != q }).take(5)
+            p[Keys.recentSearches] = updated.joinToString("\n")
+        }
+    }
+
+    suspend fun clearRecentSearches() {
+        context.settingsDataStore.edit { p ->
+            p.remove(Keys.recentSearches)
+        }
     }
 
     val settings: Flow<AppSettings> = context.settingsDataStore.data.map { p ->
