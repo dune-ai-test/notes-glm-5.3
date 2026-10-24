@@ -59,13 +59,16 @@ fun PillBottomBar(
             modifier = Modifier.weight(1f)
         ) {
             Row(
-                Modifier.padding(6.dp),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(6.dp),
                 horizontalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 TopLevelTab.entries.forEachIndexed { index, tab ->
                     val selected = selectedTab == index
                     Box(
                         modifier = Modifier
+                            .weight(1f)
                             .clip(CircleShape)
                             .background(if (selected) FN.onStrong else Color.Transparent)
                             .clickable { onSelect(index) }
