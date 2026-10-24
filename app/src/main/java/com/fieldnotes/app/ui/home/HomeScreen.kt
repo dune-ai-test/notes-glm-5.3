@@ -278,6 +278,7 @@ item(key = "empty", span = StaggeredGridItemSpan.FullLine) {
             } else {
                 notes.forEach { entry ->
                     item(key = "list-${entry.note.id}", span = StaggeredGridItemSpan.FullLine) {
+                        ListRowNote(
                             entry = entry,
                             dotColor = dotColorFor(entry),
                             onOpen = { tryOpen(entry) },
