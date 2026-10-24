@@ -177,7 +177,7 @@ fun HomeScreen(navController: NavHostController) {
                     SearchBarRow(
                         onSearch = { navController.navigate("search") },
                         onFilters = { showFilters = true },
-                        sort = sort
+                        activeFilters = activeFilterCount.value
                     )
                     Row(
                         Modifier.fillMaxWidth(),
@@ -299,7 +299,14 @@ item(key = "empty", span = StaggeredGridItemSpan.FullLine) {
         if (showFilters) {
             FilterSheet(
                 sort = sort,
+                folders = folders,
+                folderFilter = folderFilter,
+                colourFilter = colourFilter,
+                dateRange = dateRange,
                 onSort = vm::setSort,
+                onToggleFolder = vm::toggleFolderFilter,
+                onToggleColour = vm::toggleColourFilter,
+                onSetDateRange = vm::setDateRange,
                 onReset = vm::resetFilters,
                 onDismiss = { showFilters = false }
             )
@@ -377,7 +384,7 @@ private fun HeaderRow(noteCount: Int) {
 }
 
 @Composable
-private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit, sort: NoteSort) {
+private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit, activeFilters: Int) {
     Surface(
         shape = RoundedCornerShape(50),
         color = FN.surface,
@@ -411,7 +418,7 @@ private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit, sort: Note
                 color = FN.bg,
                 border = BorderStroke(
                     1.dp,
-                    if (sort == NoteSort.RECENT) FN.line else FN.accent
+                    if (activeFilters > 0) FN.accent else FN.line
                 )
             ) {
                 Row(
@@ -431,14 +438,10 @@ private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit, sort: Note
                         if (sort == NoteSort.RECENT) {
                             "Sort"
                         } else {
-                            "Sort · " + when (sort) {
-                                NoteSort.OLDEST -> "Oldest"
-                                NoteSort.TITLE -> "A–Z"
-                                else -> "Recent"
-                            }
+                            if (activeFilters > 0) "Filters · $activeFilters" else "Sort"
                         },
                         style = FT.chipSmall,
-                        color = if (sort == NoteSort.RECENT) FN.textSoft else FN.accent
+                        color = if (activeFilters > 0) FN.accent else FN.textSoft,
                     )
                 }
             }
@@ -497,7 +500,14 @@ private fun SegToggleLabel(
 @Composable
 private fun FilterSheet(
     sort: NoteSort,
+    folders: List<FolderEntity>,
+    folderFilter: Set<Long>,
+    colourFilter: Set<Int>,
+    dateRange: DateRange,
     onSort: (NoteSort) -> Unit,
+    onToggleFolder: (Long) -> Unit,
+    onToggleColour: (Int) -> Unit,
+    onSetDateRange: (DateRange) -> Unit,
     onReset: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -512,7 +522,7 @@ private fun FilterSheet(
                 .padding(bottom = 30.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text("Sort", style = FT.sectionTitle, color = FN.text)
+            Text("Filters", style = FT.sectionTitle, color = FN.text)
             SectionLabel("Sort by")
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 listOf(
@@ -521,6 +531,48 @@ private fun FilterSheet(
                     NoteSort.TITLE to "A–Z",
                 ).forEach { (value, label) ->
                     PillChip(label = label, selected = sort == value, onClick = { onSort(value) })
+                }
+            }
+            SectionLabel("Folder")
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                verticalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                folders.forEach { folder ->
+                    val selected = folder.id in folderFilter
+                    PillChip(
+                        label = folder.name,
+                        selected = selected,
+                        onClick = { onToggleFolder(folder.id) }
+                    )
+                }
+            }
+            SectionLabel("Colour")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                (0..5).forEach { index ->
+                    val selected = index in colourFilter
+                    Box(
+                        Modifier
+                            .size(30.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(noteColor(index))
+                            .border(
+                                width = if (selected) 2.dp else 1.dp,
+                                color = if (selected) FN.accent else FN.line,
+                                shape = androidx.compose.foundation.shape.CircleShape
+                            )
+                            .clickable { onToggleColour(index) }
+                    )
+                }
+            }
+            SectionLabel("Date range")
+            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                DateRange.entries.forEach { range ->
+                    PillChip(
+                        label = range.label,
+                        selected = dateRange == range,
+                        onClick = { onSetDateRange(range) }
+                    )
                 }
             }
             Row(
