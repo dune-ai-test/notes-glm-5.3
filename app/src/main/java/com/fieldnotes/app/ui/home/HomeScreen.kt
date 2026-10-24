@@ -24,9 +24,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
+
+
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -210,15 +212,15 @@ fun HomeScreen(navController: NavHostController) {
                     SectionLabel("Your notes")
             }
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
+            LazyVerticalStaggeredGrid(
+                columns = StaggeredGridCells.Fixed(2),
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
+                verticalItemSpacing = 14.dp,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 132.dp)
             ) {
             if (notes.isEmpty()) {
-item(key = "empty", span = { GridItemSpan(maxLineSpan) }) {
+item(key = "empty", span = StaggeredGridItemSpan.FullLine) {
                     Column(
                         Modifier
                             .fillMaxWidth()
@@ -252,7 +254,6 @@ item(key = "empty", span = { GridItemSpan(maxLineSpan) }) {
                                 entry = entry,
                                 dotColor = dotColorFor(entry),
                                 folderName = folderNameFor(entry),
-                                modifier = if (wide) Modifier else Modifier.fillMaxSize(),
                                 playbackState = playback,
                                 onOpen = { tryOpen(entry) },
                                 onLongPress = {
@@ -269,17 +270,14 @@ item(key = "empty", span = { GridItemSpan(maxLineSpan) }) {
                         }
                     }
                     if (wide) {
-item(key = "home-${entry.note.id}", span = { GridItemSpan(maxLineSpan) }) { card() }
+                        item(key = "home-${entry.note.id}", span = StaggeredGridItemSpan.FullLine) { card() }
                     } else {
-                        item(key = "home-${entry.note.id}") {
-                            Box(Modifier.height(220.dp)) { card() }
-                        }
+                        item(key = "home-${entry.note.id}") { card() }
                     }
                 }
             } else {
                 notes.forEach { entry ->
-item(key = "list-${entry.note.id}", span = { GridItemSpan(maxLineSpan) }) {
-                        ListRowNote(
+                    item(key = "list-${entry.note.id}", span = StaggeredGridItemSpan.FullLine) {
                             entry = entry,
                             dotColor = dotColorFor(entry),
                             onOpen = { tryOpen(entry) },
