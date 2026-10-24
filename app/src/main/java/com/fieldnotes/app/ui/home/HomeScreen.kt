@@ -304,7 +304,7 @@ fun HomeScreen(navController: NavHostController) {
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 132.dp)
             ) {
             if (notes.isEmpty()) {
-                item(key = "empty", span = GridItemSpan(maxLineSpan)) {
+item(key = "empty", span = { GridItemSpan(maxLineSpan) }) {
                     Column(
                         Modifier
                             .fillMaxWidth()
@@ -393,16 +393,18 @@ fun HomeScreen(navController: NavHostController) {
                         }
                     }
                     if (wide) {
-                        item(key = "home-${entry.note.id}", span = GridItemSpan(maxLineSpan)) { card() }
+item(key = "home-${entry.note.id}", span = { GridItemSpan(maxLineSpan) }) { card() }
                     } else {
                         item(key = "home-${entry.note.id}") {
+                            Box(Modifier.height(220.dp)) { card() }
+                        }
                             Box(Modifier.fillParentMaxHeight()) { card() }
                         }
                     }
                 }
             } else {
                 notes.forEach { entry ->
-                    item(key = "list-${entry.note.id}", span = GridItemSpan(maxLineSpan)) {
+item(key = "list-${entry.note.id}", span = { GridItemSpan(maxLineSpan) }) {
                         ListRowNote(
                             entry = entry,
                             dotColor = dotColorFor(entry),
