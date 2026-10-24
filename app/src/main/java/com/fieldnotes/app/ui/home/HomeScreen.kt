@@ -183,7 +183,7 @@ fun HomeScreen(navController: NavHostController) {
                     SearchBarRow(
                         onSearch = { navController.navigate("search") },
                         onFilters = { showFilters = true },
-                        activeFilters = activeFilterCount.value
+                        activeFilters = activeFilterCount
                     )
                     Row(
                         Modifier.fillMaxWidth(),
@@ -441,11 +441,7 @@ private fun SearchBarRow(onSearch: () -> Unit, onFilters: () -> Unit, activeFilt
                         modifier = Modifier.size(13.dp)
                     )
                     Text(
-                        if (sort == NoteSort.RECENT) {
-                            "Sort"
-                        } else {
-                            if (activeFilters > 0) "Filters · $activeFilters" else "Sort"
-                        },
+                        if (activeFilters > 0) "Filters · $activeFilters" else "Sort",
                         style = FT.chipSmall,
                         color = if (activeFilters > 0) FN.accent else FN.textSoft,
                     )

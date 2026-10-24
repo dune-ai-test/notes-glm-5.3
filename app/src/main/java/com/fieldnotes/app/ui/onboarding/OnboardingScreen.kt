@@ -46,6 +46,7 @@ private data class OnboardingPage(
     val body: String
 )
 
+@Composable
 private fun pages(): List<OnboardingPage> = listOf(
     OnboardingPage(
         icon = Icons.Outlined.Edit,
