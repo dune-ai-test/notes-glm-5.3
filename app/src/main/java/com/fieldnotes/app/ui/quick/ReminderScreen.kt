@@ -189,9 +189,7 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
             if (page == 0) {
                 UpcomingTab(
                     pending = pending,
-                    completed = completed,
                     onComplete = vm::complete,
-                    onRestore = vm::restore,
                     onSnooze1h = { vm.snooze(it, ReminderScheduler.snoozeUntil1h()) },
                     onSnoozeTomorrow = { vm.snooze(it, ReminderScheduler.tomorrowAt()) },
                     onOpenNote = { noteId -> navController.navigate("editor/$noteId") },
@@ -200,7 +198,7 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
                 )
             } else {
                 CalendarTab(
-                    reminders = pending,
+                    reminders = pending + completed,
                     onAddForDate = { date ->
                         pendingDate = date
                         showAdd = true
@@ -208,6 +206,7 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
                     onAddToCalendar = ::addToCalendar,
                     onDelete = { deleteTarget = it },
                     onComplete = vm::complete,
+                    onRestore = vm::restore,
                     onOpenNote = { noteId -> navController.navigate("editor/$noteId") }
                 )
             }
@@ -252,16 +251,14 @@ fun ReminderScreen(navController: androidx.navigation.NavHostController, onCreat
 @Composable
 private fun UpcomingTab(
     pending: List<ReminderEntity>,
-    completed: List<ReminderEntity>,
     onComplete: (Long) -> Unit,
-    onRestore: (Long) -> Unit,
     onSnooze1h: (Long) -> Unit,
     onSnoozeTomorrow: (Long) -> Unit,
     onOpenNote: (Long) -> Unit,
     onDelete: (ReminderEntity) -> Unit,
     onAddToCalendar: (String, Long) -> Unit
 ) {
-    if (pending.isEmpty() && completed.isEmpty()) {
+    if (pending.isEmpty()) {
         Column(
             Modifier
                 .fillMaxSize()
@@ -298,15 +295,6 @@ private fun UpcomingTab(
                 onDelete = { onDelete(reminder) }
             )
         }
-        if (completed.isNotEmpty()) {
-            item(key = "completed-header") {
-                SectionLabel("Completed", color = FN.muted)
-            }
-            items(completed, key = { "done-${it.id}" }) { reminder ->
-                CompletedRow(
-                    reminder = reminder,
-                    onRestore = { onRestore(reminder.id) }
-                )
             }
         }
     }
@@ -535,33 +523,6 @@ private fun ReminderRow(
 }
 
 @Composable
-private fun CompletedRow(reminder: ReminderEntity, onRestore: () -> Unit) {
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = FN.surfaceAlt,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            ColoredDot(FN.sage, size = 8.dp)
-            Text(
-                reminder.title,
-                style = FT.bodySmall.copy(fontSize = 12.5.sp),
-                color = FN.muted,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
-            Text(
-                "Restore",
-                style = FT.button,
-                color = FN.text,
-                modifier = Modifier.clickable(onClick = onRestore)
-            )
-        }
     }
 }
 
@@ -572,6 +533,7 @@ private fun CalendarTab(
     onAddToCalendar: (String, Long) -> Unit,
     onDelete: (ReminderEntity) -> Unit,
     onComplete: (Long) -> Unit,
+    onRestore: (Long) -> Unit,
     onOpenNote: (Long) -> Unit
 ) {
     var month by remember { mutableStateOf(YearMonth.now()) }
@@ -659,15 +621,45 @@ private fun CalendarTab(
             Text("Nothing planned for this day.", style = FT.bodySmall, color = FN.muted)
         }
         dayReminders.forEach { reminder ->
-            SwipeableReminderRow(
-                reminder = reminder,
-                onComplete = { onComplete(reminder.id) },
-                onSnooze1h = { },
-                onSnoozeTomorrow = { },
-                onOpenNote = reminder.noteId?.let { noteId -> { onOpenNote(noteId) } },
-                onAddToCalendar = { onAddToCalendar(reminder.title, reminder.dueAt) },
-                onDelete = { onDelete(reminder) }
-            )
+            if (reminder.completed) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = FN.surfaceAlt,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        ColoredDot(FN.sage, size = 8.dp)
+                        Text(
+                            reminder.title,
+                            style = FT.bodySmall.copy(fontSize = 12.5.sp),
+                            color = FN.muted,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            "Restore",
+                            style = FT.button,
+                            color = FN.text,
+                            modifier = Modifier.clickable { onRestore(reminder.id) }
+                        )
+                    }
+                }
+            } else {
+                SwipeableReminderRow(
+                    reminder = reminder,
+                    onComplete = { onComplete(reminder.id) },
+                    onSnooze1h = { },
+                    onSnoozeTomorrow = { },
+                    onOpenNote = reminder.noteId?.let { noteId -> { onOpenNote(noteId) } },
+                    onAddToCalendar = { onAddToCalendar(reminder.title, reminder.dueAt) },
+                    onDelete = { onDelete(reminder) }
+                )
+            }
         }
         Spacer(Modifier.height(8.dp))
     }
