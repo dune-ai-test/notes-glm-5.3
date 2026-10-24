@@ -501,7 +501,7 @@ private fun SketchCard(
     folderName: String,
     modifier: Modifier = Modifier,
     onOpen: () -> Unit,
-    onLongPress: () -> Unit
+    onLongPress: (() -> Unit)?
 ) {
     CardShell(FN.butter, onOpen, onLongPress, modifier = modifier) {
         Row(
@@ -828,7 +828,7 @@ private fun MiniProgressBar(progress: Float, track: Color, fill: Color) {
 }
 
 private fun readMinutes(blocks: List<Block>): Int =
-    (blocks.plainTextSafe().wordCount() / 200).coerceAtLeast(1)
+    (wordCount(blocks.plainTextSafe()) / 200).coerceAtLeast(1)
 
 private fun List<Block>.plainTextSafe(): String = try {
     plainText()
